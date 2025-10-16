@@ -1,12 +1,10 @@
 /**
  * Courts Data Hook with SWR
- * Cached data fetching for courts using CourtService
+ * Cached data fetching for courts
  */
 
 import useSWR from 'swr';
 import { Court } from '../types';
-import { serviceContainer } from '../core/config/ServiceContainer';
-import { CourtService } from '../core/services/courts';
 
 interface UseCortsOptions {
   search?: string;
@@ -23,24 +21,57 @@ interface UseCortsReturn {
   mutate: () => void;
 }
 
+// Mock fetcher
+const fetcher = async (url: string): Promise<Court[]> => {
+  await new Promise(resolve => setTimeout(resolve, 800));
+
+  return [
+    {
+      id: "1",
+      name: "Quadra 1 - Society",
+      address: "Rua A, 123 - São Paulo, SP",
+      type: "society",
+      rating: 4.8,
+      reviews: 45,
+      price: 120,
+      image: "https://via.placeholder.com/300x200?text=Quadra+1",
+      amenities: ["Vestiário", "Chuveiro", "Estacionamento"],
+      availability: "Disponível",
+    },
+    {
+      id: "2",
+      name: "Quadra 2 - Poliesportiva",
+      address: "Rua B, 456 - São Paulo, SP",
+      type: "poliesportiva",
+      rating: 4.5,
+      reviews: 32,
+      price: 150,
+      image: "https://via.placeholder.com/300x200?text=Quadra+2",
+      amenities: ["Vestiário", "Chuveiro", "Estacionamento", "Ar Condicionado"],
+      availability: "Disponível",
+    },
+    {
+      id: "3",
+      name: "Quadra 3 - Futsal",
+      address: "Rua C, 789 - São Paulo, SP",
+      type: "futsal",
+      rating: 4.6,
+      reviews: 28,
+      price: 100,
+      image: "https://via.placeholder.com/300x200?text=Quadra+3",
+      amenities: ["Vestiário", "Chuveiro"],
+      availability: "Disponível",
+    },
+  ];
+};
+
 /**
  * Hook to fetch all courts
  */
 export function useCourts(options: UseCortsOptions = {}): UseCortsReturn {
-  const courtService: CourtService = serviceContainer.getCourtService();
   const { search, type, minRating, refreshInterval = 0 } = options;
 
   const cacheKey = `/api/courts?search=${search || ''}&type=${type || ''}&minRating=${minRating || 0}`;
-
-  const fetcher = async () => {
-    if (search) {
-      return courtService.searchCourts(search);
-    } else if (type || minRating) {
-      return courtService.filterCourts({ type, minRating });
-    } else {
-      return courtService.getAllCourts();
-    }
-  };
 
   const {
     data,
@@ -54,8 +85,15 @@ export function useCourts(options: UseCortsOptions = {}): UseCortsReturn {
     refreshInterval,
   });
 
+  // Filter courts based on options
+  let filteredCourts = data || [];
+
+  if (minRating) {
+    filteredCourts = filteredCourts.filter(c => c.rating >= minRating);
+  }
+
   return {
-    courts: data || [],
+    courts: filteredCourts,
     isLoading,
     isError: !!error,
     error: error || null,
@@ -67,17 +105,27 @@ export function useCourts(options: UseCortsOptions = {}): UseCortsReturn {
  * Hook to fetch a single court
  */
 export function useCourt(courtId: string | null) {
-  const courtService: CourtService = serviceContainer.getCourtService();
   const cacheKey = courtId ? `/api/courts/${courtId}` : null;
-
-  const fetcher = async () => {
-    if (!courtId) return null;
-    return courtService.getCourt(courtId);
-  };
 
   const { data, error, isLoading, mutate } = useSWR<Court | null>(
     cacheKey,
-    fetcher,
+    async (url: string) => {
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Mock single court
+      return {
+        id: courtId!,
+        name: "Quadra 1 - Society",
+        address: "Rua A, 123 - São Paulo, SP",
+        type: "society",
+        rating: 4.8,
+        reviews: 45,
+        price: 120,
+        image: "https://via.placeholder.com/300x200?text=Quadra+1",
+        amenities: ["Vestiário", "Chuveiro", "Estacionamento"],
+        availability: "Disponível",
+      };
+    },
     {
       revalidateOnFocus: false,
     }
@@ -87,8 +135,6 @@ export function useCourt(courtId: string | null) {
     court: data || null,
     isLoading,
     isError: !!error,
-    error: error || null,
     mutate,
   };
 }
-

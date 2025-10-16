@@ -1,12 +1,10 @@
 /**
  * Teams Data Hook with SWR
- * Cached data fetching for teams using TeamService
+ * Cached data fetching for teams
  */
 
 import useSWR from 'swr';
 import { Team } from '../types';
-import { serviceContainer } from '../core/config/ServiceContainer';
-import { TeamService } from '../core/services/teams';
 
 interface UseTeamsOptions {
   userId?: string;
@@ -22,24 +20,39 @@ interface UseTeamsReturn {
   mutate: () => void;
 }
 
+// Mock fetcher
+const fetcher = async (url: string): Promise<Team[]> => {
+  await new Promise(resolve => setTimeout(resolve, 800));
+
+  return [
+    {
+      id: "1",
+      name: "Galera do Futebol",
+      description: "Time de futebol society",
+      members: 8,
+      maxMembers: 12,
+      sport: "Futebol",
+      createdAt: new Date("2024-01-15"),
+    },
+    {
+      id: "2",
+      name: "Vôlei Amigos",
+      description: "Time de vôlei recreativo",
+      members: 6,
+      maxMembers: 12,
+      sport: "Vôlei",
+      createdAt: new Date("2024-02-20"),
+    },
+  ];
+};
+
 /**
  * Hook to fetch teams for a user
  */
 export function useTeams(options: UseTeamsOptions = {}): UseTeamsReturn {
-  const teamService: TeamService = serviceContainer.getTeamService();
   const { userId, search, refreshInterval = 0 } = options;
 
   const cacheKey = `/api/teams?userId=${userId || 'all'}&search=${search || ''}`;
-
-  const fetcher = async () => {
-    if (search) {
-      return teamService.searchTeams(search);
-    } else if (userId) {
-      return teamService.getUserTeams(userId);
-    } else {
-      return teamService.getAllTeams();
-    }
-  };
 
   const {
     data,
@@ -66,17 +79,24 @@ export function useTeams(options: UseTeamsOptions = {}): UseTeamsReturn {
  * Hook to fetch a single team
  */
 export function useTeam(teamId: string | null) {
-  const teamService: TeamService = serviceContainer.getTeamService();
   const cacheKey = teamId ? `/api/teams/${teamId}` : null;
-
-  const fetcher = async () => {
-    if (!teamId) return null;
-    return teamService.getTeam(teamId);
-  };
 
   const { data, error, isLoading, mutate } = useSWR<Team | null>(
     cacheKey,
-    fetcher,
+    async (url: string) => {
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Mock single team
+      return {
+        id: teamId!,
+        name: "Galera do Futebol",
+        description: "Time de futebol society",
+        members: 8,
+        maxMembers: 12,
+        sport: "Futebol",
+        createdAt: new Date("2024-01-15"),
+      };
+    },
     {
       revalidateOnFocus: false,
     }
@@ -86,7 +106,6 @@ export function useTeam(teamId: string | null) {
     team: data || null,
     isLoading,
     isError: !!error,
-    error: error || null,
     mutate,
   };
 }
@@ -95,17 +114,14 @@ export function useTeam(teamId: string | null) {
  * Hook to fetch teams where user is a member
  */
 export function useUserTeams(userId: string | null) {
-  const teamService: TeamService = serviceContainer.getTeamService();
   const cacheKey = userId ? `/api/teams/member/${userId}` : null;
-
-  const fetcher = async () => {
-    if (!userId) return [];
-    return teamService.getTeamsForMember(userId);
-  };
 
   const { data, error, isLoading, mutate } = useSWR<Team[]>(
     cacheKey,
-    fetcher,
+    async (url: string) => {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      return [];
+    },
     {
       revalidateOnFocus: false,
     }
@@ -115,8 +131,6 @@ export function useUserTeams(userId: string | null) {
     teams: data || [],
     isLoading,
     isError: !!error,
-    error: error || null,
     mutate,
   };
 }
-
