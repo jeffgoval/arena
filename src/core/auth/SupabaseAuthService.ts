@@ -71,12 +71,15 @@ export class SupabaseAuthService {
         ...userData,
       };
 
+      const token = authResponse.data.session?.access_token || authResponse.data.access_token;
       await this.httpClient.post('/users', {
         id: user.id,
         email: user.email,
         name: user.name,
         role: user.role,
         status: user.status,
+      }, {
+        'Authorization': `Bearer ${token}`,
       });
 
       return {
@@ -126,7 +129,10 @@ export class SupabaseAuthService {
 
       // 2. Buscar dados do usuário na tabela users
       const userResponse = await this.httpClient.get<any[]>(
-        `/users?id=eq.${authResponse.data.user.id}`
+        `/users?id=eq.${authResponse.data.user.id}`,
+        {
+          'Authorization': `Bearer ${authResponse.data.access_token}`,
+        }
       );
 
       const userData = userResponse.data?.[0];

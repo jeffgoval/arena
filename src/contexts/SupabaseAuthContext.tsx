@@ -101,6 +101,11 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
 
       if (response.user) {
         setUser(response.user);
+        // Salvar token
+        if (response.session?.access_token) {
+          localStorage.setItem('supabase_token', response.session.access_token);
+          localStorage.setItem('supabase_refresh_token', response.session.refresh_token);
+        }
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro ao fazer login';
