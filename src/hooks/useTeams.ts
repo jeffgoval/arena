@@ -1,10 +1,11 @@
 /**
  * Teams Data Hook with SWR
- * Cached data fetching for teams
+ * Cached data fetching for teams using Supabase
  */
 
 import useSWR from 'swr';
 import { Team } from '../types';
+import { ServiceContainer } from '../core/config/ServiceContainer';
 
 interface UseTeamsOptions {
   userId?: string;
@@ -20,30 +21,27 @@ interface UseTeamsReturn {
   mutate: () => void;
 }
 
-// Mock fetcher
+// Real fetcher using Supabase
 const fetcher = async (url: string): Promise<Team[]> => {
-  await new Promise(resolve => setTimeout(resolve, 800));
+  try {
+    const container = ServiceContainer.getInstance();
+    const teamService = container.getTeamService();
+    const teams = await teamService.getAllTeams();
 
-  return [
-    {
-      id: "1",
-      name: "Galera do Futebol",
-      description: "Time de futebol society",
-      members: 8,
-      maxMembers: 12,
-      sport: "Futebol",
-      createdAt: new Date("2024-01-15"),
-    },
-    {
-      id: "2",
-      name: "Vôlei Amigos",
-      description: "Time de vôlei recreativo",
-      members: 6,
-      maxMembers: 12,
-      sport: "Vôlei",
-      createdAt: new Date("2024-02-20"),
-    },
-  ];
+    // Map from core Team type to hook Team type
+    return teams.map(t => ({
+      id: t.id,
+      name: t.name,
+      description: t.description,
+      members: t.members?.length || 0,
+      maxMembers: t.maxMembers || 12,
+      sport: t.sport,
+      createdAt: t.createdAt,
+    }));
+  } catch (error) {
+    console.error('Error fetching teams:', error);
+    return [];
+  }
 };
 
 /**
@@ -111,7 +109,7 @@ export function useTeam(teamId: string | null) {
 }
 
 /**
- * Hook to fetch teams where user is a member
+ * Hook to fetch teams where user is a member using Supabase
  */
 export function useUserTeams(userId: string | null) {
   const cacheKey = userId ? `/api/teams/member/${userId}` : null;
@@ -119,8 +117,26 @@ export function useUserTeams(userId: string | null) {
   const { data, error, isLoading, mutate } = useSWR<Team[]>(
     cacheKey,
     async (url: string) => {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      return [];
+      try {
+        if (!userId) return [];
+
+        const container = ServiceContainer.getInstance();
+        const teamService = container.getTeamService();
+        const teams = await teamService.getTeamsForMember(userId);
+
+        return teams.map(t => ({
+          id: t.id,
+          name: t.name,
+          description: t.description,
+          members: t.members?.length || 0,
+          maxMembers: t.maxMembers || 12,
+          sport: t.sport,
+          createdAt: t.createdAt,
+        }));
+      } catch (error) {
+        console.error('Error fetching user teams:', error);
+        return [];
+      }
     },
     {
       revalidateOnFocus: false,

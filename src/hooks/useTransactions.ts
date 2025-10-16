@@ -1,9 +1,10 @@
 /**
  * Transactions Data Hook with SWR
- * Cached data fetching for financial transactions
+ * Cached data fetching for financial transactions using Supabase
  */
 
 import useSWR from 'swr';
+import { ServiceContainer } from '../core/config/ServiceContainer';
 
 // Types
 export interface Transaction {
@@ -32,44 +33,27 @@ interface UseTransactionsReturn {
   mutate: () => void;
 }
 
-// Mock fetcher
+// Real fetcher using Supabase
 const fetcher = async (url: string): Promise<Transaction[]> => {
-  await new Promise(resolve => setTimeout(resolve, 700));
+  try {
+    const container = ServiceContainer.getInstance();
+    const transactionService = container.getTransactionService();
+    const transactions = await transactionService.getAllTransactions();
 
-  return [
-    {
-      id: 1,
-      date: "10/10/2025",
-      description: "Reserva Quadra 1",
-      type: "debit",
-      value: 120,
-      category: "Reserva",
-    },
-    {
-      id: 2,
-      date: "08/10/2025",
-      description: "Convite João - Jogo 15/10",
-      type: "credit",
-      value: 15,
-      category: "Convite",
-    },
-    {
-      id: 3,
-      date: "05/10/2025",
-      description: "Bônus Indicação",
-      type: "credit",
-      value: 30,
-      category: "Bônus",
-    },
-    {
-      id: 4,
-      date: "03/10/2025",
-      description: "Reserva Quadra 2",
-      type: "debit",
-      value: 100,
-      category: "Reserva",
-    },
-  ];
+    // Map from core Transaction type to hook Transaction type
+    return transactions.map(t => ({
+      id: parseInt(t.id),
+      date: new Date(t.createdAt).toLocaleDateString('pt-BR'),
+      description: t.description,
+      type: t.type as 'debit' | 'credit',
+      value: t.amount,
+      category: t.category,
+      bookingId: t.bookingId ? parseInt(t.bookingId) : undefined,
+    }));
+  } catch (error) {
+    console.error('Error fetching transactions:', error);
+    return [];
+  }
 };
 
 /**
@@ -126,14 +110,24 @@ export function useTransactions(
 }
 
 /**
- * Hook to fetch account balance
+ * Hook to fetch account balance using Supabase
  */
-export function useBalance() {
+export function useBalance(userId?: string) {
   const { data, error, isLoading, mutate } = useSWR<number>(
-    '/api/balance',
+    userId ? `/api/balance/${userId}` : null,
     async () => {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      return 250; // Mock balance
+      try {
+        const container = ServiceContainer.getInstance();
+        const transactionService = container.getTransactionService();
+
+        if (!userId) return 0;
+
+        const balance = await transactionService.getUserBalance(userId);
+        return balance;
+      } catch (err) {
+        console.error('Error fetching balance:', err);
+        return 0;
+      }
     },
     {
       refreshInterval: 60000, // Refresh every minute

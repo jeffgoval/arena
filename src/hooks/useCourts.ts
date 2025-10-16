@@ -1,10 +1,11 @@
 /**
  * Courts Data Hook with SWR
- * Cached data fetching for courts
+ * Cached data fetching for courts using Supabase
  */
 
 import useSWR from 'swr';
 import { Court } from '../types';
+import { ServiceContainer } from '../core/config/ServiceContainer';
 
 interface UseCortsOptions {
   search?: string;
@@ -21,48 +22,30 @@ interface UseCortsReturn {
   mutate: () => void;
 }
 
-// Mock fetcher
+// Real fetcher using Supabase
 const fetcher = async (url: string): Promise<Court[]> => {
-  await new Promise(resolve => setTimeout(resolve, 800));
+  try {
+    const container = ServiceContainer.getInstance();
+    const courtService = container.getCourtService();
+    const courts = await courtService.getAllCourts();
 
-  return [
-    {
-      id: "1",
-      name: "Quadra 1 - Society",
-      address: "Rua A, 123 - São Paulo, SP",
-      type: "society",
-      rating: 4.8,
-      reviews: 45,
-      price: 120,
-      image: "https://via.placeholder.com/300x200?text=Quadra+1",
-      amenities: ["Vestiário", "Chuveiro", "Estacionamento"],
-      availability: "Disponível",
-    },
-    {
-      id: "2",
-      name: "Quadra 2 - Poliesportiva",
-      address: "Rua B, 456 - São Paulo, SP",
-      type: "poliesportiva",
-      rating: 4.5,
-      reviews: 32,
-      price: 150,
-      image: "https://via.placeholder.com/300x200?text=Quadra+2",
-      amenities: ["Vestiário", "Chuveiro", "Estacionamento", "Ar Condicionado"],
-      availability: "Disponível",
-    },
-    {
-      id: "3",
-      name: "Quadra 3 - Futsal",
-      address: "Rua C, 789 - São Paulo, SP",
-      type: "futsal",
-      rating: 4.6,
-      reviews: 28,
-      price: 100,
-      image: "https://via.placeholder.com/300x200?text=Quadra+3",
-      amenities: ["Vestiário", "Chuveiro"],
-      availability: "Disponível",
-    },
-  ];
+    // Map from core Court type to hook Court type
+    return courts.map(c => ({
+      id: c.id,
+      name: c.name,
+      address: c.description || '',
+      type: c.type,
+      rating: c.rating?.average || 0,
+      reviews: c.rating?.count || 0,
+      price: c.pricing?.hourly || 0,
+      image: c.images?.[0] || 'https://via.placeholder.com/300x200?text=Quadra',
+      amenities: c.amenities || [],
+      availability: 'Disponível',
+    }));
+  } catch (error) {
+    console.error('Error fetching courts:', error);
+    return [];
+  }
 };
 
 /**

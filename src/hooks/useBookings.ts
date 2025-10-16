@@ -1,10 +1,11 @@
 /**
  * Bookings Data Hook with SWR
- * Cached data fetching for bookings
+ * Cached data fetching for bookings using Supabase
  */
 
 import useSWR from 'swr';
 import { useCallback } from 'react';
+import { ServiceContainer } from '../core/config/ServiceContainer';
 
 // Types
 export interface Booking {
@@ -36,47 +37,30 @@ interface UseBookingsReturn {
   refresh: () => void;
 }
 
-// Mock fetcher (replace with real API call)
+// Real fetcher using Supabase
 const fetcher = async (url: string): Promise<Booking[]> => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 800));
+  try {
+    const container = ServiceContainer.getInstance();
+    const bookingService = container.getBookingService();
+    const bookings = await bookingService.getAllBookings();
 
-  // Mock data
-  return [
-    {
-      id: 1,
-      court: "Quadra 1 - Society",
-      date: "15/10/2025",
-      time: "19:00",
-      status: "confirmed",
-      players: 8,
+    // Map from core Booking type to hook Booking type
+    return bookings.map(b => ({
+      id: parseInt(b.id),
+      court: `Quadra ${b.courtId}`,
+      date: b.date,
+      time: b.time,
+      status: b.status as 'confirmed' | 'pending' | 'cancelled',
+      players: b.participants?.length || 0,
       totalPlayers: 10,
-      payment: "paid",
-      price: 120,
-    },
-    {
-      id: 2,
-      court: "Quadra 2 - Poliesportiva",
-      date: "18/10/2025",
-      time: "20:00",
-      status: "confirmed",
-      players: 6,
-      totalPlayers: 12,
-      payment: "paid",
-      price: 150,
-    },
-    {
-      id: 3,
-      court: "Quadra 1 - Society",
-      date: "22/10/2025",
-      time: "19:00",
-      status: "pending",
-      players: 5,
-      totalPlayers: 10,
-      payment: "pending",
-      price: 120,
-    },
-  ];
+      payment: b.status === 'confirmed' ? 'paid' : 'pending',
+      price: b.price,
+      organizerId: undefined,
+    }));
+  } catch (error) {
+    console.error('Error fetching bookings:', error);
+    return [];
+  }
 };
 
 /**
@@ -168,23 +152,43 @@ export function useBooking(bookingId: number | null) {
 }
 
 /**
- * Optimistic update helper
+ * Optimistic update helper using Supabase
  */
 export function useBookingMutations() {
   const cancelBooking = async (bookingId: number) => {
-    // Optimistic update logic
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    return { success: true };
+    try {
+      const container = ServiceContainer.getInstance();
+      const bookingService = container.getBookingService();
+      await bookingService.cancelBooking(String(bookingId));
+      return { success: true };
+    } catch (error) {
+      console.error('Error canceling booking:', error);
+      return { success: false, error };
+    }
   };
 
   const confirmBooking = async (bookingId: number) => {
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    return { success: true };
+    try {
+      const container = ServiceContainer.getInstance();
+      const bookingService = container.getBookingService();
+      await bookingService.confirmBooking(String(bookingId));
+      return { success: true };
+    } catch (error) {
+      console.error('Error confirming booking:', error);
+      return { success: false, error };
+    }
   };
 
   const updateBooking = async (bookingId: number, data: Partial<Booking>) => {
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    return { success: true };
+    try {
+      const container = ServiceContainer.getInstance();
+      const bookingService = container.getBookingService();
+      await bookingService.updateBooking(String(bookingId), data as any);
+      return { success: true };
+    } catch (error) {
+      console.error('Error updating booking:', error);
+      return { success: false, error };
+    }
   };
 
   return {
