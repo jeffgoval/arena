@@ -3,13 +3,13 @@ export { IStorage } from './storage/IStorage';
 export { LocalStorage } from './storage/LocalStorage';
 
 // HTTP
-export { IHttpClient } from './http';
-export { FetchHttpClient } from './http';
+export { IHttpClient } from './http/IHttpClient';
+export { FetchHttpClient } from './http/FetchHttpClient';
 
 // Repositories
-export { IRepository } from './repositories';
-export { IAuthRepository, LoginCredentials, SignUpData, AuthSession } from './repositories';
-export { LocalAuthRepository } from './repositories';
+export { IRepository } from './repositories/IRepository';
+export { IAuthRepository, LoginCredentials, SignUpData, AuthSession } from './repositories/auth/IAuthRepository';
+export { LocalAuthRepository } from './repositories/auth/LocalAuthRepository';
 export { IBookingRepository, BookingFilters } from './repositories/bookings';
 export { LocalBookingRepository } from './repositories/bookings';
 export { ICourtRepository, CourtFilters } from './repositories/courts';
@@ -20,11 +20,11 @@ export { ITransactionRepository, TransactionFilters } from './repositories/trans
 export { LocalTransactionRepository } from './repositories/transactions';
 
 // Services
-export { AuthService } from './services';
-export { BookingService } from './services';
-export { CourtService } from './services';
-export { TeamService } from './services';
-export { TransactionService } from './services';
+export { AuthService } from './services/auth/AuthService';
+export { BookingService } from './services/bookings/BookingService';
+export { CourtService } from './services/courts/CourtService';
+export { TeamService } from './services/teams/TeamService';
+export { TransactionService } from './services/transactions/TransactionService';
 
 // Config
 export { ServiceContainer, serviceContainer } from './config/ServiceContainer';

@@ -4,8 +4,10 @@
  * Suporta múltiplos backends: Local, Supabase, REST API
  */
 
-import { LocalStorage, IStorage } from '../storage';
-import { FetchHttpClient, IHttpClient } from '../http';
+import { LocalStorage } from '../storage/LocalStorage';
+import { IStorage } from '../storage/IStorage';
+import { FetchHttpClient } from '../http/FetchHttpClient';
+import { IHttpClient } from '../http/IHttpClient';
 import { LocalAuthRepository, IAuthRepository } from '../repositories';
 import { LocalBookingRepository, IBookingRepository } from '../repositories/bookings';
 import { LocalCourtRepository, ICourtRepository } from '../repositories/courts';
