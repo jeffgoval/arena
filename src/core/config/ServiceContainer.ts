@@ -1,6 +1,7 @@
 /**
  * Container de serviços (Service Locator)
  * Centraliza a criação e acesso aos serviços
+ * Suporta múltiplos backends: Local, Supabase, REST API
  */
 
 import { LocalStorage, IStorage } from '../storage';
@@ -16,10 +17,14 @@ import { CourtService } from '../services/courts';
 import { TeamService } from '../services/teams';
 import { TransactionService } from '../services/transactions';
 
+// Tipos de backend suportados
+export type BackendType = 'local' | 'supabase' | 'rest-api';
+
 export class ServiceContainer {
   private static instance: ServiceContainer;
   private storage: IStorage;
   private httpClient: IHttpClient;
+  private backend: BackendType;
 
   // Repositories
   private authRepository: IAuthRepository;
@@ -35,12 +40,24 @@ export class ServiceContainer {
   private teamService: TeamService;
   private transactionService: TransactionService;
 
-  private constructor() {
-    // Inicializar storage
-    this.storage = new LocalStorage('arena_');
+  private constructor(backend: BackendType = 'local') {
+    this.backend = backend;
 
-    // Inicializar HTTP client
-    this.httpClient = new FetchHttpClient(process.env.REACT_APP_API_URL || '');
+    // Inicializar HTTP client baseado no backend
+    if (backend === 'supabase') {
+      const { SupabaseHttpClient } = require('../http/SupabaseHttpClient');
+      this.httpClient = new SupabaseHttpClient();
+    } else {
+      this.httpClient = new FetchHttpClient(import.meta.env.VITE_API_URL || '');
+    }
+
+    // Inicializar storage baseado no backend
+    if (backend === 'supabase') {
+      const { SupabaseStorage } = require('../storage/SupabaseStorage');
+      this.storage = new SupabaseStorage(this.httpClient, 'arena_');
+    } else {
+      this.storage = new LocalStorage('arena_');
+    }
 
     // Inicializar repositórios
     this.authRepository = new LocalAuthRepository(this.storage);
@@ -68,11 +85,28 @@ export class ServiceContainer {
   /**
    * Obtém a instância singleton
    */
-  static getInstance(): ServiceContainer {
+  static getInstance(backend?: BackendType): ServiceContainer {
     if (!ServiceContainer.instance) {
-      ServiceContainer.instance = new ServiceContainer();
+      // Detectar backend a partir de variáveis de ambiente
+      const detectedBackend = backend ||
+        (import.meta.env.VITE_ENABLE_SUPABASE === 'true' ? 'supabase' : 'local');
+      ServiceContainer.instance = new ServiceContainer(detectedBackend);
     }
     return ServiceContainer.instance;
+  }
+
+  /**
+   * Reinicializar com novo backend
+   */
+  static switchBackend(backend: BackendType): void {
+    ServiceContainer.instance = new ServiceContainer(backend);
+  }
+
+  /**
+   * Obter backend atual
+   */
+  getBackend(): BackendType {
+    return this.backend;
   }
 
   /**
