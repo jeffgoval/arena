@@ -1,6 +1,6 @@
 // Storage
-export { IStorage } from './storage';
-export { LocalStorage } from './storage';
+export { IStorage } from './storage/IStorage';
+export { LocalStorage } from './storage/LocalStorage';
 
 // HTTP
 export { IHttpClient } from './http';
