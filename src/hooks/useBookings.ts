@@ -1,27 +1,17 @@
 /**
  * Bookings Data Hook with SWR
- * Cached data fetching for bookings
+ * Cached data fetching for bookings using BookingService
  */
 
 import useSWR from 'swr';
-import { useCallback } from 'react';
-
-// Types
-export interface Booking {
-  id: number;
-  court: string;
-  date: string;
-  time: string;
-  status: 'confirmed' | 'pending' | 'cancelled';
-  players: number;
-  totalPlayers: number;
-  payment: 'paid' | 'pending' | 'cancelled';
-  price?: number;
-  organizerId?: number;
-}
+import { useCallback, useState } from 'react';
+import { Booking } from '../types';
+import { serviceContainer } from '../core/config/ServiceContainer';
+import { BookingService } from '../core/services/bookings';
 
 interface UseBookingsOptions {
-  type?: 'organized' | 'participating' | 'all';
+  userId?: string;
+  courtId?: string;
   status?: Booking['status'][];
   refreshInterval?: number;
   revalidateOnFocus?: boolean;
@@ -36,62 +26,31 @@ interface UseBookingsReturn {
   refresh: () => void;
 }
 
-// Mock fetcher (replace with real API call)
-const fetcher = async (url: string): Promise<Booking[]> => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 800));
-
-  // Mock data
-  return [
-    {
-      id: 1,
-      court: "Quadra 1 - Society",
-      date: "15/10/2025",
-      time: "19:00",
-      status: "confirmed",
-      players: 8,
-      totalPlayers: 10,
-      payment: "paid",
-      price: 120,
-    },
-    {
-      id: 2,
-      court: "Quadra 2 - Poliesportiva",
-      date: "18/10/2025",
-      time: "20:00",
-      status: "confirmed",
-      players: 6,
-      totalPlayers: 12,
-      payment: "paid",
-      price: 150,
-    },
-    {
-      id: 3,
-      court: "Quadra 1 - Society",
-      date: "22/10/2025",
-      time: "19:00",
-      status: "pending",
-      players: 5,
-      totalPlayers: 10,
-      payment: "pending",
-      price: 120,
-    },
-  ];
-};
-
 /**
  * Hook to fetch bookings with caching
  */
 export function useBookings(options: UseBookingsOptions = {}): UseBookingsReturn {
+  const bookingService: BookingService = serviceContainer.getBookingService();
   const {
-    type = 'all',
+    userId,
+    courtId,
     status,
     refreshInterval = 0,
     revalidateOnFocus = false,
   } = options;
 
   // Build cache key based on filters
-  const cacheKey = `/api/bookings?type=${type}&status=${status?.join(',') || 'all'}`;
+  const cacheKey = `/api/bookings?userId=${userId || 'all'}&courtId=${courtId || 'all'}&status=${status?.join(',') || 'all'}`;
+
+  const fetcher = async () => {
+    if (userId) {
+      return bookingService.getUserBookings(userId);
+    } else if (courtId) {
+      return bookingService.getCourtBookings(courtId);
+    } else {
+      return bookingService.getAllBookings();
+    }
+  };
 
   const {
     data,
@@ -102,8 +61,7 @@ export function useBookings(options: UseBookingsOptions = {}): UseBookingsReturn
     refreshInterval,
     revalidateOnFocus,
     revalidateOnReconnect: true,
-    dedupingInterval: 5000, // 5 seconds
-    // Keep previous data while loading new data
+    dedupingInterval: 5000,
     keepPreviousData: true,
   });
 
@@ -132,27 +90,18 @@ export function useBookings(options: UseBookingsOptions = {}): UseBookingsReturn
 /**
  * Hook to fetch a single booking
  */
-export function useBooking(bookingId: number | null) {
+export function useBooking(bookingId: string | null) {
+  const bookingService: BookingService = serviceContainer.getBookingService();
   const cacheKey = bookingId ? `/api/bookings/${bookingId}` : null;
 
-  const { data, error, isLoading, mutate } = useSWR<Booking>(
+  const fetcher = async () => {
+    if (!bookingId) return null;
+    return bookingService.getBooking(bookingId);
+  };
+
+  const { data, error, isLoading, mutate } = useSWR<Booking | null>(
     cacheKey,
-    async (url: string) => {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Mock single booking
-      return {
-        id: bookingId!,
-        court: "Quadra 1 - Society",
-        date: "15/10/2025",
-        time: "19:00",
-        status: "confirmed",
-        players: 8,
-        totalPlayers: 10,
-        payment: "paid",
-        price: 120,
-      };
-    },
+    fetcher,
     {
       revalidateOnFocus: false,
     }
@@ -171,25 +120,60 @@ export function useBooking(bookingId: number | null) {
  * Optimistic update helper
  */
 export function useBookingMutations() {
-  const cancelBooking = async (bookingId: number) => {
-    // Optimistic update logic
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    return { success: true };
+  const bookingService: BookingService = serviceContainer.getBookingService();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  const cancelBooking = async (bookingId: string, reason?: string) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      await bookingService.cancelBooking(bookingId, reason);
+      return { success: true };
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Unknown error');
+      setError(error);
+      return { success: false, error };
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const confirmBooking = async (bookingId: number) => {
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    return { success: true };
+  const confirmBooking = async (bookingId: string) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      await bookingService.confirmBooking(bookingId);
+      return { success: true };
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Unknown error');
+      setError(error);
+      return { success: false, error };
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const updateBooking = async (bookingId: number, data: Partial<Booking>) => {
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    return { success: true };
+  const createBooking = async (data: Partial<Booking>) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const booking = await bookingService.createBooking(data);
+      return { success: true, booking };
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Unknown error');
+      setError(error);
+      return { success: false, error };
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return {
     cancelBooking,
     confirmBooking,
-    updateBooking,
+    createBooking,
+    isLoading,
+    error,
   };
 }

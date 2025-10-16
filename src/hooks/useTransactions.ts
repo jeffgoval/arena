@@ -1,24 +1,18 @@
 /**
  * Transactions Data Hook with SWR
- * Cached data fetching for financial transactions
+ * Cached data fetching for financial transactions using TransactionService
  */
 
 import useSWR from 'swr';
-
-// Types
-export interface Transaction {
-  id?: number;
-  date: string;
-  description: string;
-  type: 'debit' | 'credit';
-  value: number;
-  category?: string;
-  bookingId?: number;
-}
+import { Transaction } from '../types';
+import { serviceContainer } from '../core/config/ServiceContainer';
+import { TransactionService } from '../core/services/transactions';
 
 interface UseTransactionsOptions {
-  type?: 'debit' | 'credit' | 'all';
+  userId?: string;
+  type?: Transaction['type'] | 'all';
   limit?: number;
+  refreshInterval?: number;
 }
 
 interface UseTransactionsReturn {
@@ -32,71 +26,41 @@ interface UseTransactionsReturn {
   mutate: () => void;
 }
 
-// Mock fetcher
-const fetcher = async (url: string): Promise<Transaction[]> => {
-  await new Promise(resolve => setTimeout(resolve, 700));
-
-  return [
-    { 
-      id: 1,
-      date: "10/10/2025", 
-      description: "Reserva Quadra 1", 
-      type: "debit", 
-      value: 120,
-      category: "Reserva",
-    },
-    { 
-      id: 2,
-      date: "08/10/2025", 
-      description: "Convite João - Jogo 15/10", 
-      type: "credit", 
-      value: 15,
-      category: "Convite",
-    },
-    { 
-      id: 3,
-      date: "05/10/2025", 
-      description: "Bônus Indicação", 
-      type: "credit", 
-      value: 30,
-      category: "Bônus",
-    },
-    { 
-      id: 4,
-      date: "03/10/2025", 
-      description: "Reserva Quadra 2", 
-      type: "debit", 
-      value: 100,
-      category: "Reserva",
-    },
-  ];
-};
-
 /**
  * Hook to fetch transactions
  */
 export function useTransactions(
   options: UseTransactionsOptions = {}
 ): UseTransactionsReturn {
-  const { type = 'all', limit } = options;
+  const transactionService: TransactionService = serviceContainer.getTransactionService();
+  const { userId, type = 'all', limit, refreshInterval = 0 } = options;
+
+  const cacheKey = `/api/transactions?userId=${userId || 'all'}&type=${type}`;
+
+  const fetcher = async () => {
+    if (!userId) return [];
+
+    if (type === 'all') {
+      return transactionService.getUserTransactions(userId);
+    } else {
+      return transactionService.searchTransactions({ userId, type: type as Transaction['type'] });
+    }
+  };
 
   const {
     data,
     error,
     isLoading,
     mutate,
-  } = useSWR<Transaction[]>(`/api/transactions?type=${type}`, fetcher, {
+  } = useSWR<Transaction[]>(cacheKey, fetcher, {
     revalidateOnFocus: false,
     revalidateOnReconnect: true,
-    dedupingInterval: 10000, // 10 seconds
+    dedupingInterval: 10000,
+    refreshInterval,
   });
 
   // Filter and limit transactions
   let filteredTransactions = data || [];
-  
-  if (type !== 'all') {
-    filteredTransactions = filteredTransactions.filter(t => t.type === type);
-  }
 
   if (limit) {
     filteredTransactions = filteredTransactions.slice(0, limit);
@@ -105,11 +69,11 @@ export function useTransactions(
   // Calculate totals
   const credits = filteredTransactions
     .filter(t => t.type === 'credit')
-    .reduce((sum, t) => sum + t.value, 0);
+    .reduce((sum, t) => sum + t.amount, 0);
 
   const debits = filteredTransactions
     .filter(t => t.type === 'debit')
-    .reduce((sum, t) => sum + t.value, 0);
+    .reduce((sum, t) => sum + t.amount, 0);
 
   const balance = credits - debits;
 
@@ -128,15 +92,20 @@ export function useTransactions(
 /**
  * Hook to fetch account balance
  */
-export function useBalance() {
+export function useBalance(userId?: string) {
+  const transactionService: TransactionService = serviceContainer.getTransactionService();
+  const cacheKey = userId ? `/api/balance/${userId}` : null;
+
+  const fetcher = async () => {
+    if (!userId) return 0;
+    return transactionService.getBalance(userId);
+  };
+
   const { data, error, isLoading, mutate } = useSWR<number>(
-    '/api/balance',
-    async () => {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      return 250; // Mock balance
-    },
+    cacheKey,
+    fetcher,
     {
-      refreshInterval: 60000, // Refresh every minute
+      refreshInterval: 60000,
       revalidateOnFocus: true,
     }
   );
