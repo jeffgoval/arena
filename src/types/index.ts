@@ -3,23 +3,24 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  phone: string;
+  phone?: string;
   cpf?: string;
   birthDate?: string;
   avatar?: string;
   role: "client" | "manager" | "admin";
   bio?: string;
   address?: string;
-  sports: string[];
+  sports?: string[];
   credits: number;
+  status?: "active" | "inactive" | "suspended";
   createdAt: Date;
-  stats: {
+  stats?: {
     gamesPlayed: number;
     hoursPlayed: number;
     totalSpent: number;
     rating: number;
   };
-  preferences: {
+  preferences?: {
     notifications: {
       email: boolean;
       whatsapp: boolean;
