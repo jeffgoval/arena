@@ -10,14 +10,14 @@ export { FetchHttpClient } from './http/FetchHttpClient';
 export { IRepository } from './repositories/IRepository';
 export { IAuthRepository, LoginCredentials, SignUpData, AuthSession } from './repositories/auth/IAuthRepository';
 export { LocalAuthRepository } from './repositories/auth/LocalAuthRepository';
-export { IBookingRepository, BookingFilters } from './repositories/bookings';
-export { LocalBookingRepository } from './repositories/bookings';
-export { ICourtRepository, CourtFilters } from './repositories/courts';
-export { LocalCourtRepository } from './repositories/courts';
-export { ITeamRepository } from './repositories/teams';
-export { LocalTeamRepository } from './repositories/teams';
-export { ITransactionRepository, TransactionFilters } from './repositories/transactions';
-export { LocalTransactionRepository } from './repositories/transactions';
+export { IBookingRepository, BookingFilters } from './repositories/bookings/IBookingRepository';
+export { LocalBookingRepository } from './repositories/bookings/LocalBookingRepository';
+export { ICourtRepository, CourtFilters } from './repositories/courts/ICourtRepository';
+export { LocalCourtRepository } from './repositories/courts/LocalCourtRepository';
+export { ITeamRepository } from './repositories/teams/ITeamRepository';
+export { LocalTeamRepository } from './repositories/teams/LocalTeamRepository';
+export { ITransactionRepository, TransactionFilters } from './repositories/transactions/ITransactionRepository';
+export { LocalTransactionRepository } from './repositories/transactions/LocalTransactionRepository';
 
 // Services
 export { AuthService } from './services/auth/AuthService';
