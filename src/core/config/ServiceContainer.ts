@@ -11,6 +11,11 @@ import { LocalBookingRepository, IBookingRepository } from '../repositories/book
 import { LocalCourtRepository, ICourtRepository } from '../repositories/courts';
 import { LocalTeamRepository, ITeamRepository } from '../repositories/teams';
 import { LocalTransactionRepository, ITransactionRepository } from '../repositories/transactions';
+import { SupabaseAuthRepository } from '../repositories/auth/SupabaseAuthRepository';
+import { SupabaseBookingRepository } from '../repositories/bookings/SupabaseBookingRepository';
+import { SupabaseCourtRepository } from '../repositories/courts/SupabaseCourtRepository';
+import { SupabaseTeamRepository } from '../repositories/teams/SupabaseTeamRepository';
+import { SupabaseTransactionRepository } from '../repositories/transactions/SupabaseTransactionRepository';
 import { AuthService } from '../services/auth';
 import { BookingService } from '../services/bookings';
 import { CourtService } from '../services/courts';
@@ -59,12 +64,20 @@ export class ServiceContainer {
       this.storage = new LocalStorage('arena_');
     }
 
-    // Inicializar repositórios
-    this.authRepository = new LocalAuthRepository(this.storage);
-    this.bookingRepository = new LocalBookingRepository(this.storage);
-    this.courtRepository = new LocalCourtRepository(this.storage);
-    this.teamRepository = new LocalTeamRepository(this.storage);
-    this.transactionRepository = new LocalTransactionRepository(this.storage);
+    // Inicializar repositórios baseado no backend
+    if (backend === 'supabase') {
+      this.authRepository = new SupabaseAuthRepository(this.httpClient);
+      this.bookingRepository = new SupabaseBookingRepository(this.httpClient);
+      this.courtRepository = new SupabaseCourtRepository(this.httpClient);
+      this.teamRepository = new SupabaseTeamRepository(this.httpClient);
+      this.transactionRepository = new SupabaseTransactionRepository(this.httpClient);
+    } else {
+      this.authRepository = new LocalAuthRepository(this.storage);
+      this.bookingRepository = new LocalBookingRepository(this.storage);
+      this.courtRepository = new LocalCourtRepository(this.storage);
+      this.teamRepository = new LocalTeamRepository(this.storage);
+      this.transactionRepository = new LocalTransactionRepository(this.storage);
+    }
 
     // Inicializar serviços
     this.authService = new AuthService(this.authRepository, {
