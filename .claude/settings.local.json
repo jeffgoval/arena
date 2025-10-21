@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(tree:*)",
+      "Bash(cat:*)",
+      "Bash(npx shadcn@latest add form select calendar dialog dropdown-menu table tabs toast checkbox radio-group switch avatar separator --yes)",
+      "Bash(npx shadcn@latest add:*)",
+      "Bash(git init:*)",
+      "Bash(git add:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

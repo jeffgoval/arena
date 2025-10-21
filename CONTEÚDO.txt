@@ -1,0 +1,86 @@
+====================================
+  LISTA COMPLETA DE ARQUIVOS
+====================================
+
+Total: 35 arquivos
+Tamanho: 394KB (código-fonte)
+
+====================================
+  CONFIGURAÇÃO (5 arquivos)
+====================================
+✅ .gitignore
+✅ package.json
+✅ next.config.js
+✅ tailwind.config.ts
+✅ tsconfig.json
+✅ postcss.config.js
+
+====================================
+  APP (3 arquivos)
+====================================
+✅ app/globals.css
+✅ app/layout.tsx
+✅ app/page.tsx
+
+====================================
+  COMPONENTS/HOME (11 seções)
+====================================
+✅ BarRestaurantSection.tsx
+✅ ContactSection.tsx
+✅ CTASection.tsx
+✅ FeaturesGrid.tsx
+✅ GaloAcademySection.tsx
+✅ HeroSection.tsx
+✅ PromoBanner.tsx
+✅ SponsorsSection.tsx
+✅ SportsModalitiesSection.tsx
+✅ TestimonialsSection.tsx
+✅ WelcomeSection.tsx
+
+====================================
+  COMPONENTS/LANDING (1 arquivo)
+====================================
+✅ Landing.tsx
+   (Inclui Footer e Logo inline)
+
+====================================
+  COMPONENTS/UI (7 componentes)
+====================================
+✅ badge.tsx
+✅ button.tsx
+✅ card.tsx
+✅ carousel.tsx
+✅ input.tsx
+✅ label.tsx
+✅ textarea.tsx
+
+====================================
+  LIB (1 arquivo)
+====================================
+✅ utils.ts
+   (Função cn() para Tailwind)
+
+====================================
+  PUBLIC (4 arquivos)
+====================================
+✅ hero-arena.jpg (266KB)
+✅ favicon.ico (15KB)
+✅ placeholder.svg (3KB)
+✅ robots.txt
+
+====================================
+  DOCUMENTAÇÃO (3 arquivos)
+====================================
+✅ README.md
+✅ INSTRUÇÕES.txt
+✅ CONTEÚDO.txt (este arquivo)
+
+====================================
+  RESUMO
+====================================
+
+📁 6 diretórios
+📄 35 arquivos
+💾 394KB total
+🎯 100% autocontido
+✅ Pronto para uso!
