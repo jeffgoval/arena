@@ -315,13 +315,13 @@ export default function Home() {
       </section>
 
       {/* Diferenciais */}
-      <section className="section-padding bg-dark text-white">
+      <section className="section-padding bg-white">
         <div className="container-custom">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4 fade-in">
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 fade-in text-dark">
               Por Que Escolher a Arena Dona Santa?
             </h2>
-            <p className="text-xl text-white/80 fade-in">
+            <p className="text-xl text-dark/70 fade-in">
               A melhor estrutura e tecnologia para seus jogos
             </p>
           </div>
@@ -331,10 +331,10 @@ export default function Home() {
               <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center mx-auto mb-4 text-4xl">
                 🏆
               </div>
-              <h3 className="text-xl font-bold mb-3">
+              <h3 className="text-xl font-bold mb-3 text-dark">
                 Estrutura Completa
               </h3>
-              <p className="text-white/70">
+              <p className="text-dark/70">
                 Vestiários, estacionamento, arquibancadas e lanchonete
               </p>
             </div>
@@ -343,10 +343,10 @@ export default function Home() {
               <div className="w-20 h-20 bg-secondary rounded-full flex items-center justify-center mx-auto mb-4 text-4xl">
                 💡
               </div>
-              <h3 className="text-xl font-bold mb-3">
+              <h3 className="text-xl font-bold mb-3 text-dark">
                 Iluminação LED
               </h3>
-              <p className="text-white/70">
+              <p className="text-dark/70">
                 Jogue até mais tarde com iluminação profissional de alta qualidade
               </p>
             </div>
@@ -355,10 +355,10 @@ export default function Home() {
               <div className="w-20 h-20 bg-accent rounded-full flex items-center justify-center mx-auto mb-4 text-4xl">
                 🔒
               </div>
-              <h3 className="text-xl font-bold mb-3">
+              <h3 className="text-xl font-bold mb-3 text-dark">
                 Segurança Total
               </h3>
-              <p className="text-white/70">
+              <p className="text-dark/70">
                 Monitoramento 24h e equipe sempre presente
               </p>
             </div>
@@ -367,10 +367,10 @@ export default function Home() {
               <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center mx-auto mb-4 text-4xl">
                 📱
               </div>
-              <h3 className="text-xl font-bold mb-3">
+              <h3 className="text-xl font-bold mb-3 text-dark">
                 Reserva Online
               </h3>
-              <p className="text-white/70">
+              <p className="text-dark/70">
                 Sistema moderno para reservar e gerenciar suas partidas
               </p>
             </div>
@@ -782,6 +782,196 @@ export default function Home() {
             <button className="btn-hover bg-white text-secondary border-2 border-secondary px-10 py-4 rounded-lg text-xl font-bold shadow-xl">
               Ver Todos os Pacotes e Add-ons
             </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Patrocinadores */}
+      <section className="section-padding bg-gradient-to-br from-gray via-white to-gray relative overflow-hidden">
+        {/* Background decorativo */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute inset-0" style={{backgroundImage: "radial-gradient(circle at 20% 50%, rgba(0,102,204,0.3) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(255,87,34,0.3) 0%, transparent 50%)"}}>
+          </div>
+        </div>
+
+        <div className="container-custom relative z-10">
+          <div className="text-center mb-16">
+            <div className="inline-block bg-primary/10 px-6 py-2 rounded-full mb-4">
+              <span className="text-primary font-bold uppercase text-sm tracking-wider">Nossos Parceiros</span>
+            </div>
+            <h2 className="text-4xl md:text-6xl font-black mb-6 text-dark fade-in">
+              Patrocinadores que
+              <br />
+              <span className="gradient-text">Fazem a Diferença</span>
+            </h2>
+            <p className="text-xl text-dark/70 max-w-3xl mx-auto leading-relaxed fade-in">
+              Agradecemos aos nossos parceiros que acreditam no potencial do esporte
+              e contribuem para o desenvolvimento da nossa comunidade.
+            </p>
+          </div>
+
+          {/* Grid de Logos Premium */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 mb-16">
+            {[1, 2, 3, 4, 5, 6].map((num) => (
+              <div
+                key={num}
+                className="feature-card bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 flex items-center justify-center min-h-[160px] group border-2 border-gray/20 hover:border-primary/40"
+              >
+                <div className="text-center">
+                  <div className="text-6xl mb-3 group-hover:scale-110 transition-transform duration-300">
+                    🏢
+                  </div>
+                  <p className="text-xs font-semibold text-dark/60 group-hover:text-primary transition-colors">
+                    Logo {num}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Métricas de Impacto */}
+          <div className="bg-gradient-to-r from-primary/10 via-secondary/10 to-accent/10 rounded-3xl p-12 mb-16 border-2 border-primary/20">
+            <div className="text-center mb-8">
+              <h3 className="text-3xl md:text-4xl font-black text-dark mb-4">
+                📊 Impacto dos Nossos Patrocinadores
+              </h3>
+              <p className="text-lg text-dark/70">
+                Sua marca conectada com uma comunidade ativa e engajada
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+              <div className="text-center fade-in">
+                <div className="text-5xl font-black text-primary mb-2">5.000+</div>
+                <div className="text-dark/70 font-semibold">Pessoas/mês</div>
+                <div className="text-sm text-dark/50 mt-1">visitando a arena</div>
+              </div>
+
+              <div className="text-center fade-in">
+                <div className="text-5xl font-black text-secondary mb-2">500+</div>
+                <div className="text-dark/70 font-semibold">Alunos Ativos</div>
+                <div className="text-sm text-dark/50 mt-1">academia e escolinha</div>
+              </div>
+
+              <div className="text-center fade-in">
+                <div className="text-5xl font-black text-accent mb-2">50+</div>
+                <div className="text-dark/70 font-semibold">Eventos/ano</div>
+                <div className="text-sm text-dark/50 mt-1">torneios e campeonatos</div>
+              </div>
+
+              <div className="text-center fade-in">
+                <div className="text-5xl font-black text-primary mb-2">100K+</div>
+                <div className="text-dark/70 font-semibold">Impressões</div>
+                <div className="text-sm text-dark/50 mt-1">nas redes sociais</div>
+              </div>
+            </div>
+          </div>
+
+          {/* CTA para Novos Patrocinadores */}
+          <div className="bg-gradient-to-br from-dark via-primary/20 to-dark rounded-3xl overflow-hidden shadow-2xl">
+            <div className="grid md:grid-cols-2 gap-0">
+              {/* Lado Esquerdo - Conteúdo */}
+              <div className="p-12 text-white">
+                <div className="inline-block bg-yellow-500 text-dark px-4 py-2 rounded-full mb-6 font-black text-sm">
+                  🤝 OPORTUNIDADE DE PARCERIA
+                </div>
+                <h3 className="text-4xl font-black mb-6 leading-tight">
+                  Torne-se um
+                  <br />
+                  <span className="text-yellow-500">Patrocinador Oficial</span>
+                </h3>
+                <p className="text-xl text-white/90 mb-8 leading-relaxed">
+                  Conecte sua marca a uma comunidade esportiva ativa e em crescimento.
+                  Exposição em eventos, redes sociais, uniformes e instalações.
+                </p>
+
+                <div className="space-y-4 mb-8">
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-full bg-yellow-500 flex items-center justify-center flex-shrink-0 text-dark font-bold">
+                      ✓
+                    </div>
+                    <div>
+                      <h4 className="font-bold mb-1">Exposição Premium</h4>
+                      <p className="text-white/70 text-sm">Logo em uniformes, banners e materiais digitais</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-full bg-yellow-500 flex items-center justify-center flex-shrink-0 text-dark font-bold">
+                      ✓
+                    </div>
+                    <div>
+                      <h4 className="font-bold mb-1">Eventos Exclusivos</h4>
+                      <p className="text-white/70 text-sm">Ativações e experiências em torneios e campeonatos</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-full bg-yellow-500 flex items-center justify-center flex-shrink-0 text-dark font-bold">
+                      ✓
+                    </div>
+                    <div>
+                      <h4 className="font-bold mb-1">Redes Sociais</h4>
+                      <p className="text-white/70 text-sm">Menções, posts patrocinados e stories destacados</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-full bg-yellow-500 flex items-center justify-center flex-shrink-0 text-dark font-bold">
+                      ✓
+                    </div>
+                    <div>
+                      <h4 className="font-bold mb-1">Comunidade Engajada</h4>
+                      <p className="text-white/70 text-sm">Acesso direto a 5 mil+ visitantes mensais</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <button className="btn-hover bg-yellow-500 hover:bg-yellow-600 text-dark px-8 py-4 rounded-lg text-lg font-black shadow-2xl">
+                    📞 Quero Ser Patrocinador
+                  </button>
+                  <button className="btn-hover bg-white/10 backdrop-blur-sm border-2 border-white/40 hover:bg-white/20 text-white px-8 py-4 rounded-lg text-lg font-bold">
+                    📄 Ver Pacotes
+                  </button>
+                </div>
+              </div>
+
+              {/* Lado Direito - Benefícios em Destaque */}
+              <div className="bg-gradient-to-br from-primary/20 to-secondary/20 p-12 flex items-center">
+                <div className="space-y-6 w-full">
+                  <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+                    <div className="flex items-center gap-4 mb-3">
+                      <div className="text-4xl">🎯</div>
+                      <h4 className="text-2xl font-bold text-white">Plano Bronze</h4>
+                    </div>
+                    <p className="text-white/80 mb-2">Logo em banners e redes sociais</p>
+                    <p className="text-yellow-500 font-black text-xl">A partir de R$ 500/mês</p>
+                  </div>
+
+                  <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+                    <div className="flex items-center gap-4 mb-3">
+                      <div className="text-4xl">🥈</div>
+                      <h4 className="text-2xl font-bold text-white">Plano Prata</h4>
+                    </div>
+                    <p className="text-white/80 mb-2">Bronze + logo em uniformes</p>
+                    <p className="text-yellow-500 font-black text-xl">A partir de R$ 1.200/mês</p>
+                  </div>
+
+                  <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border-2 border-yellow-500 relative">
+                    <div className="absolute -top-3 right-4 bg-yellow-500 text-dark px-3 py-1 rounded-full text-xs font-black">
+                      MAIS ESCOLHIDO
+                    </div>
+                    <div className="flex items-center gap-4 mb-3">
+                      <div className="text-4xl">🥇</div>
+                      <h4 className="text-2xl font-bold text-white">Plano Ouro</h4>
+                    </div>
+                    <p className="text-white/80 mb-2">Prata + naming rights de eventos</p>
+                    <p className="text-yellow-500 font-black text-xl">A partir de R$ 2.500/mês</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
