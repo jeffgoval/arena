@@ -1,6 +1,6 @@
 -- Invitations table (public invitations - RN-024 to RN-032)
 CREATE TABLE invitations (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   reservation_id UUID REFERENCES reservations(id) ON DELETE CASCADE NOT NULL,
   name TEXT NOT NULL, -- Name of invitation batch
   total_slots INTEGER NOT NULL CHECK (total_slots > 0),
@@ -21,7 +21,7 @@ CREATE INDEX idx_invitations_status ON invitations(status);
 
 -- Invitation acceptances table (RN-030: Guests get full profile)
 CREATE TABLE invitation_acceptances (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   invitation_id UUID REFERENCES invitations(id) ON DELETE CASCADE NOT NULL,
   user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL, -- Guest who accepted
   payment_id UUID, -- Reference to payments table

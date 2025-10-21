@@ -1,6 +1,6 @@
 -- Courts table
 CREATE TABLE courts (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
   description TEXT,
   capacity INTEGER NOT NULL DEFAULT 14, -- Default soccer court capacity
@@ -11,7 +11,7 @@ CREATE TABLE courts (
 
 -- Schedules table (court availability by day of week and time)
 CREATE TABLE schedules (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   court_id UUID REFERENCES courts(id) ON DELETE CASCADE,
   day_of_week INTEGER CHECK (day_of_week >= 0 AND day_of_week <= 6), -- 0=Sunday, 6=Saturday
   start_time TIME NOT NULL,
@@ -30,7 +30,7 @@ CREATE INDEX idx_schedules_day_of_week ON schedules(day_of_week);
 
 -- Court blocks table (for maintenance, events, etc)
 CREATE TABLE court_blocks (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   court_id UUID REFERENCES courts(id) ON DELETE CASCADE,
   start_datetime TIMESTAMP WITH TIME ZONE NOT NULL,
   end_datetime TIMESTAMP WITH TIME ZONE NOT NULL,

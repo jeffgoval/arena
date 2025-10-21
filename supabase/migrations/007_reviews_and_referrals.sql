@@ -1,6 +1,6 @@
 -- Reviews table
 CREATE TABLE reviews (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   reservation_id UUID REFERENCES reservations(id) ON DELETE CASCADE NOT NULL,
   user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
   rating review_rating NOT NULL,
@@ -17,7 +17,7 @@ CREATE UNIQUE INDEX idx_reviews_unique ON reviews(reservation_id, user_id);
 
 -- Referrals table (RN-036, RN-037)
 CREATE TABLE referrals (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   referrer_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL, -- Who referred
   referred_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL, -- Who was referred
   status referral_status DEFAULT 'pending',
@@ -35,7 +35,7 @@ CREATE UNIQUE INDEX idx_referrals_unique ON referrals(referrer_id, referred_id);
 
 -- Coupons table (for discounts)
 CREATE TABLE coupons (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   code TEXT UNIQUE NOT NULL,
   discount_type TEXT CHECK (discount_type IN ('percentage', 'fixed')),
   discount_value DECIMAL(10, 2) NOT NULL CHECK (discount_value >= 0),
@@ -52,7 +52,7 @@ CREATE INDEX idx_coupons_is_active ON coupons(is_active);
 
 -- Coupon usage tracking
 CREATE TABLE coupon_usages (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   coupon_id UUID REFERENCES coupons(id) ON DELETE CASCADE NOT NULL,
   user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
   reservation_id UUID REFERENCES reservations(id) ON DELETE SET NULL,

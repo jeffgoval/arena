@@ -1,6 +1,6 @@
 -- Reservations table
 CREATE TABLE reservations (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL, -- Organizer
   court_id UUID REFERENCES courts(id) ON DELETE RESTRICT NOT NULL,
   date DATE NOT NULL,
@@ -39,7 +39,7 @@ CREATE INDEX idx_reservations_parent_id ON reservations(parent_reservation_id);
 
 -- Reservation participants table (from team or invitations)
 CREATE TABLE reservation_participants (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   reservation_id UUID REFERENCES reservations(id) ON DELETE CASCADE NOT NULL,
   user_id UUID REFERENCES users(id) ON DELETE SET NULL, -- Null if guest not registered yet
   player_name TEXT NOT NULL,

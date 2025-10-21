@@ -16,14 +16,14 @@ ALTER TABLE referrals ENABLE ROW LEVEL SECURITY;
 ALTER TABLE coupons ENABLE ROW LEVEL SECURITY;
 ALTER TABLE coupon_usages ENABLE ROW LEVEL SECURITY;
 
--- Helper function to get current user ID
-CREATE OR REPLACE FUNCTION auth.user_id()
+-- Helper function to get current user ID from users table
+CREATE OR REPLACE FUNCTION get_current_user_id()
 RETURNS UUID AS $$
   SELECT COALESCE(
     (SELECT id FROM users WHERE auth_id = auth.uid()),
     '00000000-0000-0000-0000-000000000000'::uuid
   );
-$$ LANGUAGE SQL STABLE;
+$$ LANGUAGE SQL STABLE SECURITY DEFINER;
 
 -- Helper function to check if user is manager
 CREATE OR REPLACE FUNCTION is_manager()
@@ -31,9 +31,9 @@ RETURNS BOOLEAN AS $$
   SELECT EXISTS (
     SELECT 1 FROM users
     WHERE auth_id = auth.uid()
-    AND user_type IN ('manager')
+    AND user_type = 'manager'
   );
-$$ LANGUAGE SQL STABLE;
+$$ LANGUAGE SQL STABLE SECURITY DEFINER;
 
 -- USERS policies
 CREATE POLICY "Users can view their own profile"
@@ -69,38 +69,38 @@ CREATE POLICY "Only managers can manage schedules"
 -- TEAMS policies
 CREATE POLICY "Users can view their own teams"
   ON teams FOR SELECT
-  USING (user_id = auth.user_id() OR is_manager());
+  USING (user_id = get_current_user_id() OR is_manager());
 
 CREATE POLICY "Users can create their own teams"
   ON teams FOR INSERT
-  WITH CHECK (user_id = auth.user_id());
+  WITH CHECK (user_id = get_current_user_id());
 
 CREATE POLICY "Users can update their own teams"
   ON teams FOR UPDATE
-  USING (user_id = auth.user_id());
+  USING (user_id = get_current_user_id());
 
 CREATE POLICY "Users can delete their own teams"
   ON teams FOR DELETE
-  USING (user_id = auth.user_id());
+  USING (user_id = get_current_user_id());
 
 -- TEAM MEMBERS policies
 CREATE POLICY "Users can view members of their teams"
   ON team_members FOR SELECT
   USING (
-    EXISTS (SELECT 1 FROM teams WHERE teams.id = team_members.team_id AND teams.user_id = auth.user_id())
+    EXISTS (SELECT 1 FROM teams WHERE teams.id = team_members.team_id AND teams.user_id = get_current_user_id())
     OR is_manager()
   );
 
 CREATE POLICY "Users can manage members of their teams"
   ON team_members FOR ALL
   USING (
-    EXISTS (SELECT 1 FROM teams WHERE teams.id = team_members.team_id AND teams.user_id = auth.user_id())
+    EXISTS (SELECT 1 FROM teams WHERE teams.id = team_members.team_id AND teams.user_id = get_current_user_id())
   );
 
 -- RESERVATIONS policies
 CREATE POLICY "Users can view their own reservations"
   ON reservations FOR SELECT
-  USING (user_id = auth.user_id() OR is_manager());
+  USING (user_id = get_current_user_id() OR is_manager());
 
 CREATE POLICY "Users can view reservations they're participating in"
   ON reservations FOR SELECT
@@ -108,17 +108,17 @@ CREATE POLICY "Users can view reservations they're participating in"
     EXISTS (
       SELECT 1 FROM reservation_participants
       WHERE reservation_participants.reservation_id = reservations.id
-      AND reservation_participants.user_id = auth.user_id()
+      AND reservation_participants.user_id = get_current_user_id()
     )
   );
 
 CREATE POLICY "Users can create reservations"
   ON reservations FOR INSERT
-  WITH CHECK (user_id = auth.user_id());
+  WITH CHECK (user_id = get_current_user_id());
 
 CREATE POLICY "Users can update their own reservations"
   ON reservations FOR UPDATE
-  USING (user_id = auth.user_id() OR is_manager());
+  USING (user_id = get_current_user_id() OR is_manager());
 
 -- INVITATIONS policies
 CREATE POLICY "Anyone can view active invitations"
@@ -131,7 +131,7 @@ CREATE POLICY "Organizers can manage their reservation invitations"
     EXISTS (
       SELECT 1 FROM reservations
       WHERE reservations.id = invitations.reservation_id
-      AND reservations.user_id = auth.user_id()
+      AND reservations.user_id = get_current_user_id()
     )
     OR is_manager()
   );
@@ -139,25 +139,25 @@ CREATE POLICY "Organizers can manage their reservation invitations"
 -- INVITATION ACCEPTANCES policies
 CREATE POLICY "Users can view their own acceptances"
   ON invitation_acceptances FOR SELECT
-  USING (user_id = auth.user_id() OR is_manager());
+  USING (user_id = get_current_user_id() OR is_manager());
 
 CREATE POLICY "Users can accept invitations"
   ON invitation_acceptances FOR INSERT
-  WITH CHECK (user_id = auth.user_id());
+  WITH CHECK (user_id = get_current_user_id());
 
 -- PAYMENTS policies
 CREATE POLICY "Users can view their own payments"
   ON payments FOR SELECT
-  USING (user_id = auth.user_id() OR is_manager());
+  USING (user_id = get_current_user_id() OR is_manager());
 
 CREATE POLICY "Users can create payments"
   ON payments FOR INSERT
-  WITH CHECK (user_id = auth.user_id());
+  WITH CHECK (user_id = get_current_user_id());
 
 -- TRANSACTIONS policies
 CREATE POLICY "Users can view their own transactions"
   ON transactions FOR SELECT
-  USING (user_id = auth.user_id() OR is_manager());
+  USING (user_id = get_current_user_id() OR is_manager());
 
 -- REVIEWS policies
 CREATE POLICY "Anyone can view reviews"
@@ -167,10 +167,10 @@ CREATE POLICY "Anyone can view reviews"
 CREATE POLICY "Users can create reviews for their reservations"
   ON reviews FOR INSERT
   WITH CHECK (
-    user_id = auth.user_id() AND
+    user_id = get_current_user_id() AND
     EXISTS (
       SELECT 1 FROM reservation_participants
       WHERE reservation_participants.reservation_id = reviews.reservation_id
-      AND reservation_participants.user_id = auth.user_id()
+      AND reservation_participants.user_id = get_current_user_id()
     )
   );

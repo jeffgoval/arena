@@ -1,6 +1,6 @@
 -- Payments table
 CREATE TABLE payments (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
   reservation_id UUID REFERENCES reservations(id) ON DELETE SET NULL,
   invitation_id UUID REFERENCES invitations(id) ON DELETE SET NULL,
@@ -35,7 +35,7 @@ CREATE INDEX idx_payments_transaction_id ON payments(transaction_id);
 
 -- Transactions table (financial ledger)
 CREATE TABLE transactions (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
   type transaction_type NOT NULL, -- 'credit' or 'debit'
   amount DECIMAL(10, 2) NOT NULL CHECK (amount >= 0),

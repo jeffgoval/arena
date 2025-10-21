@@ -1,5 +1,4 @@
--- Enable UUID extension
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+-- PostgreSQL gen_random_uuid() is available by default in PG 13+
 
 -- Create custom types/enums
 CREATE TYPE user_type AS ENUM ('organizer', 'guest', 'manager', 'both');
@@ -19,7 +18,7 @@ CREATE TYPE schedule_status AS ENUM ('active', 'inactive');
 
 -- Users table
 CREATE TABLE users (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   -- Auth
   auth_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
 

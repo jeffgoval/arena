@@ -1,6 +1,6 @@
 -- Teams table (autonomous teams - RN-008 to RN-015)
 CREATE TABLE teams (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL, -- Team owner
   name TEXT NOT NULL,
   description TEXT,
@@ -12,7 +12,7 @@ CREATE INDEX idx_teams_user_id ON teams(user_id);
 
 -- Team members table
 CREATE TABLE team_members (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   team_id UUID REFERENCES teams(id) ON DELETE CASCADE NOT NULL,
   player_name TEXT NOT NULL,
   player_phone TEXT NOT NULL,
