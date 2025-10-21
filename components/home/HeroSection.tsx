@@ -98,7 +98,7 @@ export const HeroSection = () => {
               <Button size="lg" variant="outline" asChild className="text-lg px-8 py-6 h-auto bg-white/10 backdrop-blur-sm border-white/30 text-white hover:bg-white/20">
                 <Link href="/cliente">
                   <LogIn className="mr-2 h-5 w-5" />
-                  Ver Dashboard
+                  Entrar
                 </Link>
               </Button>
             </motion.div>
