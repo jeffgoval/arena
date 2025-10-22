@@ -12,7 +12,7 @@ export const courtsService = {
   // Listar todas as quadras
   async getAll(): Promise<Court[]> {
     const { data, error } = await supabase
-      .from('courts')
+      .from('quadras')
       .select('*')
       .order('nome');
 
@@ -23,7 +23,7 @@ export const courtsService = {
   // Buscar quadra por ID
   async getById(id: string): Promise<Court | null> {
     const { data, error } = await supabase
-      .from('courts')
+      .from('quadras')
       .select('*')
       .eq('id', id)
       .single();
@@ -35,7 +35,7 @@ export const courtsService = {
   // Criar quadra
   async create(courtData: CourtFormData): Promise<Court> {
     const { data, error } = await supabase
-      .from('courts')
+      .from('quadras')
       .insert([courtData])
       .select()
       .single();
@@ -47,7 +47,7 @@ export const courtsService = {
   // Atualizar quadra
   async update(id: string, courtData: Partial<CourtFormData>): Promise<Court> {
     const { data, error } = await supabase
-      .from('courts')
+      .from('quadras')
       .update(courtData)
       .eq('id', id)
       .select()
@@ -60,7 +60,7 @@ export const courtsService = {
   // Deletar quadra
   async delete(id: string): Promise<void> {
     const { error } = await supabase
-      .from('courts')
+      .from('quadras')
       .delete()
       .eq('id', id);
 
@@ -68,8 +68,8 @@ export const courtsService = {
   },
 
   // Ativar/Desativar quadra
-  async toggleActive(id: string, ativa: boolean): Promise<Court> {
-    return this.update(id, { ativa });
+  async toggleActive(id: string, status: 'ativa' | 'inativa' | 'manutencao'): Promise<Court> {
+    return this.update(id, { status } as Partial<CourtFormData>);
   },
 };
 
@@ -81,11 +81,11 @@ export const schedulesService = {
   // Listar horários de uma quadra
   async getByCourt(courtId: string): Promise<Schedule[]> {
     const { data, error } = await supabase
-      .from('schedules')
+      .from('horarios')
       .select('*')
-      .eq('court_id', courtId)
+      .eq('quadra_id', courtId)
       .order('dia_semana')
-      .order('horario_inicio');
+      .order('hora_inicio');
 
     if (error) throw error;
     return data || [];
@@ -94,7 +94,7 @@ export const schedulesService = {
   // Criar horário
   async create(scheduleData: ScheduleFormData): Promise<Schedule> {
     const { data, error } = await supabase
-      .from('schedules')
+      .from('horarios')
       .insert([scheduleData])
       .select()
       .single();
@@ -106,7 +106,7 @@ export const schedulesService = {
   // Atualizar horário
   async update(id: string, scheduleData: Partial<ScheduleFormData>): Promise<Schedule> {
     const { data, error } = await supabase
-      .from('schedules')
+      .from('horarios')
       .update(scheduleData)
       .eq('id', id)
       .select()
@@ -119,7 +119,7 @@ export const schedulesService = {
   // Deletar horário
   async delete(id: string): Promise<void> {
     const { error } = await supabase
-      .from('schedules')
+      .from('horarios')
       .delete()
       .eq('id', id);
 

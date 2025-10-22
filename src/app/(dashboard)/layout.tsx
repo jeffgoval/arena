@@ -1,247 +1,144 @@
-'use client';
+"use client";
 
-import { useUser } from '@/hooks/auth/useUser';
-import { useRouter, usePathname } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
-import Link from 'next/link';
-import Image from 'next/image';
-import { Loader2, LayoutDashboard, Users, Calendar, Settings, LogOut, Building2, Home, Trophy, CreditCard, Crown } from 'lucide-react';
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { LayoutDashboard, Users, Calendar, Trophy, CreditCard, LogOut, Menu, X } from "lucide-react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { data: user, isLoading } = useUser();
-  const router = useRouter();
   const pathname = usePathname();
-  const supabase = createClient();
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push('/login');
-  };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-primary/10 via-secondary/5 to-accent/10 flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-primary border-t-transparent mb-4"></div>
-          <p className="text-dark/70 font-semibold">Carregando...</p>
-        </div>
-      </div>
-    );
-  }
-
-  const isGestor = user?.profile?.role === 'gestor' || user?.profile?.role === 'admin';
+  const router = useRouter();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const isActive = (path: string) => pathname === path;
+  const isActiveStartsWith = (path: string) => pathname?.startsWith(path);
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      router.push("/auth");
+    }
+  };
+
+  const navItems = [
+    { href: "/cliente", icon: LayoutDashboard, label: "Dashboard", active: isActive("/cliente") },
+    { href: "/cliente/reservas", icon: Calendar, label: "Minhas Reservas", active: isActive("/cliente/reservas") },
+    { href: "/cliente/turmas", icon: Users, label: "Minhas Turmas", active: isActive("/cliente/turmas") },
+    { href: "/cliente/jogos", icon: Trophy, label: "Meus Jogos", active: isActive("/cliente/jogos") },
+    { href: "/cliente/creditos", icon: CreditCard, label: "Meus Créditos", active: isActive("/cliente/creditos") },
+  ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray via-white to-gray/50 flex">
-      {/* Sidebar Profissional */}
-      <aside className="w-72 bg-white shadow-2xl flex flex-col border-r border-gray-200">
-        {/* Header do Sidebar com Logo */}
-        <div className="p-6 bg-primary border-b border-primary-dark">
-          <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-12 h-12 bg-white rounded-lg p-2 shadow-md group-hover:scale-105 transition-transform">
-              <Image
-                src="/logo-arena.png"
-                alt="Arena Dona Santa"
-                width={32}
-                height={32}
-                className="w-full h-full object-contain"
-              />
-            </div>
-            <div>
-              <h1 className="text-lg font-bold text-white leading-tight">
-                Arena Dona Santa
-              </h1>
-              <p className="text-xs text-white/90 font-medium">Painel de Controle</p>
-            </div>
-          </Link>
-        </div>
+    <div className="min-h-screen bg-background flex">
+      {/* Mobile Sidebar Overlay */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
 
-        {/* Perfil do Usuário */}
-        <div className="p-6 bg-gray-50 border-b border-gray-200">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white font-bold text-lg shadow-sm">
-              {user?.profile?.nome_completo?.charAt(0) || '?'}
+      {/* Sidebar */}
+      <aside className={`
+        fixed lg:static inset-y-0 left-0 z-50 w-72 bg-card border-r border-border flex flex-col shadow-soft
+        transform transition-transform duration-300 ease-in-out lg:translate-x-0
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+      `}>
+        {/* Header */}
+        <div className="p-6 bg-gradient-to-br from-primary to-secondary">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-background rounded-xl flex items-center justify-center shadow-medium">
+                <span className="text-primary font-bold text-xl">A</span>
+              </div>
+              <div>
+                <h1 className="heading-4 text-primary-foreground">Arena Dona Santa</h1>
+                <p className="text-xs text-primary-foreground/90 font-medium">Painel de Controle</p>
+              </div>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-gray-900 truncate text-sm">
-                {user?.profile?.nome_completo?.split(' ').slice(0, 2).join(' ')}
-              </p>
-              <p className="text-xs text-gray-600 truncate">{user?.profile?.email}</p>
-            </div>
-          </div>
-          <div className="mt-3 flex items-center justify-between">
-            <span className="inline-flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary text-xs font-semibold rounded-full border border-primary/20">
-              {user?.profile?.role === 'gestor' || user?.profile?.role === 'admin' ? (
-                <><Crown className="w-3 h-3" /> {user?.profile?.role?.toUpperCase()}</>
-              ) : (
-                user?.profile?.role?.toUpperCase()
-              )}
-            </span>
-            <span className="text-xs font-semibold text-gray-700">
-              R$ {user?.profile?.saldo_creditos?.toFixed(2) || '0.00'}
-            </span>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSidebarOpen(false)}
+              className="lg:hidden text-primary-foreground hover:bg-primary-foreground/10"
+            >
+              <X className="w-5 h-5" />
+            </Button>
           </div>
         </div>
 
-        {/* Navegação */}
-        <nav className="flex-1 p-4 overflow-y-auto">
-          <div className="space-y-1">
-            <Link
-              href="/"
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
-                pathname === '/'
-                  ? 'bg-gray text-dark shadow-md'
-                  : 'text-dark/70 hover:bg-gray/50 hover:text-dark'
-              }`}
-            >
-              <Home className={`h-5 w-5 ${pathname === '/' ? 'text-primary' : 'group-hover:text-primary'}`} />
-              <span className="font-semibold">Início</span>
-            </Link>
+        {/* Navigation */}
+        <nav className="flex-1 p-4 overflow-y-auto scrollbar-thin">
+          <div className="space-y-2">
+            {navItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setSidebarOpen(false)}
+                className={`
+                  flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200
+                  ${item.active 
+                    ? 'bg-primary text-primary-foreground shadow-soft' 
+                    : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                  }
+                `}
+              >
+                <item.icon className="w-5 h-5" />
+                <span className="font-medium">{item.label}</span>
+              </Link>
+            ))}
 
-            <Link
-              href="/cliente"
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group ${
-                isActive('/cliente')
-                  ? 'bg-primary text-white shadow-md'
-                  : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-              }`}
-            >
-              <LayoutDashboard className={`h-5 w-5 ${isActive('/cliente') ? 'text-white' : 'text-gray-500 group-hover:text-primary'}`} />
-              <span className="font-medium">Dashboard</span>
-            </Link>
 
-            <Link
-              href="/cliente/reservas"
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group ${
-                isActive('/cliente/reservas')
-                  ? 'bg-primary text-white shadow-md'
-                  : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-              }`}
-            >
-              <Calendar className={`h-5 w-5 ${isActive('/cliente/reservas') ? 'text-white' : 'text-gray-500 group-hover:text-primary'}`} />
-              <span className="font-medium">Minhas Reservas</span>
-            </Link>
-
-            <Link
-              href="/cliente/turmas"
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group ${
-                isActive('/cliente/turmas')
-                  ? 'bg-primary text-white shadow-md'
-                  : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-              }`}
-            >
-              <Users className={`h-5 w-5 ${isActive('/cliente/turmas') ? 'text-white' : 'text-gray-500 group-hover:text-primary'}`} />
-              <span className="font-medium">Minhas Turmas</span>
-            </Link>
-
-            <Link
-              href="/cliente/jogos"
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group ${
-                isActive('/cliente/jogos')
-                  ? 'bg-primary text-white shadow-md'
-                  : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-              }`}
-            >
-              <Trophy className={`h-5 w-5 ${isActive('/cliente/jogos') ? 'text-white' : 'text-gray-500 group-hover:text-primary'}`} />
-              <span className="font-medium">Meus Jogos</span>
-            </Link>
-
-            <Link
-              href="/cliente/creditos"
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group ${
-                isActive('/cliente/creditos')
-                  ? 'bg-primary text-white shadow-md'
-                  : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-              }`}
-            >
-              <CreditCard className={`h-5 w-5 ${isActive('/cliente/creditos') ? 'text-white' : 'text-gray-500 group-hover:text-primary'}`} />
-              <span className="font-medium">Meus Créditos</span>
-            </Link>
-
-            {isGestor && (
-              <>
-                <div className="pt-4 pb-2">
-                  <div className="flex items-center gap-2 px-4 mb-2">
-                    <Crown className="w-4 h-4 text-amber-600" />
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Área do Gestor</p>
-                  </div>
-                  <div className="h-px bg-gray-200"></div>
-                </div>
-
-                <Link
-                  href="/gestor/quadras"
-                  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group ${
-                    pathname?.startsWith('/gestor/quadras')
-                      ? 'bg-amber-600 text-white shadow-md'
-                      : 'text-gray-700 hover:bg-amber-50 hover:text-gray-900'
-                  }`}
-                >
-                  <Building2 className={`h-5 w-5 ${pathname?.startsWith('/gestor/quadras') ? 'text-white' : 'text-gray-500 group-hover:text-amber-600'}`} />
-                  <span className="font-medium">Quadras</span>
-                </Link>
-
-                <Link
-                  href="/gestor/agenda"
-                  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group ${
-                    isActive('/gestor/agenda')
-                      ? 'bg-amber-600 text-white shadow-md'
-                      : 'text-gray-700 hover:bg-amber-50 hover:text-gray-900'
-                  }`}
-                >
-                  <Calendar className={`h-5 w-5 ${isActive('/gestor/agenda') ? 'text-white' : 'text-gray-500 group-hover:text-amber-600'}`} />
-                  <span className="font-medium">Agenda</span>
-                </Link>
-
-                <Link
-                  href="/gestor/clientes"
-                  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group ${
-                    isActive('/gestor/clientes')
-                      ? 'bg-amber-600 text-white shadow-md'
-                      : 'text-gray-700 hover:bg-amber-50 hover:text-gray-900'
-                  }`}
-                >
-                  <Users className={`h-5 w-5 ${isActive('/gestor/clientes') ? 'text-white' : 'text-gray-500 group-hover:text-amber-600'}`} />
-                  <span className="font-medium">Clientes</span>
-                </Link>
-
-                <Link
-                  href="/gestor/configuracoes"
-                  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group ${
-                    isActive('/gestor/configuracoes')
-                      ? 'bg-amber-600 text-white shadow-md'
-                      : 'text-gray-700 hover:bg-amber-50 hover:text-gray-900'
-                  }`}
-                >
-                  <Settings className={`h-5 w-5 ${isActive('/gestor/configuracoes') ? 'text-white' : 'text-gray-500 group-hover:text-amber-600'}`} />
-                  <span className="font-medium">Configurações</span>
-                </Link>
-              </>
-            )}
           </div>
         </nav>
 
-        {/* Footer com Logout */}
-        <div className="p-4 border-t border-gray-200 bg-gray-50">
-          <button
+        {/* Footer */}
+        <div className="p-4 border-t border-border">
+          <Button
             onClick={handleLogout}
-            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors w-full font-medium shadow-sm"
+            disabled={isLoggingOut}
+            variant="outline"
+            className="w-full justify-start gap-3 text-destructive border-destructive/20 hover:bg-destructive/10 hover:text-destructive"
           >
-            <LogOut className="h-4 w-4" />
-            <span>Sair</span>
-          </button>
+            <LogOut className="w-5 h-5" />
+            <span className="font-medium">{isLoggingOut ? "Saindo..." : "Sair"}</span>
+          </Button>
         </div>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto">
-        {children}
-      </main>
+      <div className="flex-1 flex flex-col min-h-screen">
+        {/* Mobile Header */}
+        <header className="lg:hidden bg-card border-b border-border p-4 flex items-center justify-between">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setSidebarOpen(true)}
+          >
+            <Menu className="w-5 h-5" />
+          </Button>
+          <h1 className="heading-4 gradient-text">Arena Dona Santa</h1>
+          <div className="w-10" /> {/* Spacer */}
+        </header>
+
+        {/* Page Content */}
+        <main className="flex-1 bg-background">
+          {children}
+        </main>
+      </div>
     </div>
   );
 }

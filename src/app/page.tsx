@@ -1,5 +1,4 @@
 import { AnimationObserver } from "@/components/AnimationObserver";
-import { PrefetchAuth } from "@/components/PrefetchAuth";
 import { Testimonials } from "@/components/Testimonials";
 import { Header } from "@/components/landing/Header";
 import { Hero } from "@/components/landing/Hero";
@@ -19,7 +18,6 @@ export default function Home() {
   return (
     <>
       <AnimationObserver />
-      <PrefetchAuth />
       <Header />
       <Hero />
       <Infrastructure />

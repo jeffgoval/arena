@@ -17,11 +17,12 @@ import type { Schedule } from '@/types/courts.types';
 interface FormScheduleProps {
   courtId: string;
   schedule?: Schedule;
+  defaultDiaSemana?: number;
   onSubmit: (data: ScheduleFormData) => Promise<void>;
   onCancel: () => void;
 }
 
-export function FormSchedule({ courtId, schedule, onSubmit, onCancel }: FormScheduleProps) {
+export function FormSchedule({ courtId, schedule, defaultDiaSemana, onSubmit, onCancel }: FormScheduleProps) {
   const {
     register,
     handleSubmit,
@@ -32,16 +33,17 @@ export function FormSchedule({ courtId, schedule, onSubmit, onCancel }: FormSche
     resolver: zodResolver(scheduleSchema),
     defaultValues: schedule
       ? {
-          court_id: schedule.court_id,
+          quadra_id: schedule.quadra_id,
           dia_semana: schedule.dia_semana,
-          horario_inicio: schedule.horario_inicio,
-          horario_fim: schedule.horario_fim,
+          hora_inicio: schedule.hora_inicio,
+          hora_fim: schedule.hora_fim,
           valor_avulsa: schedule.valor_avulsa,
           valor_mensalista: schedule.valor_mensalista,
           ativo: schedule.ativo,
         }
       : {
-          court_id: courtId,
+          quadra_id: courtId,
+          dia_semana: defaultDiaSemana,
           ativo: true as boolean,
         },
   } as any);
@@ -50,18 +52,21 @@ export function FormSchedule({ courtId, schedule, onSubmit, onCancel }: FormSche
   const ativo = watch('ativo');
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
       {/* Dia da Semana */}
       <div>
-        <Label htmlFor="dia_semana">Dia da Semana *</Label>
+        <Label htmlFor="dia_semana" className="text-sm font-medium text-gray-700">
+          Dia da Semana *
+        </Label>
         <Select
           value={diaSemana?.toString()}
           onValueChange={(value) => setValue('dia_semana', parseInt(value))}
+          disabled={!!defaultDiaSemana}
         >
-          <SelectTrigger>
+          <SelectTrigger className={`mt-1.5 rounded-lg ${defaultDiaSemana ? 'bg-gray-100 cursor-not-allowed' : 'bg-white'}`}>
             <SelectValue placeholder="Selecione o dia" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-white">
             {DIAS_SEMANA.map((dia) => (
               <SelectItem key={dia.value} value={dia.value.toString()}>
                 {dia.label}
@@ -69,6 +74,11 @@ export function FormSchedule({ courtId, schedule, onSubmit, onCancel }: FormSche
             ))}
           </SelectContent>
         </Select>
+        {defaultDiaSemana && (
+          <p className="text-xs text-gray-500 mt-1">
+            Dia já selecionado automaticamente
+          </p>
+        )}
         {errors.dia_semana && (
           <p className="text-sm text-red-600 mt-1">{errors.dia_semana.message}</p>
         )}
@@ -77,25 +87,31 @@ export function FormSchedule({ courtId, schedule, onSubmit, onCancel }: FormSche
       {/* Horários */}
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="horario_inicio">Horário Início *</Label>
+          <Label htmlFor="hora_inicio" className="text-sm font-medium text-gray-700">
+            Horário Início *
+          </Label>
           <Input
-            id="horario_inicio"
+            id="hora_inicio"
             type="time"
-            {...register('horario_inicio')}
+            {...register('hora_inicio')}
+            className="mt-1.5 rounded-lg"
           />
-          {errors.horario_inicio && (
-            <p className="text-sm text-red-600 mt-1">{errors.horario_inicio.message}</p>
+          {errors.hora_inicio && (
+            <p className="text-sm text-red-600 mt-1">{errors.hora_inicio.message}</p>
           )}
         </div>
         <div>
-          <Label htmlFor="horario_fim">Horário Fim *</Label>
+          <Label htmlFor="hora_fim" className="text-sm font-medium text-gray-700">
+            Horário Fim *
+          </Label>
           <Input
-            id="horario_fim"
+            id="hora_fim"
             type="time"
-            {...register('horario_fim')}
+            {...register('hora_fim')}
+            className="mt-1.5 rounded-lg"
           />
-          {errors.horario_fim && (
-            <p className="text-sm text-red-600 mt-1">{errors.horario_fim.message}</p>
+          {errors.hora_fim && (
+            <p className="text-sm text-red-600 mt-1">{errors.hora_fim.message}</p>
           )}
         </div>
       </div>
@@ -103,7 +119,9 @@ export function FormSchedule({ courtId, schedule, onSubmit, onCancel }: FormSche
       {/* Valores */}
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="valor_avulsa">Valor Avulsa (R$) *</Label>
+          <Label htmlFor="valor_avulsa" className="text-sm font-medium text-gray-700">
+            Valor Avulsa (R$) *
+          </Label>
           <Input
             id="valor_avulsa"
             type="number"
@@ -111,13 +129,16 @@ export function FormSchedule({ courtId, schedule, onSubmit, onCancel }: FormSche
             min="0"
             {...register('valor_avulsa', { valueAsNumber: true })}
             placeholder="150.00"
+            className="mt-1.5 rounded-lg"
           />
           {errors.valor_avulsa && (
             <p className="text-sm text-red-600 mt-1">{errors.valor_avulsa.message}</p>
           )}
         </div>
         <div>
-          <Label htmlFor="valor_mensalista">Valor Mensalista (R$) *</Label>
+          <Label htmlFor="valor_mensalista" className="text-sm font-medium text-gray-700">
+            Valor Mensalista (R$) *
+          </Label>
           <Input
             id="valor_mensalista"
             type="number"
@@ -125,6 +146,7 @@ export function FormSchedule({ courtId, schedule, onSubmit, onCancel }: FormSche
             min="0"
             {...register('valor_mensalista', { valueAsNumber: true })}
             placeholder="120.00"
+            className="mt-1.5 rounded-lg"
           />
           {errors.valor_mensalista && (
             <p className="text-sm text-red-600 mt-1">{errors.valor_mensalista.message}</p>
@@ -133,8 +155,24 @@ export function FormSchedule({ courtId, schedule, onSubmit, onCancel }: FormSche
       </div>
 
       {/* Ativo */}
-      <div className="flex items-center justify-between">
-        <Label htmlFor="ativo">Horário Ativo</Label>
+      <div className="flex items-center justify-between p-5 bg-gradient-to-r from-gray-50 to-gray-100/50 rounded-xl border border-gray-200/50">
+        <div className="flex items-center gap-3">
+          <div className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${
+            ativo ? 'bg-primary/10' : 'bg-gray-200'
+          }`}>
+            <div className={`w-2 h-2 rounded-full transition-colors ${
+              ativo ? 'bg-primary' : 'bg-gray-400'
+            }`} />
+          </div>
+          <div>
+            <Label htmlFor="ativo" className="text-sm font-semibold text-gray-900 cursor-pointer block">
+              Horário {ativo ? 'Ativo' : 'Inativo'}
+            </Label>
+            <p className="text-xs text-gray-500 mt-0.5">
+              {ativo ? 'Disponível para reservas' : 'Não disponível para reservas'}
+            </p>
+          </div>
+        </div>
         <Switch
           id="ativo"
           checked={ativo}
@@ -143,19 +181,19 @@ export function FormSchedule({ courtId, schedule, onSubmit, onCancel }: FormSche
       </div>
 
       {/* Ações */}
-      <div className="flex gap-3 pt-4">
+      <div className="flex gap-3 pt-2">
         <Button
           type="button"
           variant="outline"
           onClick={onCancel}
-          className="flex-1"
+          className="flex-1 rounded-lg h-11"
         >
           Cancelar
         </Button>
         <Button
           type="submit"
           disabled={isSubmitting}
-          className="flex-1 bg-[#2D9F5D] hover:bg-[#258c4f]"
+          className="flex-1 bg-primary hover:bg-primary/90 rounded-lg h-11"
         >
           {isSubmitting ? (
             <>

@@ -6,11 +6,10 @@ import type { User } from '@supabase/supabase-js';
 
 export interface UserProfile {
   id: string;
-  email: string;
-  cpf: string;
+  nome_completo: string | null;
+  cpf: string | null;
   rg: string | null;
-  nome_completo: string;
-  data_nascimento: string | null;
+  email: string;
   whatsapp: string | null;
   cep: string | null;
   logradouro: string | null;
@@ -46,12 +45,16 @@ export function useUser() {
         .single();
 
       if (error) {
-        console.error('Error fetching user profile:', error);
+        console.error('Error fetching profile:', error);
         return { ...user, profile: null };
       }
 
       return { ...user, profile };
     },
-    staleTime: 1000 * 60 * 5, // 5 minutos
+    staleTime: 0, // SEMPRE revalidar - CRÍTICO para segurança
+    gcTime: 0, // Não manter em cache
+    refetchOnMount: 'always', // Sempre refetch ao montar
+    refetchOnWindowFocus: true, // Refetch quando voltar para a aba
+    refetchOnReconnect: true, // Refetch ao reconectar
   });
 }

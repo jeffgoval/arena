@@ -2,14 +2,14 @@
  * Types para Sistema de Quadras
  */
 
-export type CourtType = 'society' | 'beach_tennis' | 'volei' | 'futvolei' | 'futsal';
+export type CourtType = 'society' | 'beach_tennis' | 'volei' | 'futevolei';
+export type CourtStatus = 'ativa' | 'inativa' | 'manutencao';
 
 export const COURT_TYPE_LABELS: Record<CourtType, string> = {
   society: 'Futebol Society',
   beach_tennis: 'Beach Tennis',
   volei: 'Vôlei de Praia',
-  futvolei: 'Futevôlei',
-  futsal: 'Futsal',
+  futevolei: 'Futevôlei',
 };
 
 export interface Court {
@@ -18,17 +18,18 @@ export interface Court {
   tipo: CourtType;
   descricao: string | null;
   capacidade_maxima: number;
-  ativa: boolean;
+  status: CourtStatus;
+  foto_url: string | null;
   created_at: string;
   updated_at: string;
 }
 
 export interface Schedule {
   id: string;
-  court_id: string;
+  quadra_id: string;
   dia_semana: number; // 0=Domingo, 6=Sábado
-  horario_inicio: string; // HH:MM
-  horario_fim: string; // HH:MM
+  hora_inicio: string; // HH:MM
+  hora_fim: string; // HH:MM
   valor_avulsa: number;
   valor_mensalista: number;
   ativo: boolean;
@@ -38,11 +39,11 @@ export interface Schedule {
 
 export interface CourtBlock {
   id: string;
-  court_id: string;
+  quadra_id: string;
   data_inicio: string; // YYYY-MM-DD
   data_fim: string; // YYYY-MM-DD
-  horario_inicio: string | null; // HH:MM
-  horario_fim: string | null; // HH:MM
+  hora_inicio: string | null; // HH:MM
+  hora_fim: string | null; // HH:MM
   motivo: string;
   created_by: string | null;
   created_at: string;

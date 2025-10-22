@@ -1,141 +1,217 @@
-'use client';
+"use client";
 
-import { useUser } from '@/hooks/auth/useUser';
-import { usePermissions } from '@/hooks/auth/usePermissions';
-import Link from 'next/link';
-import { Calendar, Users, Trophy, CreditCard, Crown } from 'lucide-react';
-
-export const dynamic = 'force-dynamic';
+import Link from "next/link";
+import { Calendar, Users, Trophy, CreditCard, Plus, Target, MessageSquare, Loader2 } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 export default function ClienteDashboard() {
-  const { data: user, isLoading } = useUser();
-  const { role, isAdmin, isGestor } = usePermissions();
+  // Simulação de dados - em produção viria de hooks/API
+  const reservasFuturas: any[] = [];
+  const isLoadingReservas = false;
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-primary/10 via-secondary/5 to-accent/10 flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-primary border-t-transparent"></div>
-          <p className="mt-4 text-dark/70 font-semibold">Carregando...</p>
-        </div>
-      </div>
-    );
-  }
+  const stats = [
+    {
+      title: "Próximas Reservas",
+      value: reservasFuturas?.length || 0,
+      icon: Calendar,
+      color: "text-primary",
+      bgColor: "bg-primary/10",
+    },
+    {
+      title: "Minhas Turmas", 
+      value: "-",
+      icon: Users,
+      color: "text-secondary",
+      bgColor: "bg-secondary/10",
+    },
+    {
+      title: "Créditos Disponíveis",
+      value: "R$ 0,00",
+      icon: CreditCard,
+      color: "text-accent",
+      bgColor: "bg-accent/10",
+    },
+    {
+      title: "Próximo Jogo",
+      value: "Sem jogos",
+      subtitle: "Crie sua primeira reserva",
+      icon: Target,
+      color: "text-primary-foreground",
+      bgColor: "bg-gradient-to-br from-primary to-secondary",
+      isGradient: true,
+    },
+  ];
+
+  const quickActions = [
+    {
+      title: "Nova Reserva",
+      description: "Reserve uma quadra agora",
+      href: "/cliente/reservas/nova",
+      icon: Calendar,
+      color: "text-primary-foreground",
+      bgColor: "bg-gradient-to-br from-primary to-primary/80",
+      isGradient: true,
+    },
+    {
+      title: "Criar Turma",
+      description: "Monte seu time fixo",
+      href: "/cliente/turmas/criar",
+      icon: Users,
+      color: "text-secondary",
+      bgColor: "bg-secondary/10",
+    },
+    {
+      title: "Minhas Reservas",
+      description: "Gerencie suas reservas",
+      href: "/cliente/reservas",
+      icon: Calendar,
+      color: "text-primary",
+      bgColor: "bg-primary/10",
+    },
+    {
+      title: "Minhas Turmas",
+      description: "Gerencie seus times",
+      href: "/cliente/turmas",
+      icon: Users,
+      color: "text-secondary",
+      bgColor: "bg-secondary/10",
+    },
+    {
+      title: "Convites Criados",
+      description: "Gerencie seus convites",
+      href: "/cliente/convites",
+      icon: MessageSquare,
+      color: "text-accent",
+      bgColor: "bg-accent/10",
+    },
+    {
+      title: "Meu Saldo",
+      description: "Compre créditos",
+      href: "/cliente/creditos",
+      icon: CreditCard,
+      color: "text-accent",
+      bgColor: "bg-accent/10",
+    },
+  ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-        {/* Welcome Banner */}
-        <div className="bg-white rounded-xl p-8 mb-8 shadow-sm border border-gray-200">
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
-            Olá, {user?.profile?.nome_completo?.split(' ')[0]}! 👋
-          </h2>
-          <p className="text-gray-600">
-            Bem-vindo de volta ao seu dashboard. Pronto para jogar?
-          </p>
-        </div>
+    <div className="container-custom page-padding space-y-8">
+      {/* Welcome Banner */}
+      <Card className="border-0 shadow-soft">
+        <CardHeader>
+          <CardTitle className="heading-2">Dashboard do Cliente 👋</CardTitle>
+          <CardDescription className="body-large">
+            Pronto para organizar seu próximo jogo?
+          </CardDescription>
+        </CardHeader>
+      </Card>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          {/* Card de Créditos */}
-          <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                <CreditCard className="w-6 h-6 text-primary" />
+      {/* Statistics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {stats.map((stat, index) => (
+          <Card key={index} className={`card-interactive border-0 shadow-soft ${stat.isGradient ? stat.bgColor : ''}`}>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className={`w-12 h-12 rounded-xl ${stat.isGradient ? 'bg-white/20' : stat.bgColor} flex items-center justify-center`}>
+                  <stat.icon className={`w-6 h-6 ${stat.isGradient ? 'text-white' : stat.color}`} />
+                </div>
               </div>
-              <span className="text-xs font-semibold text-primary bg-primary/10 px-3 py-1 rounded-full">
-                Saldo
-              </span>
-            </div>
-            <p className="text-3xl font-bold text-gray-900 mb-1">
-              R$ {user?.profile?.saldo_creditos?.toFixed(2) || '0.00'}
-            </p>
-            <p className="text-sm text-gray-600">Créditos disponíveis</p>
-          </div>
-
-          {/* Card de Perfil */}
-          <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center">
-                <span className="text-2xl">👤</span>
-              </div>
-              {role && (
-                <span className="text-xs font-semibold text-gray-700 bg-gray-100 px-3 py-1 rounded-full uppercase">
-                  {role}
-                </span>
-              )}
-            </div>
-            <p className="text-lg font-semibold text-gray-900 mb-1">{user?.profile?.email}</p>
-            <p className="text-sm text-gray-600">CPF: {user?.profile?.cpf}</p>
-          </div>
-
-          {/* Card de Status */}
-          <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 rounded-lg bg-green-50 flex items-center justify-center">
-                <span className="text-2xl">✅</span>
-              </div>
-              <span className="text-xs font-semibold text-green-700 bg-green-100 px-3 py-1 rounded-full">
-                ATIVO
-              </span>
-            </div>
-            <p className="text-lg font-semibold text-gray-900 mb-1">Conta Ativa</p>
-            <p className="text-sm text-gray-600">Tudo funcionando perfeitamente!</p>
-          </div>
-        </div>
-
-        {/* Admin/Gestor Alert */}
-        {(isAdmin() || isGestor()) && (
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-6 mb-8">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
-                <Crown className="w-6 h-6 text-amber-600" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-gray-900 text-base mb-1">
-                  Acesso Especial: {role?.toUpperCase()}
-                </h3>
-                <p className="text-gray-600 text-sm mb-3">
-                  Você possui permissões especiais nesta plataforma.
+              <p className={`text-3xl font-bold mb-1 ${stat.isGradient ? 'text-white' : 'text-foreground'}`}>
+                {stat.value}
+              </p>
+              <p className={`text-sm ${stat.isGradient ? 'text-white/90' : 'text-muted-foreground'}`}>
+                {stat.title}
+              </p>
+              {stat.subtitle && (
+                <p className={`text-xs mt-1 ${stat.isGradient ? 'text-white/80' : 'text-muted-foreground'}`}>
+                  {stat.subtitle}
                 </p>
-                {isGestor() && (
-                  <Link href="/gestor">
-                    <button className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-lg transition-colors shadow-sm">
-                      Acessar Painel do Gestor →
-                    </button>
-                  </Link>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Ações Rápidas */}
-        <div className="bg-white rounded-lg p-8 shadow-sm border border-gray-200">
-          <h3 className="text-xl font-semibold text-gray-900 mb-6">
-            Ações Rápidas
-          </h3>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <button className="group bg-white hover:bg-gray-50 border-2 border-gray-200 hover:border-primary p-6 rounded-lg transition-all text-left">
-              <Calendar className="w-8 h-8 mb-3 text-primary" />
-              <h4 className="font-semibold text-base mb-1 text-gray-900">Nova Reserva</h4>
-              <p className="text-sm text-gray-600">Reserve uma quadra agora</p>
-            </button>
-
-            <button className="group bg-white hover:bg-gray-50 border-2 border-gray-200 hover:border-primary p-6 rounded-lg transition-all text-left">
-              <Users className="w-8 h-8 mb-3 text-primary" />
-              <h4 className="font-semibold text-base mb-1 text-gray-900">Minhas Turmas</h4>
-              <p className="text-sm text-gray-600">Gerencie seus grupos</p>
-            </button>
-
-            <button className="group bg-white hover:bg-gray-50 border-2 border-gray-200 hover:border-primary p-6 rounded-lg transition-all text-left">
-              <Trophy className="w-8 h-8 mb-3 text-primary" />
-              <h4 className="font-semibold text-base mb-1 text-gray-900">Meus Jogos</h4>
-              <p className="text-sm text-gray-600">Histórico de partidas</p>
-            </button>
-          </div>
-        </div>
+              )}
+            </CardContent>
+          </Card>
+        ))}
       </div>
+
+      {/* Quick Actions */}
+      <Card className="border-0 shadow-soft">
+        <CardHeader>
+          <CardTitle className="heading-3">Acesso Rápido</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {quickActions.map((action, index) => (
+              <Link key={index} href={action.href}>
+                <Card className={`card-interactive border-0 shadow-soft h-full ${action.isGradient ? action.bgColor : ''}`}>
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className={`w-12 h-12 rounded-xl ${action.isGradient ? 'bg-white/20' : action.bgColor} flex items-center justify-center`}>
+                        <action.icon className={`w-6 h-6 ${action.isGradient ? 'text-white' : action.color}`} />
+                      </div>
+                      {action.isGradient && <Plus className="w-5 h-5 ml-auto text-white" />}
+                    </div>
+                    <h4 className={`font-bold text-lg mb-1 ${action.isGradient ? 'text-white' : 'text-foreground'}`}>
+                      {action.title}
+                    </h4>
+                    <p className={`text-sm ${action.isGradient ? 'text-white/90' : 'text-muted-foreground'}`}>
+                      {action.description}
+                    </p>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Upcoming Reservations */}
+      <Card className="border-0 shadow-soft">
+        <CardHeader>
+          <CardTitle className="heading-3">Próximas Reservas</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {isLoadingReservas ? (
+            <div className="text-center py-8">
+              <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
+              <p className="text-muted-foreground">Carregando reservas...</p>
+            </div>
+          ) : reservasFuturas && reservasFuturas.length > 0 ? (
+            <div className="space-y-4">
+              {reservasFuturas.slice(0, 3).map((reserva, index) => (
+                <Link key={index} href={`/cliente/reservas/${reserva.id}`}>
+                  <Card className="card-interactive border-0 shadow-soft">
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-4">
+                        <div className="w-16 h-16 rounded-xl bg-primary/10 flex flex-col items-center justify-center flex-shrink-0">
+                          <p className="text-xs font-semibold text-primary">SEG</p>
+                          <p className="text-2xl font-bold text-primary">15</p>
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-bold text-foreground">Quadra Society 1</h4>
+                          <p className="text-sm text-muted-foreground">19:00 - 20:00</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-lg font-bold text-primary">R$ 80,00</p>
+                          <p className="text-xs text-muted-foreground">Confirmada</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <Calendar className="w-16 h-16 text-muted-foreground/20 mx-auto mb-4" />
+              <p className="text-muted-foreground font-semibold mb-2">Nenhuma reserva futura</p>
+              <p className="text-sm text-muted-foreground mb-6">Crie sua primeira reserva e comece a jogar!</p>
+              <Link href="/cliente/reservas/nova">
+                <Button>Criar Nova Reserva</Button>
+              </Link>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

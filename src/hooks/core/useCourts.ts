@@ -113,7 +113,7 @@ export function useCreateSchedule() {
   return useMutation({
     mutationFn: (data: ScheduleFormData) => schedulesService.create(data),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['schedules', variables.court_id] });
+      queryClient.invalidateQueries({ queryKey: ['schedules', variables.quadra_id] });
       toast({
         title: 'Horário adicionado!',
         description: 'O horário foi configurado com sucesso.',
@@ -196,7 +196,7 @@ export function useCreateCourtBlock() {
     mutationFn: (data: CourtBlockFormData & { created_by?: string }) =>
       courtBlocksService.create(data),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['court_blocks', variables.court_id] });
+      queryClient.invalidateQueries({ queryKey: ['court_blocks', variables.quadra_id] });
       toast({
         title: 'Bloqueio criado!',
         description: 'O horário foi bloqueado com sucesso.',

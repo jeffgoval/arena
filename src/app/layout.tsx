@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import "./globals.css";
 import { QueryProvider } from '@/components/providers/QueryProvider';
 import { Toaster } from '@/components/ui/toaster';
+import { SessionGuard } from '@/components/auth/SessionGuard';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -24,6 +25,7 @@ export default function RootLayout({
     <html lang="pt-BR">
       <body className={inter.className}>
         <QueryProvider>
+          <SessionGuard />
           {children}
           <Toaster />
         </QueryProvider>

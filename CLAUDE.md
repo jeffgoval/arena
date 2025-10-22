@@ -4,137 +4,57 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Arena Dona Santa** is a comprehensive web platform for managing sports arena reservations in Governador Valadares, Brazil. The project is currently in its initial phase with a static landing page deployed, with plans to expand into a full-featured reservation system.
+**Arena Dona Santa** is a comprehensive sports arena reservation platform for Governador Valadares, Brazil. The project has **transitioned from Phase 1 (landing page) to Phase 2 (full application)** with Supabase authentication, dashboard pages, and the CORE module implementation underway.
 
-### Current Implementation (Phase 1)
+### Current Status (Phase 2 - Active Development)
 
-**Landing Page Features:**
-- Static Next.js site with SSG (Static Site Generation)
-- Marketing page showcasing arena facilities
-- Sections: Hero, Infrastructure, Academia do Galo, Day Use, Sponsors, FAQ, CTA
-- Native CSS animations with Intersection Observer API
-- Mobile-first responsive design
-- Deployed on Cloudflare Pages
+**Implemented Features:**
+- Landing page with modular components (Hero, Infrastructure, Academia do Galo, Day Use, etc.)
+- Supabase authentication system with SSR
+- Route-based authentication middleware
+- Dashboard layouts for Cliente (Customer) and Gestor (Manager)
+- Courts (Quadras) management with schedules and blocks
+- Teams (Turmas) management
+- Reservations (Reservas) system with cost-sharing (rateio) and invitations
+- Public invitation acceptance flow
+- shadcn/ui component library integration
+- React Query (TanStack Query) for data fetching
+- Zod validation schemas
+- Custom form components (CPF, CEP, WhatsApp)
 
-### Planned Full Application (Phase 2+)
+**Architecture:**
+- Next.js 15 App Router with SSR (no longer static export)
+- TypeScript with strict typing
+- Modular component architecture
+- Service layer pattern with React Query hooks
+- Row Level Security (RLS) on Supabase
 
-The complete system will feature:
-1. **CORE Module** - Reservation system with autonomous teams, flexible cost sharing, and public invitations
-2. **Escolinha Module** - Sports school management (Academia do Galo)
-3. **Day Use Module** - Day-use package management with pool and bar access
+### Tech Stack
 
-## Tech Stack
-
-**Current (Landing Page):**
-- Next.js 15 (App Router, Static Export)
+**Core Technologies:**
+- Next.js 15 (App Router, SSR/SSG)
 - TypeScript
 - Tailwind CSS
-- Lucide React (icons)
-- Native CSS animations + Intersection Observer API
-
-**Planned (Full Application):**
-- Next.js 15+ (App Router with SSR)
-- shadcn/ui components
-- React Query (TanStack Query)
+- Supabase (Auth, Database, Storage)
+- React Query (TanStack Query v5)
 - Zod validation
 - React Hook Form
-- Supabase (Auth, Database, Storage)
+- shadcn/ui components
+- Lucide React icons
+- date-fns (date utilities)
+
+**Future Integrations:**
 - Asaas payment gateway
 - WhatsApp Business API
 - ViaCEP (Brazilian postal code API)
 
 **Deployment:**
-- Cloudflare Pages (static export)
-- Output directory: `out/`
 - Node.js version: 20 (configured via `.node-version`)
-
-## Current Architecture
-
-### File Structure
-```
-arena-dona-santa/
-├── app/
-│   ├── globals.css          # Global styles and animations
-│   ├── layout.tsx            # Root layout
-│   └── page.tsx              # Landing page
-├── components/
-│   ├── AnimationObserver.tsx # Scroll animations controller
-│   └── Testimonials.tsx      # Auto-rotating testimonials slider
-├── lib/
-│   └── utils.ts              # Utilities (cn helper)
-├── public/
-│   └── hero-arena.jpg        # Hero background image
-├── SETUP/
-│   ├── PRD.md                # Product Requirements Document (Portuguese)
-│   ├── PROMPT.md             # Full app technical specs (Portuguese)
-│   └── PROMPT_LANDING.md     # Landing page specs (Portuguese)
-└── CLAUDE.md                 # This file
-```
-
-### Key Design Decisions
-
-**Performance Optimizations:**
-- No heavy animation libraries (Framer Motion, GSAP)
-- CSS animations with GPU acceleration (transform/opacity only)
-- Intersection Observer for scroll-triggered animations
-- Lazy loading with Next.js Image component
-- Minimal parallax effect (5% movement on hero)
-
-**Color Palette:**
-- Primary (Green): `#2D9F5D` - Sports theme
-- Secondary (Blue): `#4F9CFF` - Trust/energy
-- Accent (Orange): `#FF6B35` - Call-to-action
-- Dark: `#1A1A1A`
-- Light: `#FFFFFF`
-- Gray: `#F5F5F5`
-
-**Responsive Breakpoints:**
-- Mobile: 320px - 767px
-- Tablet: 768px - 1023px
-- Desktop: 1024px+
-
-## Future Architecture (Full Application)
-
-### Planned Route Groups
-- `(auth)` - Authentication routes (login, registration)
-- `(dashboard)` - Protected routes for clients and managers
-- `(public)` - Public routes (invitations, reservations)
-
-### Planned Component Organization
-- `components/ui/` - shadcn/ui components
-- `components/modules/core/` - Reservations, teams, invitations
-- `components/modules/escolinha/` - Classes, students, attendance
-- `components/modules/dayuse/` - Packages, check-in
-- `components/shared/` - Shared components (Header, Sidebar, Calendar)
-
-### Planned Critical Features
-
-**Autonomous Team System:**
-- Teams created independently of reservations (reusable across multiple games)
-- Members marked as "fixed" (always included) or "variable"
-- Multiple teams per organizer
-- One team per reservation
-
-**Flexible Cost Sharing (Rateio):**
-- Two modes: Percentage (must sum to 100%) or Fixed Value (sum ≤ reservation total)
-- Configuration per reservation (not per team)
-- Visual progress indicators
-- "Split Equally" helper button
-
-**Public Invitation System:**
-- Unique links for each invitation batch
-- Multiple batches per reservation
-- Landing page for invitation acceptance
-- Simplified registration for invitees
-- Invitee panel with credit purchase
-
-**User Roles:**
-1. **Cliente (Customer)** - Creates reservations, manages teams, creates invitations
-2. **Gestor (Manager)** - Full system access, court management, reports
+- Supports SSR (no longer static export)
 
 ## Development Commands
 
-### Current Development (Landing Page)
+### Essential Commands
 
 ```bash
 # Install dependencies
@@ -143,175 +63,384 @@ npm install
 # Run development server (localhost:3000)
 npm run dev
 
-# Build static export for Cloudflare Pages
+# Build for production
 npm run build
-# Output will be in /out directory
 
 # Start production server (after build)
 npm start
 
 # Lint code
 npm run lint
+
+# Type check
+npx tsc --noEmit
 ```
 
-### Future Development (Full Application)
+### Supabase Commands
 
-When implementing the full application with Supabase:
+**IMPORTANT:** Supabase is configured but migrations are managed manually. The `supabase/migrations` directory exists but may not contain all schema definitions. The database schema is maintained remotely.
 
 ```bash
-# Initialize Supabase locally
-supabase init
-supabase start
+# Check Supabase status
+supabase status
 
-# Generate database types
-npx supabase gen types typescript --local > src/types/database.types.ts
+# Pull remote schema (if needed)
+supabase db pull
 
-# Apply migrations
-supabase db push
+# Generate TypeScript types from database
+npx supabase gen types typescript --linked > src/types/database.types.ts
 
-# Reset database
-supabase db reset
+# Execute SQL on remote database
+supabase db execute --file path/to/file.sql
 
-# Generate new migration
+# Create new migration (use carefully)
 supabase migration new <migration_name>
-
-# Add shadcn/ui components
-npx shadcn-ui@latest add <component-name>
 ```
 
-## Animation System (Current Implementation)
+### Adding shadcn/ui Components
 
-The landing page uses a custom animation system optimized for performance:
+```bash
+# Add specific component
+npx shadcn@latest add <component-name>
 
-**AnimationObserver Component** (`components/AnimationObserver.tsx`):
-- Client-side component using Intersection Observer API
-- Triggers CSS animations when elements enter viewport
-- Handles parallax effect on hero section (5% movement)
-- Animation classes: `.fade-in`, `.slide-in-left`, `.slide-in-right`
+# Example: add dialog
+npx shadcn@latest add dialog
+```
 
-**CSS Animations** (`app/globals.css`):
-- GPU-accelerated (uses only `transform` and `opacity`)
-- Timing: 0.8s ease-out
-- Applied via data-visible attribute toggle
+## Architecture Overview
 
-**Testimonials Slider** (`components/Testimonials.tsx`):
-- Auto-rotating every 5 seconds
-- Smooth fade transitions
-- Manual navigation with previous/next buttons
+### Directory Structure
 
-## Build Configuration
+```
+arena-dona-santa/
+├── src/
+│   ├── app/                           # Next.js App Router
+│   │   ├── (auth)/                    # Auth route group
+│   │   │   ├── auth/page.tsx          # Unified auth page (login/register tabs)
+│   │   │   └── layout.tsx             # Auth layout
+│   │   ├── (dashboard)/               # Protected route group
+│   │   │   ├── cliente/               # Customer dashboard
+│   │   │   │   ├── page.tsx
+│   │   │   │   ├── reservas/          # Reservations module
+│   │   │   │   └── turmas/            # Teams module
+│   │   │   ├── gestor/                # Manager dashboard
+│   │   │   │   ├── page.tsx
+│   │   │   │   └── quadras/           # Courts management
+│   │   │   └── layout.tsx             # Dashboard layout
+│   │   ├── (public)/                  # Public route group
+│   │   │   ├── convite/[token]/       # Invitation acceptance
+│   │   │   └── layout.tsx             # Public layout
+│   │   ├── page.tsx                   # Landing page
+│   │   ├── layout.tsx                 # Root layout
+│   │   └── globals.css                # Global styles
+│   ├── components/
+│   │   ├── ui/                        # shadcn/ui components
+│   │   ├── landing/                   # Landing page components
+│   │   ├── modules/core/              # Business logic components
+│   │   │   ├── quadras/               # Courts forms
+│   │   │   └── turmas/                # Teams forms
+│   │   ├── shared/forms/              # Reusable form inputs
+│   │   └── providers/                 # React context providers
+│   ├── hooks/
+│   │   ├── auth/                      # Auth hooks (useUser)
+│   │   ├── core/                      # Business hooks with React Query
+│   │   └── use-toast.ts               # Toast notifications
+│   ├── lib/
+│   │   ├── supabase/                  # Supabase clients
+│   │   │   ├── client.ts              # Client-side Supabase
+│   │   │   └── server.ts              # Server-side Supabase
+│   │   ├── validations/               # Zod schemas
+│   │   ├── utils/                     # Utility functions
+│   │   │   ├── cpf.ts                 # CPF validation/formatting
+│   │   │   ├── phone.ts               # WhatsApp formatting
+│   │   │   └── cep.ts                 # CEP validation
+│   │   └── utils.ts                   # cn() helper
+│   ├── services/
+│   │   └── core/                      # API service layer
+│   │       └── courts.service.ts      # Courts CRUD operations
+│   └── types/
+│       ├── *.types.ts                 # TypeScript type definitions
+│       └── database.types.ts          # Generated Supabase types (if exists)
+├── middleware.ts                      # Auth middleware (route protection)
+├── public/                            # Static assets
+├── supabase/                          # Supabase config
+├── docs/                              # Project documentation
+├── SETUP/                             # Setup guides and specifications
+│   ├── PRD.md                         # Product Requirements (Portuguese)
+│   └── PROMPT.md                      # Technical specs (Portuguese)
+└── CLAUDE.md                          # This file
+```
 
-**Next.js Config** (`next.config.js`):
-- `output: 'export'` - Static HTML export for Cloudflare Pages
-- `images.unoptimized: true` - Required for static export
-- `eslint.ignoreDuringBuilds: true` - Allows flexible linting
-- `typescript.ignoreBuildErrors: false` - Enforces type safety
+### Key Architecture Patterns
 
-**Tailwind Config** (`tailwind.config.ts`):
-- Content paths: `./pages`, `./components`, `./app`
-- Custom colors defined (see Color Palette above)
-- Font family: Inter
+**Service Layer Pattern:**
+- Services in `src/services/` handle all Supabase interactions
+- Services export object with methods (e.g., `courtsService.getAll()`)
+- Services are called by React Query hooks, not directly by components
 
-## Deployment (Cloudflare Pages)
+**React Query Hook Pattern:**
+- Hooks in `src/hooks/core/` wrap services with React Query
+- Query hooks return `useQuery()` results
+- Mutation hooks return `useMutation()` with automatic cache invalidation
+- Hooks handle toast notifications for success/error states
 
-See `DEPLOY.md` for complete deployment guide.
+**Example Flow:**
+```
+Component → Hook (useCreateCourt) → Service (courtsService.create) → Supabase
+```
 
-**Build Settings:**
-- Framework preset: Next.js (Static HTML Export)
-- Build command: `npm run build`
-- Build output directory: `out`
-- Node.js version: 20 (via `.node-version` file)
+**Route Groups:**
+- `(auth)` - Authentication pages (login/register)
+- `(dashboard)` - Protected pages requiring authentication
+- `(public)` - Public pages (invitations, landing)
 
-**Automatic Deployment:**
-- Pushes to `main` branch trigger automatic builds
-- Preview URLs generated for all commits
-- Edge-optimized global CDN delivery
+**Authentication:**
+- Middleware protects `/cliente/*` and `/gestor/*` routes
+- Redirects unauthenticated users to `/auth`
+- Redirects authenticated users from `/auth` to `/cliente`
+- Uses Supabase SSR with cookie-based sessions
 
-## Future Database Structure (Planned)
+## Critical Implementation Details
 
-When implementing the full application with Supabase:
+### Authentication System
 
-**CORE Module Tables:**
-- `users` - User accounts (customers, managers)
-- `courts` - Sports courts (Society, Beach Tennis, Volleyball, Footvolley)
-- `schedules` - Time slots and pricing
-- `reservations` - Court reservations
-- `teams` - Autonomous teams (reusable)
-- `team_members` - Team members (fixed/variable status)
-- `reservation_participants` - Participants per reservation
-- `invitations` - Public invitation batches
-- `invitation_acceptances` - Accepted invitations
-- `payments` - Payment records (Asaas integration)
-- `transactions` - Financial history
-- `reviews` - Game reviews
-- `referrals` - Referral system
+**Middleware** (`middleware.ts`):
+- Checks authentication for protected routes
+- Uses `@supabase/ssr` for server-side auth
+- Matches `/cliente/:path*`, `/gestor/:path*`, `/auth`
 
-**Escolinha Module Tables:**
-- `classes` - Sports classes (Academia do Galo)
-- `students` - Enrolled students
-- `attendance` - Class attendance records
-- `teachers` - Teacher profiles and commissions
+**Supabase Clients:**
+- **Client-side** (`lib/supabase/client.ts`): For client components
+- **Server-side** (`lib/supabase/server.ts`): For server components and actions
 
-**Day Use Module Tables:**
-- `packages` - Day use packages (pool + bar access)
-- `addons` - Additional items/services
-- `checkins` - Check-in records
+**User Hook** (`hooks/auth/useUser.ts`):
+- Returns `{ data, isLoading, error }` with user + profile
+- Profile includes: `nome_completo`, `cpf`, `role`, `saldo_creditos`, etc.
+- Cached for 5 minutes
 
-**Important:** All tables will use Supabase Row Level Security (RLS) policies to enforce access control.
+### Service Layer
 
-## Future Implementation Details (Planned)
+**Pattern:**
+```typescript
+// Service (src/services/core/courts.service.ts)
+export const courtsService = {
+  async getAll(): Promise<Court[]> {
+    const { data, error } = await supabase
+      .from('quadras')
+      .select('*')
+      .order('nome');
 
-**User Registration:**
-- CPF and RG must be unique
-- ViaCEP API integration for address auto-fill
-- Auto-filled fields: logradouro, bairro, cidade, estado
+    if (error) throw error;
+    return data || [];
+  },
+};
 
-**Reservation Types:**
-1. **Avulsa** - One-time reservation
-2. **Mensalista** - Monthly recurring (same day/time weekly for a month)
-3. **Recorrente** - Custom recurring pattern
+// Hook (src/hooks/core/useCourts.ts)
+export function useCourts() {
+  return useQuery({
+    queryKey: ['courts'],
+    queryFn: courtsService.getAll,
+  });
+}
 
-**Payment Methods:**
-- Pix (via Asaas)
-- Credit/Debit card (via Asaas)
-- Accumulated credits
-- Security deposit (caução) with pre-authorization and partial capture
+// Component usage
+const { data: courts, isLoading } = useCourts();
+```
 
-**WhatsApp Notifications:**
-- Automatic reminders (45min and 10min before game)
-- Invitation acceptance notifications
-- Post-game review requests
-- Uses WhatsApp Business API templates
+### Validation Schemas
 
-## Future File Organization (Planned)
+**Pattern** (`lib/validations/*.schema.ts`):
+```typescript
+import { z } from 'zod';
 
-When implementing the full application:
-- **Validation schemas**: `src/lib/validations/*.schema.ts` (using Zod)
-- **Custom hooks**: `src/hooks/use*.ts`
-- **Services**: `src/services/<module>/*.service.ts`
-- **Types**: `src/types/*.types.ts`
-- **Utilities**: `src/lib/utils/*.ts` (currency, date, CPF validation)
+export const courtSchema = z.object({
+  nome: z.string().min(3, 'Nome deve ter no mínimo 3 caracteres'),
+  tipo: z.enum(['society', 'beach_tennis', 'volei', 'futvolei']),
+  // ...
+});
+
+export type CourtFormData = z.infer<typeof courtSchema>;
+```
+
+### Custom Form Components
+
+**CPF Input** (`components/shared/forms/InputCPF.tsx`):
+- Auto-formats as user types (###.###.###-##)
+- Validates CPF algorithm
+
+**CEP Input** (`components/shared/forms/InputCEP.tsx`):
+- Auto-formats (#####-###)
+- Integrates with ViaCEP API to auto-fill address
+
+**WhatsApp Input** (`components/shared/forms/InputWhatsApp.tsx`):
+- Auto-formats (##) #####-####
+- Validates Brazilian phone format
+
+### Database Tables (Current Schema)
+
+**Core Tables:**
+- `users` - User accounts and profiles
+- `quadras` - Sports courts
+- `horarios` - Court schedules (time slots + pricing)
+- `court_blocks` - Court unavailability blocks
+- `turmas` - Teams (autonomous, reusable)
+- `turma_membros` - Team members
+- `reservas` - Court reservations
+- `reserva_participantes` - Reservation participants
+- `rateios` - Cost sharing configurations
+- `convites` - Invitation batches
+- `aceites_convite` - Invitation acceptances
+
+**Important:** Database migrations are not fully tracked in `supabase/migrations`. Reference the remote database schema or docs for complete structure.
+
+## Important Configuration
+
+### Next.js Config
+
+**Key Settings:**
+- **NO** `output: 'export'` (removed to support SSR)
+- `images.unoptimized: true` (for Supabase images)
+- `experimental.serverActions` enabled
+- `typescript.ignoreBuildErrors: false` (enforces type safety)
+
+### Environment Variables
+
+Required in `.env.local` (see `.env.example`):
+```
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+NEXT_PUBLIC_APP_URL=
+```
+
+### Color Palette
+
+Defined in `tailwind.config.ts`:
+- Primary (Green): `#2D9F5D` - Sports theme
+- Secondary (Blue): `#4F9CFF` - Trust/energy
+- Accent (Orange): `#FF6B35` - Call-to-action
+
+## Development Guidelines
+
+### When Creating New Features
+
+1. **Define Types** - Create type definitions in `src/types/*.types.ts`
+2. **Create Validation Schema** - Add Zod schema in `src/lib/validations/*.schema.ts`
+3. **Implement Service** - Add CRUD methods to service in `src/services/`
+4. **Create Hooks** - Wrap service with React Query in `src/hooks/core/`
+5. **Build Components** - Create forms/UI in `src/components/modules/`
+6. **Add Routes** - Create pages in appropriate route group
+
+### When Working with Forms
+
+- Use React Hook Form with Zod resolver
+- Use shadcn/ui Form components
+- Custom inputs available: InputCPF, InputCEP, InputWhatsApp
+- Always handle loading and error states
+- Show toast notifications on success/error
+
+### When Working with Data
+
+- **NEVER** call Supabase directly from components
+- Always use service layer methods
+- Always wrap services with React Query hooks
+- Use proper query keys for caching
+- Invalidate queries after mutations
+
+### Authentication Best Practices
+
+- Use `useUser()` hook in client components
+- Use `createClient()` from `lib/supabase/server.ts` in server components
+- Check `user.profile.role` for authorization
+- Middleware handles route protection automatically
+
+## Landing Page
+
+**Current Components:**
+- `Hero` - Hero section with parallax
+- `Infrastructure` - Arena facilities showcase
+- `Modalidades` - Sports modalities
+- `AcademiaGalo` - Academia do Galo section
+- `Escolinha` - Sports school info
+- `DayUse` - Day use packages
+- `Patrocinadores` - Sponsors section
+- `Features` - Platform features
+- `Diferenciais` - Differentiators
+- `Contact` - Contact form
+- `FinalCTA` - Final call-to-action
+- `Footer` - Footer with links
+
+**Animation System:**
+- `AnimationObserver` component handles scroll animations
+- CSS animations with GPU acceleration (transform/opacity only)
+- Intersection Observer API for scroll triggers
+
+## Debugging Tips
+
+### Check Authentication State
+
+```typescript
+// In client component
+const { data: user, isLoading } = useUser();
+console.log('User:', user?.profile);
+
+// In server component
+const supabase = await createClient();
+const { data: { user } } = await supabase.auth.getUser();
+```
+
+### Test Database Connection
+
+Use helper scripts in project root:
+- `inspect-db.mjs` - Inspect database schema
+- `test-auth-flow.mjs` - Test authentication flow
+- `check-trigger.mjs` - Check database triggers
+
+### Common Issues
+
+**"User not authenticated":**
+- Check `.env.local` has correct Supabase keys
+- Verify middleware is running
+- Check cookie storage in browser
+
+**TypeScript errors:**
+- Run `npm run lint` to see all errors
+- Ensure types are imported from correct locations
+- Regenerate database types if schema changed
+
+**Build errors:**
+- Clear `.next` folder: `rd /s /q .next` (Windows) or `rm -rf .next` (Unix)
+- Reinstall dependencies: `npm install`
+- Check for missing environment variables
 
 ## Important Reference Files
 
-- `README.md` - Landing page documentation and deployment guide
-- `DEPLOY.md` - Cloudflare Pages deployment instructions
-- `SETUP/PRD.md` - Complete Product Requirements Document (Portuguese)
-- `SETUP/PROMPT.md` - Full application technical specifications (Portuguese)
-- `SETUP/PROMPT_LANDING.md` - Landing page specifications (Portuguese)
+- `README.md` - Project overview and setup
+- `SETUP/PRD.md` - Complete Product Requirements (Portuguese)
+- `SETUP/PROMPT.md` - Full technical specifications (Portuguese)
+- `docs/AUTH_SUPABASE.md` - Authentication setup guide
+- `docs/PLANEJAMENTO.md` - Development planning
+- `docs/PROGRESSO.md` - Development progress tracking
+- `.env.example` - Environment variables template
 
-## Development Notes
+## Future Modules (Not Yet Implemented)
 
-**When working on the current landing page:**
-- Keep performance optimizations in mind (no heavy libraries)
-- Use only CSS animations with GPU acceleration
-- Test on mobile devices (mobile-first approach)
-- Maintain accessibility standards (contrast, semantic HTML)
-- Optimize images before adding to `public/`
+### Escolinha Module
+Sports school management for Academia do Galo (classes, students, attendance, teachers)
 
-**When transitioning to full application:**
-1. Remove `output: 'export'` from `next.config.js`
-2. Install additional dependencies: shadcn/ui, Supabase, React Query, Zod, React Hook Form
-3. Set up Supabase project and configure environment variables
-4. Implement database migrations from `SETUP/PROMPT.md`
-5. Follow the implementation priority order from PRD
+### Day Use Module
+Day-use package management with pool and bar access (packages, addons, check-ins)
+
+### Payment Integration
+Asaas payment gateway (Pix, credit/debit cards, security deposits)
+
+### WhatsApp Notifications
+WhatsApp Business API integration (reminders, confirmations, reviews)
+
+## Notes
+
+- Project is in **active development** - Phase 2 implementation
+- Landing page is complete and can coexist with dashboard
+- Database schema is maintained remotely (Supabase hosted)
+- All user-facing text is in Portuguese (Brazilian)
+- Focus is on CORE module (reservations, teams, invitations)

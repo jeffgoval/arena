@@ -3,13 +3,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Menu, X } from "lucide-react";
+import { Menu, X, LogIn } from "lucide-react";
 import { useState, useTransition } from "react";
+import { Button } from "@/components/ui/button";
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isPending, startTransition] = useTransition();
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md shadow-sm border-b border-gray/20">
@@ -54,27 +55,26 @@ export function Header() {
             >
               Contato
             </a>
-          </nav>
 
-          {/* Action Buttons */}
-          <div className="flex items-center gap-3">
-            <button
+            {/* Botão Entrar */}
+            <Button 
               onClick={() => startTransition(() => router.push("/auth"))}
               disabled={isPending}
-              className="px-6 py-2.5 bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white text-sm font-semibold rounded-lg shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="gap-2"
             >
-              {isPending ? "Carregando..." : "Entrar / Cadastrar"}
-            </button>
+              <LogIn className="w-4 h-4" />
+              {isPending ? "Carregando..." : "Entrar"}
+            </Button>
+          </nav>
 
-            {/* Mobile Menu Button */}
-            <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="md:hidden p-2 text-dark hover:text-primary transition-colors"
-              aria-label="Toggle menu"
-            >
-              {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
-          </div>
+          {/* Mobile Menu Button */}
+          <button
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="md:hidden p-2 text-dark hover:text-primary transition-colors"
+            aria-label="Toggle menu"
+          >
+            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
         </div>
 
         {/* Mobile Menu */}
@@ -102,16 +102,19 @@ export function Header() {
               >
                 Contato
               </a>
-              <button
+
+              {/* Botão Entrar Mobile */}
+              <Button 
                 onClick={() => {
                   setIsMenuOpen(false);
                   startTransition(() => router.push("/auth"));
                 }}
                 disabled={isPending}
-                className="w-full text-left px-4 py-2 text-sm font-semibold text-primary disabled:opacity-50"
+                className="w-full gap-2 mt-2"
               >
-                Entrar / Cadastrar
-              </button>
+                <LogIn className="w-4 h-4" />
+                {isPending ? "Carregando..." : "Entrar"}
+              </Button>
             </nav>
           </div>
         )}
