@@ -2,11 +2,14 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Menu, X } from "lucide-react";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const router = useRouter();
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md shadow-sm border-b border-gray/20">
@@ -55,16 +58,20 @@ export function Header() {
 
           {/* Action Buttons */}
           <div className="flex items-center gap-3">
-            <Link href="/login" className="hidden sm:block">
-              <button className="px-4 py-2 text-sm font-semibold text-primary hover:text-primary/80 transition-colors">
-                Entrar
-              </button>
-            </Link>
-            <Link href="/cadastro">
-              <button className="px-6 py-2.5 bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white text-sm font-semibold rounded-lg shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105">
-                Criar Conta
-              </button>
-            </Link>
+            <button
+              onClick={() => startTransition(() => router.push("/login"))}
+              disabled={isPending}
+              className="hidden sm:block px-4 py-2 text-sm font-semibold text-primary hover:text-primary/80 transition-colors disabled:opacity-50"
+            >
+              Entrar
+            </button>
+            <button
+              onClick={() => startTransition(() => router.push("/cadastro"))}
+              disabled={isPending}
+              className="px-6 py-2.5 bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white text-sm font-semibold rounded-lg shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isPending ? "Carregando..." : "Criar Conta"}
+            </button>
 
             {/* Mobile Menu Button */}
             <button
@@ -102,11 +109,16 @@ export function Header() {
               >
                 Contato
               </a>
-              <Link href="/login" className="sm:hidden">
-                <button className="w-full text-left px-4 py-2 text-sm font-semibold text-primary">
-                  Entrar
-                </button>
-              </Link>
+              <button
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  startTransition(() => router.push("/login"));
+                }}
+                disabled={isPending}
+                className="sm:hidden w-full text-left px-4 py-2 text-sm font-semibold text-primary disabled:opacity-50"
+              >
+                Entrar
+              </button>
             </nav>
           </div>
         )}

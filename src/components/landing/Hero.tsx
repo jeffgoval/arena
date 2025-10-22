@@ -1,8 +1,13 @@
+"use client";
+
 import Image from "next/image";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { MapPin, Users, Sparkles, Waves } from "lucide-react";
+import { useTransition } from "react";
 
 export function Hero() {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       <div className="hero-bg absolute inset-0 z-0">
@@ -37,12 +42,14 @@ export function Hero() {
         </p>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto mb-16 fade-in">
-          <Link href="/login" className="group">
-            <button className="bg-primary hover:bg-primary/90 text-white px-6 py-4 rounded-xl text-base font-semibold shadow-lg w-full transition-all duration-300 group-hover:scale-105 group-hover:shadow-xl flex items-center justify-center gap-2">
-              <Sparkles className="w-5 h-5" />
-              Reservar Quadra
-            </button>
-          </Link>
+          <button
+            onClick={() => startTransition(() => router.push("/login"))}
+            disabled={isPending}
+            className="bg-primary hover:bg-primary/90 text-white px-6 py-4 rounded-xl text-base font-semibold shadow-lg w-full transition-all duration-300 hover:scale-105 hover:shadow-xl flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Sparkles className="w-5 h-5" />
+            {isPending ? "Carregando..." : "Reservar Quadra"}
+          </button>
           <a href="#academia-galo" className="group">
             <button className="bg-yellow-500 hover:bg-yellow-600 text-dark px-6 py-4 rounded-xl text-base font-bold shadow-lg w-full transition-all duration-300 group-hover:scale-105 group-hover:shadow-xl flex items-center justify-center gap-2">
               <Users className="w-5 h-5" />
