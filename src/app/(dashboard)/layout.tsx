@@ -7,6 +7,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Loader2, LayoutDashboard, Users, Calendar, Settings, LogOut, Building2, Home, Trophy, CreditCard, Crown } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 export default function DashboardLayout({
   children,
 }: {
