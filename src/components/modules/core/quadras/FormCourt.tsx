@@ -39,10 +39,10 @@ export function FormCourt({ court, onSubmit, onCancel }: FormCourtProps) {
           ativa: court.ativa,
         }
       : {
-          capacidade_maxima: 14,
-          ativa: true,
+          capacidade_maxima: 14 as number,
+          ativa: true as boolean,
         },
-  });
+  } as any);
 
   const tipo = watch('tipo');
   const ativa = watch('ativa');

@@ -168,7 +168,7 @@ export default function HorariosPage() {
                           <tr
                             key={schedule.id}
                             className={`border-b hover:bg-gray-50 ${
-                              !schedule.ativa ? 'opacity-50' : ''
+                              !schedule.ativo ? 'opacity-50' : ''
                             }`}
                           >
                             <td className="py-3 px-3 font-medium">
@@ -182,10 +182,10 @@ export default function HorariosPage() {
                             </td>
                             <td className="py-3 px-3 text-center">
                               <Badge
-                                variant={schedule.ativa ? 'default' : 'secondary'}
+                                variant={schedule.ativo ? 'default' : 'secondary'}
                                 className="text-xs"
                               >
-                                {schedule.ativa ? 'Ativo' : 'Inativo'}
+                                {schedule.ativo ? 'Ativo' : 'Inativo'}
                               </Badge>
                             </td>
                             <td className="py-3 px-3">

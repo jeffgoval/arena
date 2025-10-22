@@ -7,7 +7,7 @@ export const courtSchema = z.object({
     .max(100, 'Nome muito longo'),
 
   tipo: z.enum(['society', 'beach_tennis', 'volei', 'futvolei', 'futsal'], {
-    errorMap: () => ({ message: 'Tipo de quadra inválido' }),
+    message: 'Tipo de quadra inválido',
   }),
 
   descricao: z.string()

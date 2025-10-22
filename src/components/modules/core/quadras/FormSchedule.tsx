@@ -38,16 +38,16 @@ export function FormSchedule({ courtId, schedule, onSubmit, onCancel }: FormSche
           horario_fim: schedule.horario_fim,
           valor_avulsa: schedule.valor_avulsa,
           valor_mensalista: schedule.valor_mensalista,
-          ativa: schedule.ativa,
+          ativo: schedule.ativo,
         }
       : {
           court_id: courtId,
-          ativa: true,
+          ativo: true as boolean,
         },
-  });
+  } as any);
 
   const diaSemana = watch('dia_semana');
-  const ativa = watch('ativa');
+  const ativo = watch('ativo');
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -132,13 +132,13 @@ export function FormSchedule({ courtId, schedule, onSubmit, onCancel }: FormSche
         </div>
       </div>
 
-      {/* Ativa */}
+      {/* Ativo */}
       <div className="flex items-center justify-between">
-        <Label htmlFor="ativa">Horário Ativo</Label>
+        <Label htmlFor="ativo">Horário Ativo</Label>
         <Switch
-          id="ativa"
-          checked={ativa}
-          onCheckedChange={(checked) => setValue('ativa', checked)}
+          id="ativo"
+          checked={ativo}
+          onCheckedChange={(checked) => setValue('ativo', checked)}
         />
       </div>
 

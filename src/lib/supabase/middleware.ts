@@ -51,7 +51,7 @@ export async function updateSession(request: NextRequest) {
   }
 
   // Proteger rotas de admin (apenas role: admin)
-  if (request.nextUrl.pathname.startsWith('/admin')) {
+  if (request.nextUrl.pathname.startsWith('/admin') && user) {
     const { data: profile } = await supabase
       .from('users')
       .select('role')
@@ -65,7 +65,7 @@ export async function updateSession(request: NextRequest) {
   }
 
   // Proteger rotas de gestor (apenas role: gestor ou admin)
-  if (request.nextUrl.pathname.startsWith('/gestor')) {
+  if (request.nextUrl.pathname.startsWith('/gestor') && user) {
     const { data: profile } = await supabase
       .from('users')
       .select('role')
