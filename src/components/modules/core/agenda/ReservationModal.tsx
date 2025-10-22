@@ -109,7 +109,7 @@ export function ReservationModal({
       });
     }
     setEditMode(mode === "create" || mode === "edit");
-  }, [reservation, mode, courts, timeSlots]);
+  }, [reservation, mode]); // Removidas as dependências courts e timeSlots
 
   const handleSave = () => {
     if (onSave) {
