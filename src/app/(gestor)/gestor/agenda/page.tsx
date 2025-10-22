@@ -213,14 +213,7 @@ export default function AgendaPage() {
   };
 
   const handleNewReservation = () => {
-    setSelectedReservation({
-      court: courts[0],
-      day: currentDate.getDay(),
-      time: timeSlots[0],
-      organizer: "",
-      participants: 1,
-      status: "pendente"
-    });
+    setSelectedReservation(null); // Limpar reserva selecionada
     setModalMode("create");
     setIsModalOpen(true);
   };

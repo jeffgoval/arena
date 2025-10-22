@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -78,6 +78,38 @@ export function ReservationModal({
   });
 
   const [editMode, setEditMode] = useState(mode === "create" || mode === "edit");
+
+  // Update form data when reservation or mode changes
+  useEffect(() => {
+    if (mode === "create") {
+      // Para modo create, inicializar com valores padrão ou dados passados
+      setFormData({
+        court: reservation?.court || (courts.length > 0 ? courts[0] : ""),
+        day: reservation?.day ?? 0,
+        time: reservation?.time || (timeSlots.length > 0 ? timeSlots[0] : ""),
+        organizer: reservation?.organizer || "",
+        participants: reservation?.participants || 1,
+        status: "pendente",
+        phone: reservation?.phone || "",
+        email: reservation?.email || "",
+        notes: reservation?.notes || "",
+      });
+    } else if (reservation) {
+      // Para view/edit, usar dados da reserva
+      setFormData({
+        court: reservation.court || "",
+        day: reservation.day || 0,
+        time: reservation.time || "",
+        organizer: reservation.organizer || "",
+        participants: reservation.participants || 1,
+        status: reservation.status || "pendente",
+        phone: reservation.phone || "",
+        email: reservation.email || "",
+        notes: reservation.notes || "",
+      });
+    }
+    setEditMode(mode === "create" || mode === "edit");
+  }, [reservation, mode, courts, timeSlots]);
 
   const handleSave = () => {
     if (onSave) {
