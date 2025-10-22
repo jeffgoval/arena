@@ -21,6 +21,8 @@ import { fetchAddressByCEP } from '@/lib/utils/cep';
 import { unformatCPF } from '@/lib/utils/cpf';
 import { unformatPhone } from '@/lib/utils/phone';
 
+export const dynamic = 'force-dynamic';
+
 export default function CadastroPage() {
   const [loading, setLoading] = useState(false);
   const [loadingCEP, setLoadingCEP] = useState(false);

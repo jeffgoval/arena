@@ -15,6 +15,8 @@ import { COURT_TYPE_LABELS } from '@/types/courts.types';
 import type { Court } from '@/types/courts.types';
 import type { CourtFormData } from '@/lib/validations/court.schema';
 
+export const dynamic = 'force-dynamic';
+
 export default function QuadrasPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingCourt, setEditingCourt] = useState<Court | null>(null);

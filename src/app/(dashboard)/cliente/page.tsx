@@ -5,6 +5,8 @@ import { usePermissions } from '@/hooks/auth/usePermissions';
 import Link from 'next/link';
 import { Calendar, Users, Trophy, CreditCard, Crown } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 export default function ClienteDashboard() {
   const { data: user, isLoading } = useUser();
   const { role, isAdmin, isGestor } = usePermissions();

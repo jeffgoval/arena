@@ -15,6 +15,8 @@ import { COURT_TYPE_LABELS, DIAS_SEMANA } from '@/types/courts.types';
 import type { Schedule } from '@/types/courts.types';
 import type { ScheduleFormData } from '@/lib/validations/court.schema';
 
+export const dynamic = 'force-dynamic';
+
 export default function HorariosPage() {
   const params = useParams();
   const router = useRouter();
