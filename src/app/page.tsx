@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { AnimationObserver } from "@/components/AnimationObserver";
 import { Testimonials } from "@/components/Testimonials";
 
@@ -6,6 +7,57 @@ export default function Home() {
   return (
     <>
       <AnimationObserver />
+
+      {/* Header de Navegação */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm shadow-md">
+        <div className="container-custom">
+          <div className="flex items-center justify-between h-20">
+            {/* Logo */}
+            <div className="flex items-center gap-3">
+              <Image
+                src="/logo-arena.png"
+                alt="Arena Dona Santa"
+                width={50}
+                height={50}
+                className="drop-shadow-lg"
+              />
+              <div className="hidden sm:block">
+                <h1 className="text-xl font-black bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                  Arena Dona Santa
+                </h1>
+                <p className="text-xs text-dark/60">Governador Valadares</p>
+              </div>
+            </div>
+
+            {/* Menu de Navegação */}
+            <nav className="hidden md:flex items-center gap-6">
+              <a href="#modalidades" className="text-dark/70 hover:text-primary font-semibold transition-colors">
+                Modalidades
+              </a>
+              <a href="#features" className="text-dark/70 hover:text-primary font-semibold transition-colors">
+                Recursos
+              </a>
+              <a href="#contato" className="text-dark/70 hover:text-primary font-semibold transition-colors">
+                Contato
+              </a>
+            </nav>
+
+            {/* Botões de Ação */}
+            <div className="flex items-center gap-2">
+              <Link href="/login">
+                <button className="px-3 md:px-4 py-2 text-primary hover:text-primary/80 font-semibold transition-colors text-sm md:text-base">
+                  Entrar
+                </button>
+              </Link>
+              <Link href="/cadastro">
+                <button className="btn-hover px-4 md:px-6 py-2 bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white font-bold rounded-lg shadow-lg text-sm md:text-base">
+                  Criar Conta
+                </button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </header>
 
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
@@ -40,15 +92,21 @@ export default function Home() {
           </p>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto mb-16 fade-in">
-            <button className="btn-hover bg-primary hover:bg-primary/90 text-white px-6 py-4 rounded-lg text-lg font-bold shadow-2xl">
-              ⚽ Reservar Quadra
-            </button>
-            <button className="btn-hover bg-yellow-500 hover:bg-yellow-600 text-dark px-6 py-4 rounded-lg text-lg font-black shadow-2xl">
-              ⚽ Academia do Galo
-            </button>
-            <button className="btn-hover bg-secondary hover:bg-secondary/90 text-white px-6 py-4 rounded-lg text-lg font-bold shadow-2xl">
-              🏊 Day Use
-            </button>
+            <Link href="/login">
+              <button className="btn-hover bg-primary hover:bg-primary/90 text-white px-6 py-4 rounded-lg text-lg font-bold shadow-2xl w-full">
+                ⚽ Reservar Quadra
+              </button>
+            </Link>
+            <a href="#academia-galo">
+              <button className="btn-hover bg-yellow-500 hover:bg-yellow-600 text-dark px-6 py-4 rounded-lg text-lg font-black shadow-2xl w-full">
+                ⚽ Academia do Galo
+              </button>
+            </a>
+            <a href="#day-use">
+              <button className="btn-hover bg-secondary hover:bg-secondary/90 text-white px-6 py-4 rounded-lg text-lg font-bold shadow-2xl w-full">
+                🏊 Day Use
+              </button>
+            </a>
           </div>
 
           <div className="flex flex-wrap gap-8 justify-center text-sm md:text-base fade-in">
@@ -215,9 +273,11 @@ export default function Home() {
                 <p className="text-dark/70 mb-4 leading-relaxed">
                   Campo 45x25m com grama sintética de alta qualidade. Partidas de 7x7.
                 </p>
-                <button className="btn-hover bg-primary text-white px-6 py-3 rounded-lg font-semibold w-full">
-                  Reservar Agora
-                </button>
+                <Link href="/login">
+                  <button className="btn-hover bg-primary text-white px-6 py-3 rounded-lg font-semibold w-full">
+                    Reservar Agora
+                  </button>
+                </Link>
               </div>
             </div>
 
@@ -233,9 +293,11 @@ export default function Home() {
                 <p className="text-dark/70 mb-4 leading-relaxed">
                   Quadras de areia branca com infraestrutura completa. Diversão garantida!
                 </p>
-                <button className="btn-hover bg-secondary text-white px-6 py-3 rounded-lg font-semibold w-full">
-                  Reservar Agora
-                </button>
+                <Link href="/login">
+                  <button className="btn-hover bg-secondary text-white px-6 py-3 rounded-lg font-semibold w-full">
+                    Reservar Agora
+                  </button>
+                </Link>
               </div>
             </div>
 
@@ -251,9 +313,11 @@ export default function Home() {
                 <p className="text-dark/70 mb-4 leading-relaxed">
                   Areia de qualidade e espaço adequado para jogos e treinos.
                 </p>
-                <button className="btn-hover bg-accent text-white px-6 py-3 rounded-lg font-semibold w-full">
-                  Reservar Agora
-                </button>
+                <Link href="/login">
+                  <button className="btn-hover bg-accent text-white px-6 py-3 rounded-lg font-semibold w-full">
+                    Reservar Agora
+                  </button>
+                </Link>
               </div>
             </div>
 
@@ -269,9 +333,11 @@ export default function Home() {
                 <p className="text-dark/70 mb-4 leading-relaxed">
                   Modalidade que une futebol e vôlei em quadras de areia.
                 </p>
-                <button className="btn-hover bg-primary text-white px-6 py-3 rounded-lg font-semibold w-full">
-                  Reservar Agora
-                </button>
+                <Link href="/login">
+                  <button className="btn-hover bg-primary text-white px-6 py-3 rounded-lg font-semibold w-full">
+                    Reservar Agora
+                  </button>
+                </Link>
               </div>
             </div>
 
@@ -379,7 +445,7 @@ export default function Home() {
       </section>
 
       {/* Academia do Galo - Destaque */}
-      <section className="relative section-padding bg-gradient-to-br from-dark via-gray-900 to-dark text-white overflow-hidden">
+      <section id="academia-galo" className="relative section-padding bg-gradient-to-br from-dark via-gray-900 to-dark text-white overflow-hidden">
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-5">
           <div className="absolute inset-0" style={{backgroundImage: "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,.05) 10px, rgba(255,255,255,.05) 20px)"}}>
@@ -419,9 +485,11 @@ export default function Home() {
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 mb-8">
-                <button className="btn-hover bg-yellow-500 hover:bg-yellow-600 text-dark px-8 py-4 rounded-lg text-lg font-black shadow-2xl">
-                  ⚽ Inscrever na Academia do Galo
-                </button>
+                <Link href="/login">
+                  <button className="btn-hover bg-yellow-500 hover:bg-yellow-600 text-dark px-8 py-4 rounded-lg text-lg font-black shadow-2xl w-full sm:w-auto">
+                    ⚽ Inscrever na Academia do Galo
+                  </button>
+                </Link>
                 <button className="btn-hover bg-white/20 backdrop-blur-sm border-2 border-white/40 hover:bg-white/30 text-white px-8 py-4 rounded-lg text-lg font-bold">
                   📋 Ver Turmas e Horários
                 </button>
@@ -526,12 +594,16 @@ export default function Home() {
                 Valores humanos: <strong>disciplina, trabalho em equipe e superação</strong>.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <button className="btn-hover bg-yellow-500 hover:bg-yellow-600 text-dark px-10 py-4 rounded-lg text-xl font-black shadow-2xl">
-                  Quero Fazer Parte do Galo! 🐔
-                </button>
-                <button className="btn-hover bg-white text-dark px-10 py-4 rounded-lg text-xl font-bold shadow-2xl">
-                  Agendar Avaliação Gratuita
-                </button>
+                <Link href="/login">
+                  <button className="btn-hover bg-yellow-500 hover:bg-yellow-600 text-dark px-10 py-4 rounded-lg text-xl font-black shadow-2xl">
+                    Quero Fazer Parte do Galo! 🐔
+                  </button>
+                </Link>
+                <Link href="/login">
+                  <button className="btn-hover bg-white text-dark px-10 py-4 rounded-lg text-xl font-bold shadow-2xl">
+                    Agendar Avaliação Gratuita
+                  </button>
+                </Link>
               </div>
               <p className="text-sm text-white/70 mt-4">
                 💰 Planos acessíveis com desconto para sócios e parcelamento facilitado
@@ -578,9 +650,11 @@ export default function Home() {
               </div>
 
               <div className="flex flex-col sm:flex-row gap-4">
-                <button className="btn-hover bg-accent text-white px-8 py-4 rounded-lg text-lg font-bold shadow-xl">
-                  🎓 Agendar Aula Experimental
-                </button>
+                <Link href="/login">
+                  <button className="btn-hover bg-accent text-white px-8 py-4 rounded-lg text-lg font-bold shadow-xl w-full sm:w-auto">
+                    🎓 Agendar Aula Experimental
+                  </button>
+                </Link>
                 <button className="btn-hover bg-white text-accent border-2 border-accent px-8 py-4 rounded-lg text-lg font-bold">
                   📋 Ver Turmas e Horários
                 </button>
@@ -622,7 +696,7 @@ export default function Home() {
       </section>
 
       {/* Day Use - Experiência Completa */}
-      <section className="section-padding bg-gradient-to-br from-secondary/10 to-primary/10">
+      <section id="day-use" className="section-padding bg-gradient-to-br from-secondary/10 to-primary/10">
         <div className="container-custom">
           <div className="text-center mb-16">
             <div className="inline-block bg-secondary/20 px-4 py-2 rounded-full mb-4">
@@ -677,9 +751,11 @@ export default function Home() {
                   </li>
                 </ul>
 
-                <button className="btn-hover w-full bg-primary text-white py-4 rounded-lg font-bold text-lg">
-                  Reservar Agora
-                </button>
+                <Link href="/login">
+                  <button className="btn-hover w-full bg-primary text-white py-4 rounded-lg font-bold text-lg">
+                    Reservar Agora
+                  </button>
+                </Link>
               </div>
             </div>
 
@@ -721,9 +797,11 @@ export default function Home() {
                   </li>
                 </ul>
 
-                <button className="btn-hover w-full bg-secondary text-white py-4 rounded-lg font-bold text-lg">
-                  Comprar Day Use
-                </button>
+                <Link href="/login">
+                  <button className="btn-hover w-full bg-secondary text-white py-4 rounded-lg font-bold text-lg">
+                    Comprar Day Use
+                  </button>
+                </Link>
               </div>
             </div>
 
@@ -768,9 +846,11 @@ export default function Home() {
                   </li>
                 </ul>
 
-                <button className="btn-hover w-full bg-accent text-white py-4 rounded-lg font-bold text-lg">
-                  Garantir Vaga Premium
-                </button>
+                <Link href="/login">
+                  <button className="btn-hover w-full bg-accent text-white py-4 rounded-lg font-bold text-lg">
+                    Garantir Vaga Premium
+                  </button>
+                </Link>
               </div>
             </div>
           </div>
@@ -779,9 +859,11 @@ export default function Home() {
             <p className="text-dark/70 mb-4">
               🎉 <strong>Promoção:</strong> Reserve com 7 dias de antecedência e ganhe 15% de desconto!
             </p>
-            <button className="btn-hover bg-white text-secondary border-2 border-secondary px-10 py-4 rounded-lg text-xl font-bold shadow-xl">
-              Ver Todos os Pacotes e Add-ons
-            </button>
+            <Link href="/login">
+              <button className="btn-hover bg-white text-secondary border-2 border-secondary px-10 py-4 rounded-lg text-xl font-bold shadow-xl">
+                Ver Todos os Pacotes e Add-ons
+              </button>
+            </Link>
           </div>
         </div>
       </section>
@@ -1193,6 +1275,15 @@ export default function Home() {
         <div className="container-custom">
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div>
+              <div className="mb-4">
+                <Image
+                  src="/logo-arena.png"
+                  alt="Arena Dona Santa Logo"
+                  width={80}
+                  height={80}
+                  className="mb-3"
+                />
+              </div>
               <h3 className="text-2xl font-bold mb-4">Arena Dona Santa</h3>
               <p className="text-white/70">
                 Gestão inteligente de quadras esportivas.

@@ -11,7 +11,22 @@
       "Bash(git commit:*)",
       "Bash(git remote add:*)",
       "Bash(git branch:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(npm install:*)",
+      "Bash(npx shadcn@latest init:*)",
+      "Bash(npx shadcn@latest add:*)",
+      "Bash(cat:*)",
+      "Bash(supabase --version:*)",
+      "Bash(supabase link:*)",
+      "Bash(supabase db execute:*)",
+      "Bash(supabase db push:*)",
+      "Bash(start http://localhost:3000)",
+      "Bash(where:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(taskkill /F /PID 9916)",
+      "Bash(start http://localhost:3006)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)"
     ],
     "deny": [],
     "ask": []
