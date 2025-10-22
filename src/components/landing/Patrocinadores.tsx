@@ -1,4 +1,4 @@
-import { Building2, Target, Award, Check, Phone, FileText } from "lucide-react";
+import { Building2, Target, Award, TrendingUp, Check, Phone, FileText } from "lucide-react";
 
 export function Patrocinadores() {
   return (
