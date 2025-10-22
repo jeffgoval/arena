@@ -212,13 +212,16 @@ export default function AgendaPage() {
     setCurrentDate(new Date());
   };
 
-  const handleSlotClick = (court: string, date: Date, time: string) => {
-    setSelectedSlot({ court, date, time });
-    setIsModalOpen(true);
-  };
-
   const handleNewReservation = () => {
-    setSelectedSlot(null);
+    setSelectedReservation({
+      court: courts[0],
+      day: currentDate.getDay(),
+      time: timeSlots[0],
+      organizer: "",
+      participants: 1,
+      status: "pendente"
+    });
+    setModalMode("create");
     setIsModalOpen(true);
   };
 
