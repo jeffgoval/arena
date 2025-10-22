@@ -59,18 +59,11 @@ export function Header() {
           {/* Action Buttons */}
           <div className="flex items-center gap-3">
             <button
-              onClick={() => startTransition(() => router.push("/login"))}
-              disabled={isPending}
-              className="hidden sm:block px-4 py-2 text-sm font-semibold text-primary hover:text-primary/80 transition-colors disabled:opacity-50"
-            >
-              Entrar
-            </button>
-            <button
-              onClick={() => startTransition(() => router.push("/cadastro"))}
+              onClick={() => startTransition(() => router.push("/auth"))}
               disabled={isPending}
               className="px-6 py-2.5 bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white text-sm font-semibold rounded-lg shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isPending ? "Carregando..." : "Criar Conta"}
+              {isPending ? "Carregando..." : "Entrar / Cadastrar"}
             </button>
 
             {/* Mobile Menu Button */}
@@ -112,12 +105,12 @@ export function Header() {
               <button
                 onClick={() => {
                   setIsMenuOpen(false);
-                  startTransition(() => router.push("/login"));
+                  startTransition(() => router.push("/auth"));
                 }}
                 disabled={isPending}
-                className="sm:hidden w-full text-left px-4 py-2 text-sm font-semibold text-primary disabled:opacity-50"
+                className="w-full text-left px-4 py-2 text-sm font-semibold text-primary disabled:opacity-50"
               >
-                Entrar
+                Entrar / Cadastrar
               </button>
             </nav>
           </div>

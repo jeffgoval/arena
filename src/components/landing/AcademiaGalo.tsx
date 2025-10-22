@@ -41,7 +41,7 @@ export function AcademiaGalo() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 mb-8">
-              <Link href="/login" className="group">
+              <Link href="/auth" className="group">
                 <button className="bg-yellow-500 hover:bg-yellow-600 text-dark px-8 py-4 rounded-xl text-base font-bold shadow-2xl w-full sm:w-auto transition-all duration-300 group-hover:scale-105 flex items-center justify-center gap-2">
                   <Trophy className="w-5 h-5" />
                   Inscrever na Academia
@@ -153,12 +153,12 @@ export function AcademiaGalo() {
               Valores humanos: <strong>disciplina, trabalho em equipe e superação</strong>.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/login" className="group">
+              <Link href="/auth" className="group">
                 <button className="bg-yellow-500 hover:bg-yellow-600 text-dark px-10 py-4 rounded-xl text-lg font-bold shadow-2xl transition-all duration-300 group-hover:scale-105">
                   Quero Fazer Parte do Galo!
                 </button>
               </Link>
-              <Link href="/login" className="group">
+              <Link href="/auth" className="group">
                 <button className="bg-white text-dark px-10 py-4 rounded-xl text-lg font-semibold shadow-2xl transition-all duration-300 group-hover:scale-105">
                   Agendar Avaliação Gratuita
                 </button>

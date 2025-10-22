@@ -61,7 +61,7 @@ export function DayUse() {
                 </li>
               </ul>
 
-              <Link href="/login">
+              <Link href="/auth">
                 <button className="w-full bg-primary text-white py-4 rounded-xl font-semibold text-base hover:bg-primary/90 transition-all duration-300 hover:scale-105">
                   Reservar Agora
                 </button>
@@ -109,7 +109,7 @@ export function DayUse() {
                 </li>
               </ul>
 
-              <Link href="/login">
+              <Link href="/auth">
                 <button className="w-full bg-secondary text-white py-4 rounded-xl font-semibold text-base hover:bg-secondary/90 transition-all duration-300 hover:scale-105">
                   Comprar Day Use
                 </button>
@@ -160,7 +160,7 @@ export function DayUse() {
                 </li>
               </ul>
 
-              <Link href="/login">
+              <Link href="/auth">
                 <button className="w-full bg-accent text-white py-4 rounded-xl font-semibold text-base hover:bg-accent/90 transition-all duration-300 hover:scale-105">
                   Garantir Vaga Premium
                 </button>
@@ -173,7 +173,7 @@ export function DayUse() {
           <p className="text-dark/70 mb-4 font-medium">
             <strong>Promoção:</strong> Reserve com 7 dias de antecedência e ganhe 15% de desconto!
           </p>
-          <Link href="/login">
+          <Link href="/auth">
             <button className="bg-white text-secondary border-2 border-secondary px-10 py-4 rounded-xl text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
               Ver Todos os Pacotes e Add-ons
             </button>

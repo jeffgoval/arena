@@ -29,7 +29,7 @@ export function Modalidades() {
               <p className="text-dark/70 mb-6 leading-relaxed">
                 Campo 45x25m com grama sintética de alta qualidade. Partidas de 7x7.
               </p>
-              <Link href="/login">
+              <Link href="/auth">
                 <button className="bg-primary text-white px-6 py-3 rounded-xl font-semibold w-full hover:bg-primary/90 transition-all duration-300 hover:scale-105">
                   Reservar Agora
                 </button>
@@ -51,7 +51,7 @@ export function Modalidades() {
               <p className="text-dark/70 mb-6 leading-relaxed">
                 Quadras de areia branca com infraestrutura completa. Diversão garantida!
               </p>
-              <Link href="/login">
+              <Link href="/auth">
                 <button className="bg-secondary text-white px-6 py-3 rounded-xl font-semibold w-full hover:bg-secondary/90 transition-all duration-300 hover:scale-105">
                   Reservar Agora
                 </button>
@@ -73,7 +73,7 @@ export function Modalidades() {
               <p className="text-dark/70 mb-6 leading-relaxed">
                 Areia de qualidade e espaço adequado para jogos e treinos.
               </p>
-              <Link href="/login">
+              <Link href="/auth">
                 <button className="bg-accent text-white px-6 py-3 rounded-xl font-semibold w-full hover:bg-accent/90 transition-all duration-300 hover:scale-105">
                   Reservar Agora
                 </button>
@@ -95,7 +95,7 @@ export function Modalidades() {
               <p className="text-dark/70 mb-6 leading-relaxed">
                 Modalidade que une futebol e vôlei em quadras de areia.
               </p>
-              <Link href="/login">
+              <Link href="/auth">
                 <button className="bg-primary text-white px-6 py-3 rounded-xl font-semibold w-full hover:bg-primary/90 transition-all duration-300 hover:scale-105">
                   Reservar Agora
                 </button>

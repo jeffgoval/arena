@@ -11,9 +11,8 @@ export function PrefetchAuth() {
   const router = useRouter();
 
   useEffect(() => {
-    // Prefetch das rotas de auth assim que a página carregar
-    router.prefetch("/login");
-    router.prefetch("/cadastro");
+    // Prefetch da rota de auth assim que a página carregar
+    router.prefetch("/auth");
   }, [router]);
 
   return null;

@@ -48,7 +48,7 @@ export function Escolinha() {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4">
-              <Link href="/login" className="group">
+              <Link href="/auth" className="group">
                 <button className="bg-accent text-white px-8 py-4 rounded-xl text-base font-semibold shadow-lg w-full sm:w-auto transition-all duration-300 group-hover:scale-105 group-hover:shadow-xl flex items-center justify-center gap-2">
                   <GraduationCap className="w-5 h-5" />
                   Agendar Aula Experimental

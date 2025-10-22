@@ -43,7 +43,7 @@ export function Hero() {
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto mb-16 fade-in">
           <button
-            onClick={() => startTransition(() => router.push("/login"))}
+            onClick={() => startTransition(() => router.push("/auth"))}
             disabled={isPending}
             className="bg-primary hover:bg-primary/90 text-white px-6 py-4 rounded-xl text-base font-semibold shadow-lg w-full transition-all duration-300 hover:scale-105 hover:shadow-xl flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
