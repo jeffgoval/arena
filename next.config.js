@@ -1,8 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Removido 'output: export' para habilitar SSR
+  // Static export para Cloudflare Pages (compatível com @cloudflare/next-on-pages@1)
+  output: 'export',
+
   images: {
-    // Manter unoptimized para compatibilidade com Cloudflare Pages
     unoptimized: true,
     remotePatterns: [
       {
@@ -18,7 +19,6 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: false,
   },
-  // Configurações para SSR
   experimental: {
     serverActions: {
       allowedOrigins: ['localhost:3000'],
