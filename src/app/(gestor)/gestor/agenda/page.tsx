@@ -26,12 +26,11 @@ interface Reservation {
 export default function AgendaPage() {
   const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>("semana");
   const [currentDate, setCurrentDate] = useState(new Date());
+  
+  // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedSlot, setSelectedSlot] = useState<{
-    court: string;
-    date: Date;
-    time: string;
-  } | null>(null);
+  const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
+  const [modalMode, setModalMode] = useState<"view" | "edit" | "create">("view");
 
   const today = new Date();
   const currentWeek = Array.from({ length: 7 }, (_, i) => {
@@ -47,15 +46,73 @@ export default function AgendaPage() {
 
   const courts = ["Society 1", "Society 2", "Futsal", "Beach Tennis"];
 
-  // Simulação de reservas
-  const reservations = [
-    { court: "Society 1", day: 1, time: "19:00", organizer: "João Silva", participants: 8, status: "confirmada" },
-    { court: "Society 1", day: 1, time: "20:00", organizer: "Maria Santos", participants: 6, status: "pendente" },
-    { court: "Futsal", day: 2, time: "19:00", organizer: "Pedro Costa", participants: 10, status: "confirmada" },
-    { court: "Society 2", day: 3, time: "20:00", organizer: "Ana Silva", participants: 12, status: "confirmada" },
-    { court: "Society 1", day: 4, time: "19:00", organizer: "Carlos Lima", participants: 8, status: "confirmada" },
-    { court: "Society 1", day: 5, time: "21:00", organizer: "Bruno Santos", participants: 14, status: "pendente" },
-  ];
+  // Simulação de reservas com estado
+  const [reservations, setReservations] = useState<Reservation[]>([
+    { 
+      id: "1", 
+      court: "Society 1", 
+      day: 1, 
+      time: "19:00", 
+      organizer: "João Silva", 
+      participants: 8, 
+      status: "confirmada",
+      phone: "(11) 99999-1111",
+      email: "joao@email.com",
+      notes: "Pelada dos amigos"
+    },
+    { 
+      id: "2", 
+      court: "Society 1", 
+      day: 1, 
+      time: "20:00", 
+      organizer: "Maria Santos", 
+      participants: 6, 
+      status: "pendente",
+      phone: "(11) 99999-2222",
+      email: "maria@email.com"
+    },
+    { 
+      id: "3", 
+      court: "Futsal", 
+      day: 2, 
+      time: "19:00", 
+      organizer: "Pedro Costa", 
+      participants: 10, 
+      status: "confirmada",
+      phone: "(11) 99999-3333"
+    },
+    { 
+      id: "4", 
+      court: "Society 2", 
+      day: 3, 
+      time: "20:00", 
+      organizer: "Ana Silva", 
+      participants: 12, 
+      status: "confirmada",
+      email: "ana@email.com",
+      notes: "Aniversário da Ana"
+    },
+    { 
+      id: "5", 
+      court: "Society 1", 
+      day: 4, 
+      time: "19:00", 
+      organizer: "Carlos Lima", 
+      participants: 8, 
+      status: "confirmada"
+    },
+    { 
+      id: "6", 
+      court: "Society 1", 
+      day: 5, 
+      time: "21:00", 
+      organizer: "Bruno Santos", 
+      participants: 14, 
+      status: "pendente",
+      phone: "(11) 99999-6666",
+      notes: "Confirmar até amanhã"
+    },
+  ]);
 
   const getReservation = (court: string, day: number, time: string) => {
     return reservations.find(r => r.court === court && r.day === day && r.time === time);
@@ -67,6 +124,49 @@ export default function AgendaPage() {
 
   const getDayName = (date: Date) => {
     return date.toLocaleDateString('pt-BR', { weekday: 'short' });
+  };
+
+  // Modal functions
+  const openReservationModal = (reservation: Reservation) => {
+    setSelectedReservation(reservation);
+    setModalMode("view");
+    setIsModalOpen(true);
+  };
+
+  const openCreateModal = (court: string, day: number, time: string) => {
+    setSelectedReservation({
+      court,
+      day,
+      time,
+      organizer: "",
+      participants: 1,
+      status: "pendente"
+    });
+    setModalMode("create");
+    setIsModalOpen(true);
+  };
+
+  const handleSaveReservation = (reservation: Reservation) => {
+    if (modalMode === "create") {
+      const newReservation = {
+        ...reservation,
+        id: Date.now().toString() // Simple ID generation
+      };
+      setReservations([...reservations, newReservation]);
+    } else {
+      setReservations(reservations.map(r => 
+        r.id === reservation.id ? reservation : r
+      ));
+    }
+  };
+
+  const handleDeleteReservation = (reservationId: string) => {
+    setReservations(reservations.filter(r => r.id !== reservationId));
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedReservation(null);
   };
 
   const getPeriodLabel = () => {
@@ -320,6 +420,13 @@ export default function AgendaPage() {
                                   return (
                                     <div
                                       key={court}
+                                      onClick={() => {
+                                        if (reservation) {
+                                          openReservationModal(reservation);
+                                        } else if (selectedPeriod !== "mes") {
+                                          openCreateModal(court, columnIndex, time);
+                                        }
+                                      }}
                                       className={`${selectedPeriod === "mes" ? "p-1" : "p-2"} rounded text-xs cursor-pointer transition-colors ${selectedPeriod === "mes" ? "" :
                                         reservation
                                           ? reservation.status === 'confirmada'
@@ -486,6 +593,17 @@ export default function AgendaPage() {
                           return (
                             <div key={courtIndex} className="p-3 min-h-[80px] flex items-center">
                               <div
+                                onClick={() => {
+                                  if (dayReservations.length === 1) {
+                                    openReservationModal(dayReservations[0]);
+                                  } else if (dayReservations.length > 1) {
+                                    // Para múltiplas reservas, abrir a primeira por enquanto
+                                    openReservationModal(dayReservations[0]);
+                                  } else {
+                                    // Slot vazio - criar nova reserva para o primeiro horário disponível
+                                    openCreateModal(court, dayIndex, timeSlots[0]);
+                                  }
+                                }}
                                 className={`w-full p-3 rounded-lg text-sm cursor-pointer transition-colors ${dayReservations.length > 0
                                   ? 'bg-success/10 border border-success/20 hover:bg-success/20'
                                   : 'bg-muted/50 border border-border hover:bg-muted'
@@ -555,6 +673,13 @@ export default function AgendaPage() {
                           return (
                             <div key={courtIndex} className="p-3 min-h-[80px] flex items-center">
                               <div
+                                onClick={() => {
+                                  if (reservation) {
+                                    openReservationModal(reservation);
+                                  } else if (selectedPeriod === "dia") {
+                                    openCreateModal(court, currentDate.getDay(), time);
+                                  }
+                                }}
                                 className={`w-full p-3 rounded-lg text-sm cursor-pointer transition-colors ${reservation || displayContent
                                   ? 'bg-success/10 border border-success/20 hover:bg-success/20'
                                   : 'bg-muted/50 border border-border hover:bg-muted'
@@ -639,6 +764,18 @@ export default function AgendaPage() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Reservation Modal */}
+      <ReservationModal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        reservation={selectedReservation}
+        mode={modalMode}
+        onSave={handleSaveReservation}
+        onDelete={handleDeleteReservation}
+        courts={courts}
+        timeSlots={timeSlots}
+      />
     </div>
   );
 }
