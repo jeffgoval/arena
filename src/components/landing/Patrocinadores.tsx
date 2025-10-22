@@ -1,4 +1,4 @@
-import { Building2, Target, Award, TrendingUp, Check, Phone, FileText } from "lucide-react";
+import { Building2, Target, Award, Check, Phone, FileText } from "lucide-react";
 
 export function Patrocinadores() {
   return (
@@ -42,45 +42,6 @@ export function Patrocinadores() {
               </div>
             </div>
           ))}
-        </div>
-
-        {/* Métricas de Impacto */}
-        <div className="bg-gradient-to-r from-primary/10 via-secondary/10 to-accent/10 rounded-3xl p-12 mb-20 border border-primary/20">
-          <div className="text-center mb-10">
-            <h3 className="text-3xl md:text-4xl font-bold text-dark mb-4 flex items-center justify-center gap-2">
-              <TrendingUp className="w-8 h-8 text-primary" />
-              Impacto dos Nossos Patrocinadores
-            </h3>
-            <p className="text-base text-dark/70 font-medium">
-              Sua marca conectada com uma comunidade ativa e engajada
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            <div className="text-center fade-in">
-              <div className="text-5xl font-bold text-primary mb-2">5.000+</div>
-              <div className="text-dark/70 font-semibold">Pessoas/mês</div>
-              <div className="text-sm text-dark/50 mt-1">visitando a arena</div>
-            </div>
-
-            <div className="text-center fade-in">
-              <div className="text-5xl font-bold text-secondary mb-2">500+</div>
-              <div className="text-dark/70 font-semibold">Alunos Ativos</div>
-              <div className="text-sm text-dark/50 mt-1">academia e escolinha</div>
-            </div>
-
-            <div className="text-center fade-in">
-              <div className="text-5xl font-bold text-accent mb-2">50+</div>
-              <div className="text-dark/70 font-semibold">Eventos/ano</div>
-              <div className="text-sm text-dark/50 mt-1">torneios e campeonatos</div>
-            </div>
-
-            <div className="text-center fade-in">
-              <div className="text-5xl font-bold text-primary mb-2">100K+</div>
-              <div className="text-dark/70 font-semibold">Impressões</div>
-              <div className="text-sm text-dark/50 mt-1">nas redes sociais</div>
-            </div>
-          </div>
         </div>
 
         {/* CTA para Novos Patrocinadores */}
