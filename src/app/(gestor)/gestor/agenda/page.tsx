@@ -6,16 +6,37 @@ import { Button } from "@/components/ui/button";
 import { Calendar, ChevronLeft, ChevronRight, Clock, Users, MapPin } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ReservationModal } from "@/components/modules/core/agenda/ReservationModal";
 
 type PeriodType = "dia" | "semana" | "mes";
 
+interface Reservation {
+  id?: string;
+  court: string;
+  day: number;
+  time: string;
+  organizer: string;
+  participants: number;
+  status: "confirmada" | "pendente" | "cancelada";
+  phone?: string;
+  email?: string;
+  notes?: string;
+}
+
 export default function AgendaPage() {
   const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>("semana");
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState<{
+    court: string;
+    date: Date;
+    time: string;
+  } | null>(null);
 
   const today = new Date();
   const currentWeek = Array.from({ length: 7 }, (_, i) => {
-    const date = new Date(today);
-    date.setDate(today.getDate() - today.getDay() + i);
+    const date = new Date(currentDate);
+    date.setDate(currentDate.getDate() - currentDate.getDay() + i);
     return date;
   });
 
@@ -51,7 +72,7 @@ export default function AgendaPage() {
   const getPeriodLabel = () => {
     switch (selectedPeriod) {
       case "dia":
-        return today.toLocaleDateString('pt-BR', {
+        return currentDate.toLocaleDateString('pt-BR', {
           weekday: 'short',
           day: '2-digit',
           month: 'short'
@@ -59,7 +80,7 @@ export default function AgendaPage() {
       case "semana":
         return `${formatDate(currentWeek[0])} - ${formatDate(currentWeek[6])}`;
       case "mes":
-        return today.toLocaleDateString('pt-BR', {
+        return currentDate.toLocaleDateString('pt-BR', {
           month: 'long',
           year: 'numeric'
         });
@@ -68,12 +89,45 @@ export default function AgendaPage() {
     }
   };
 
+  // Funções de navegação
+  const navigatePeriod = (direction: 'prev' | 'next') => {
+    const newDate = new Date(currentDate);
+    
+    switch (selectedPeriod) {
+      case "dia":
+        newDate.setDate(currentDate.getDate() + (direction === 'next' ? 1 : -1));
+        break;
+      case "semana":
+        newDate.setDate(currentDate.getDate() + (direction === 'next' ? 7 : -7));
+        break;
+      case "mes":
+        newDate.setMonth(currentDate.getMonth() + (direction === 'next' ? 1 : -1));
+        break;
+    }
+    
+    setCurrentDate(newDate);
+  };
+
+  const goToToday = () => {
+    setCurrentDate(new Date());
+  };
+
+  const handleSlotClick = (court: string, date: Date, time: string) => {
+    setSelectedSlot({ court, date, time });
+    setIsModalOpen(true);
+  };
+
+  const handleNewReservation = () => {
+    setSelectedSlot(null);
+    setIsModalOpen(true);
+  };
+
   // Gerar dados baseados no período selecionado
   const getPeriodData = () => {
     switch (selectedPeriod) {
       case "dia":
         return {
-          columns: [today],
+          columns: [currentDate],
           gridCols: "grid-cols-2", // Horário + 1 dia
           showAllCourts: true
         };
@@ -86,7 +140,7 @@ export default function AgendaPage() {
       case "mes":
         // Para mês, vamos mostrar uma visão resumida por semana
         const monthWeeks = Array.from({ length: 4 }, (_, i) => {
-          const weekStart = new Date(today.getFullYear(), today.getMonth(), 1 + (i * 7));
+          const weekStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1 + (i * 7));
           return weekStart;
         });
         return {
@@ -121,11 +175,20 @@ export default function AgendaPage() {
         <div className="flex items-center gap-4">
           {/* Navigation chevrons with period indicator in the middle */}
           <div className="flex items-center gap-1">
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-8 w-8 p-0"
+              onClick={() => navigatePeriod('prev')}
+            >
               <ChevronLeft className="w-4 h-4" />
             </Button>
 
-            <div className="text-center min-w-[180px] px-3">
+            <div 
+              className="text-center min-w-[180px] px-3 cursor-pointer hover:bg-muted/50 rounded-md py-1 transition-colors"
+              onClick={goToToday}
+              title="Clique para voltar para hoje"
+            >
               <p className="text-sm font-semibold text-foreground">
                 {getPeriodLabel()}
               </p>
@@ -136,7 +199,12 @@ export default function AgendaPage() {
               </p>
             </div>
 
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-8 w-8 p-0"
+              onClick={() => navigatePeriod('next')}
+            >
               <ChevronRight className="w-4 h-4" />
             </Button>
           </div>
@@ -169,7 +237,7 @@ export default function AgendaPage() {
             </Button>
           </div>
 
-          <Button>Nova Reserva</Button>
+          <Button onClick={handleNewReservation}>Nova Reserva</Button>
         </div>
       </div>
 
@@ -301,14 +369,16 @@ export default function AgendaPage() {
             </CardContent>
           </Card>
 
-          {/* Today's Reservations */}
+          {/* Current Day Reservations */}
           <Card className="border-0 shadow-soft">
             <CardHeader>
-              <CardTitle className="heading-3">Reservas de Hoje</CardTitle>
+              <CardTitle className="heading-3">
+                {selectedPeriod === "dia" ? "Reservas do Dia" : "Reservas de Hoje"}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {reservations.filter(r => r.day === today.getDay()).map((reservation, index) => (
+                {reservations.filter(r => r.day === (selectedPeriod === "dia" ? currentDate.getDay() : today.getDay())).map((reservation, index) => (
                   <div key={index} className="flex items-center gap-4 p-4 border border-border rounded-lg">
                     <div className="text-center">
                       <p className="text-lg font-bold text-primary">{reservation.time}</p>
@@ -333,10 +403,12 @@ export default function AgendaPage() {
                   </div>
                 ))}
 
-                {reservations.filter(r => r.day === today.getDay()).length === 0 && (
+                {reservations.filter(r => r.day === (selectedPeriod === "dia" ? currentDate.getDay() : today.getDay())).length === 0 && (
                   <div className="text-center py-8">
                     <Calendar className="w-16 h-16 text-muted-foreground/20 mx-auto mb-4" />
-                    <p className="text-muted-foreground">Nenhuma reserva para hoje</p>
+                    <p className="text-muted-foreground">
+                      {selectedPeriod === "dia" ? "Nenhuma reserva para este dia" : "Nenhuma reserva para hoje"}
+                    </p>
                   </div>
                 )}
               </div>
