@@ -83,20 +83,27 @@ export function ReservationModal({
   useEffect(() => {
     if (mode === "create") {
       // Para modo create, inicializar com valores padrão ou dados passados
-      setFormData({
-        court: reservation?.court || (courts.length > 0 ? courts[0] : ""),
-        day: reservation?.day ?? 0,
-        time: reservation?.time || (timeSlots.length > 0 ? timeSlots[0] : ""),
+      const defaultDay = reservation?.day !== undefined ? reservation.day : new Date().getDay();
+      const defaultTime = reservation?.time || (timeSlots.length > 0 ? timeSlots[0] : "");
+      const defaultCourt = reservation?.court || (courts.length > 0 ? courts[0] : "");
+      
+      const newFormData = {
+        court: defaultCourt,
+        day: defaultDay,
+        time: defaultTime,
         organizer: reservation?.organizer || "",
         participants: reservation?.participants || 1,
         status: "pendente",
         phone: reservation?.phone || "",
         email: reservation?.email || "",
         notes: reservation?.notes || "",
-      });
+      };
+      
+      console.log("Create mode - Setting form data:", newFormData);
+      setFormData(newFormData);
     } else if (reservation) {
       // Para view/edit, usar dados da reserva
-      setFormData({
+      const newFormData = {
         court: reservation.court || "",
         day: reservation.day || 0,
         time: reservation.time || "",
@@ -106,7 +113,10 @@ export function ReservationModal({
         phone: reservation.phone || "",
         email: reservation.email || "",
         notes: reservation.notes || "",
-      });
+      };
+      
+      console.log("View/Edit mode - Setting form data:", newFormData);
+      setFormData(newFormData);
     }
     setEditMode(mode === "create" || mode === "edit");
   }, [reservation, mode]); // Removidas as dependências courts e timeSlots
@@ -225,7 +235,7 @@ export function ReservationModal({
                   onValueChange={(value) => setFormData({ ...formData, day: parseInt(value) })}
                 >
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="Selecione o dia" />
                   </SelectTrigger>
                   <SelectContent>
                     {Array.from({ length: 7 }, (_, i) => (
