@@ -1,8 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Static export para Cloudflare Pages (compatível com @cloudflare/next-on-pages@1)
-  output: 'export',
-
+  // Removido 'output: export' para permitir SSR nas páginas do dashboard
+  // Landing page pode ser estática, dashboard usa SSR/SSG conforme necessário
   images: {
     unoptimized: true,
     remotePatterns: [
