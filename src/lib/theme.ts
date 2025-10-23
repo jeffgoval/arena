@@ -19,7 +19,7 @@ export const colorPalette = {
   brand: {
     primary: 'hsl(142, 76%, 36%)',     // Arena Green
     secondary: 'hsl(217, 91%, 60%)',   // Arena Blue
-    accent: 'hsl(24, 95%, 53%)',       // Arena Orange
+    accent: 'hsl(220, 70%, 50%)',      // Arena Blue Dark
   },
 
   // Semantic Colors

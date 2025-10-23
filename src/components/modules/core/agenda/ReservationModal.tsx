@@ -20,12 +20,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Calendar, 
-  Clock, 
-  Users, 
-  MapPin, 
-  Trash2, 
+import {
+  Calendar,
+  Clock,
+  Users,
+  MapPin,
+  Trash2,
   Edit3,
   Phone,
   Mail
@@ -86,21 +86,22 @@ export function ReservationModal({
       const defaultDay = reservation?.day !== undefined ? reservation.day : new Date().getDay();
       const defaultTime = reservation?.time || (timeSlots.length > 0 ? timeSlots[0] : "");
       const defaultCourt = reservation?.court || (courts.length > 0 ? courts[0] : "");
-      
+
       const newFormData = {
         court: defaultCourt,
         day: defaultDay,
         time: defaultTime,
         organizer: reservation?.organizer || "",
         participants: reservation?.participants || 1,
-        status: "pendente",
+        status: "pendente" as const,
         phone: reservation?.phone || "",
         email: reservation?.email || "",
         notes: reservation?.notes || "",
       };
-      
+
       console.log("Create mode - Setting form data:", newFormData);
       setFormData(newFormData);
+      setEditMode(true);
     } else if (reservation) {
       // Para view/edit, usar dados da reserva
       const newFormData = {
@@ -114,12 +115,24 @@ export function ReservationModal({
         email: reservation.email || "",
         notes: reservation.notes || "",
       };
-      
+
       console.log("View/Edit mode - Setting form data:", newFormData);
       setFormData(newFormData);
+      // Só define editMode se for modo edit, caso contrário mantém o estado atual
+      if (mode === "edit") {
+        setEditMode(true);
+      } else if (mode === "view") {
+        setEditMode(false);
+      }
     }
-    setEditMode(mode === "create" || mode === "edit");
   }, [reservation, mode]); // Removidas as dependências courts e timeSlots
+
+  // Reset edit mode when modal opens/closes
+  useEffect(() => {
+    if (isOpen) {
+      setEditMode(mode === "create" || mode === "edit");
+    }
+  }, [isOpen, mode]);
 
   const handleSave = () => {
     if (onSave) {
@@ -158,6 +171,30 @@ export function ReservationModal({
     const days = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
     return days[day];
   };
+
+  const getFormattedDate = (day: number) => {
+    // Calcular a data baseada no dia da semana atual
+    const today = new Date();
+    const currentDay = today.getDay();
+    const diff = day - currentDay;
+    const targetDate = new Date(today);
+    targetDate.setDate(today.getDate() + diff);
+
+    return {
+      dayName: getDayName(day),
+      dateString: targetDate.toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      })
+    };
+  };
+
+  // Debug logs para verificar se os dropdowns estão recebendo dados
+  console.log("ReservationModal render:", { isOpen, mode, editMode, reservation });
+  if (editMode) {
+    console.log("Edit mode active - Courts:", courts?.length, "TimeSlots:", timeSlots?.length);
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -203,18 +240,23 @@ export function ReservationModal({
             <Label htmlFor="court">Quadra</Label>
             {editMode ? (
               <Select
-                value={formData.court}
-                onValueChange={(value) => setFormData({ ...formData, court: value })}
+                value={formData.court || ""}
+                onValueChange={(value) => {
+                  console.log("Court selected:", value);
+                  setFormData({ ...formData, court: value });
+                }}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione a quadra" />
                 </SelectTrigger>
-                <SelectContent>
-                  {courts.map((court) => (
+                <SelectContent className="z-[110]">
+                  {courts && courts.length > 0 ? courts.map((court) => (
                     <SelectItem key={court} value={court}>
                       {court}
                     </SelectItem>
-                  ))}
+                  )) : (
+                    <SelectItem value="" disabled>Nenhuma quadra disponível</SelectItem>
+                  )}
                 </SelectContent>
               </Select>
             ) : (
@@ -231,13 +273,16 @@ export function ReservationModal({
               <Label>Dia</Label>
               {editMode ? (
                 <Select
-                  value={formData.day.toString()}
-                  onValueChange={(value) => setFormData({ ...formData, day: parseInt(value) })}
+                  value={formData.day?.toString() || "0"}
+                  onValueChange={(value) => {
+                    console.log("Day selected:", value);
+                    setFormData({ ...formData, day: parseInt(value) });
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione o dia" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="z-[110]">
                     {Array.from({ length: 7 }, (_, i) => (
                       <SelectItem key={i} value={i.toString()}>
                         {getDayName(i)}
@@ -248,7 +293,10 @@ export function ReservationModal({
               ) : (
                 <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-md">
                   <Calendar className="w-4 h-4 text-muted-foreground" />
-                  <span>{getDayName(formData.day)}</span>
+                  <div className="flex flex-col">
+                    <span className="font-medium">{getFormattedDate(formData.day).dayName}</span>
+                    <span className="text-xs text-muted-foreground">{getFormattedDate(formData.day).dateString}</span>
+                  </div>
                 </div>
               )}
             </div>
@@ -257,18 +305,23 @@ export function ReservationModal({
               <Label>Horário</Label>
               {editMode ? (
                 <Select
-                  value={formData.time}
-                  onValueChange={(value) => setFormData({ ...formData, time: value })}
+                  value={formData.time || ""}
+                  onValueChange={(value) => {
+                    console.log("Time selected:", value);
+                    setFormData({ ...formData, time: value });
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Horário" />
                   </SelectTrigger>
-                  <SelectContent>
-                    {timeSlots.map((time) => (
+                  <SelectContent className="z-[110]">
+                    {timeSlots && timeSlots.length > 0 ? timeSlots.map((time) => (
                       <SelectItem key={time} value={time}>
                         {time}
                       </SelectItem>
-                    ))}
+                    )) : (
+                      <SelectItem value="" disabled>Nenhum horário disponível</SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
               ) : (
@@ -305,15 +358,16 @@ export function ReservationModal({
             <div className="space-y-2">
               <Label>Status</Label>
               <Select
-                value={formData.status}
-                onValueChange={(value: "confirmada" | "pendente" | "cancelada") => 
-                  setFormData({ ...formData, status: value })
-                }
+                value={formData.status || "pendente"}
+                onValueChange={(value: "confirmada" | "pendente" | "cancelada") => {
+                  console.log("Status selected:", value);
+                  setFormData({ ...formData, status: value });
+                }}
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="z-[110]">
                   <SelectItem value="pendente">Pendente</SelectItem>
                   <SelectItem value="confirmada">Confirmada</SelectItem>
                   <SelectItem value="cancelada">Cancelada</SelectItem>
@@ -411,7 +465,32 @@ export function ReservationModal({
 
           {editMode && (
             <>
-              <Button variant="outline" onClick={onClose}>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (mode === "view") {
+                    // Se estava em modo view e entrou em edit, volta para view
+                    setEditMode(false);
+                    // Restaura os dados originais
+                    if (reservation) {
+                      setFormData({
+                        court: reservation.court || "",
+                        day: reservation.day || 0,
+                        time: reservation.time || "",
+                        organizer: reservation.organizer || "",
+                        participants: reservation.participants || 1,
+                        status: reservation.status || "pendente",
+                        phone: reservation.phone || "",
+                        email: reservation.email || "",
+                        notes: reservation.notes || "",
+                      });
+                    }
+                  } else {
+                    // Se estava em modo create, fecha o modal
+                    onClose();
+                  }
+                }}
+              >
                 Cancelar
               </Button>
               <Button onClick={handleSave}>

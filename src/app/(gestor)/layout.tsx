@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Building2, Calendar, Users, BarChart3, Settings, LogOut, Menu, X } from "lucide-react";
+import { LayoutDashboard, Building2, Calendar, Users, BarChart3, Settings, LogOut, Menu, X, ClipboardList } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
@@ -37,6 +37,7 @@ export default function GestorLayout({
         { href: "/gestor", icon: LayoutDashboard, label: "Dashboard", active: isActive("/gestor") },
         { href: "/gestor/quadras", icon: Building2, label: "Quadras", active: isActiveStartsWith("/gestor/quadras") },
         { href: "/gestor/agenda", icon: Calendar, label: "Agenda", active: isActive("/gestor/agenda") },
+        { href: "/gestor/reservas", icon: ClipboardList, label: "Reservas", active: isActive("/gestor/reservas") },
         { href: "/gestor/clientes", icon: Users, label: "Clientes", active: isActive("/gestor/clientes") },
         { href: "/gestor/relatorios", icon: BarChart3, label: "Relatórios", active: isActive("/gestor/relatorios") },
         { href: "/gestor/configuracoes", icon: Settings, label: "Configurações", active: isActive("/gestor/configuracoes") },
@@ -59,22 +60,22 @@ export default function GestorLayout({
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
                 {/* Header */}
-                <div className="p-6 bg-gradient-to-br from-accent to-warning">
+                <div className="p-6 bg-gradient-to-br from-primary to-success">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div className="w-12 h-12 bg-background rounded-xl flex items-center justify-center shadow-medium">
-                                <span className="text-accent font-bold text-xl">A</span>
+                                <span className="text-primary font-bold text-xl">A</span>
                             </div>
                             <div>
-                                <h1 className="heading-4 text-accent-foreground">Arena Dona Santa</h1>
-                                <p className="text-xs text-accent-foreground/90 font-medium">Painel do Gestor</p>
+                                <h1 className="heading-4 text-primary-foreground">Arena Dona Santa</h1>
+                                <p className="text-xs text-primary-foreground/90 font-medium">Painel do Gestor</p>
                             </div>
                         </div>
                         <Button
                             variant="ghost"
                             size="icon"
                             onClick={() => setSidebarOpen(false)}
-                            className="lg:hidden text-accent-foreground hover:bg-accent-foreground/10"
+                            className="lg:hidden text-primary-foreground hover:bg-primary-foreground/10"
                         >
                             <X className="w-5 h-5" />
                         </Button>
@@ -88,16 +89,17 @@ export default function GestorLayout({
                             <Link
                                 key={item.href}
                                 href={item.href}
+                                prefetch={true}
                                 onClick={() => setSidebarOpen(false)}
                                 className={`
-                  flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200
+                  flex items-center gap-3 px-4 py-3 rounded-lg transition-colors
                   ${item.active
-                                        ? 'bg-accent text-accent-foreground shadow-soft'
-                                        : 'text-muted-foreground hover:bg-accent/10 hover:text-accent-foreground'
+                                        ? 'bg-primary text-primary-foreground shadow-soft'
+                                        : 'text-muted-foreground hover:bg-primary/10 hover:text-primary'
                                     }
                 `}
                             >
-                                <item.icon className="w-5 h-5" />
+                                <item.icon className="w-5 h-5 flex-shrink-0" />
                                 <span className="font-medium">{item.label}</span>
                             </Link>
                         ))}

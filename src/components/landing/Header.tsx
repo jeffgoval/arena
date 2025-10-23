@@ -2,15 +2,12 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Menu, X, LogIn } from "lucide-react";
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const router = useRouter();
-  const [isPending, startTransition] = useTransition();
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md shadow-sm border-b border-gray/20">
@@ -57,14 +54,12 @@ export function Header() {
             </a>
 
             {/* Botão Entrar */}
-            <Button 
-              onClick={() => startTransition(() => router.push("/auth"))}
-              disabled={isPending}
-              className="gap-2"
-            >
-              <LogIn className="w-4 h-4" />
-              {isPending ? "Carregando..." : "Entrar"}
-            </Button>
+            <Link href="/auth">
+              <Button className="gap-2">
+                <LogIn className="w-4 h-4" />
+                Entrar
+              </Button>
+            </Link>
           </nav>
 
           {/* Mobile Menu Button */}
@@ -104,17 +99,15 @@ export function Header() {
               </a>
 
               {/* Botão Entrar Mobile */}
-              <Button 
-                onClick={() => {
-                  setIsMenuOpen(false);
-                  startTransition(() => router.push("/auth"));
-                }}
-                disabled={isPending}
-                className="w-full gap-2 mt-2"
-              >
-                <LogIn className="w-4 h-4" />
-                {isPending ? "Carregando..." : "Entrar"}
-              </Button>
+              <Link href="/auth">
+                <Button 
+                  onClick={() => setIsMenuOpen(false)}
+                  className="w-full gap-2 mt-2"
+                >
+                  <LogIn className="w-4 h-4" />
+                  Entrar
+                </Button>
+              </Link>
             </nav>
           </div>
         )}

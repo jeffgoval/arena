@@ -51,10 +51,10 @@ export function useUser() {
 
       return { ...user, profile };
     },
-    staleTime: 0, // SEMPRE revalidar - CRÍTICO para segurança
-    gcTime: 0, // Não manter em cache
-    refetchOnMount: 'always', // Sempre refetch ao montar
-    refetchOnWindowFocus: true, // Refetch quando voltar para a aba
-    refetchOnReconnect: true, // Refetch ao reconectar
+    staleTime: 5 * 60 * 1000, // 5 minutos - dados do usuário não mudam frequentemente
+    gcTime: 10 * 60 * 1000, // 10 minutos em cache
+    refetchOnMount: false, // Não refetch desnecessariamente
+    refetchOnWindowFocus: false, // Não refetch ao focar na janela
+    refetchOnReconnect: true, // Apenas ao reconectar
   });
 }

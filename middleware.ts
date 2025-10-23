@@ -55,23 +55,60 @@ export async function middleware(request: NextRequest) {
       return response;
     }
 
-    // Se está autenticado, verificar role
-    const { data: profile } = await supabase
-      .from('users')
-      .select('role')
-      .eq('id', user.id)
-      .single();
+    // Otimização: Verificar role com cache em cookie
+    let userRole: string | null = null;
 
-    if (!profile) {
-      // Se não tem perfil, redirecionar para auth (erro)
+    // 1. Tentar obter role do cookie cache (mais rápido)
+    const cachedRole = request.cookies.get('user-role')?.value;
+    const cacheTimestamp = request.cookies.get('user-role-timestamp')?.value;
+    const now = Date.now();
+    const cacheAge = cacheTimestamp ? now - parseInt(cacheTimestamp) : Infinity;
+
+    // Cache válido por 5 minutos
+    if (cachedRole && cacheAge < 5 * 60 * 1000) {
+      userRole = cachedRole;
+    } else {
+      // 2. Tentar obter role do JWT metadata
+      if (user.user_metadata?.role) {
+        userRole = user.user_metadata.role;
+      } else if (user.app_metadata?.role) {
+        userRole = user.app_metadata.role;
+      } else {
+        // 3. Fallback: consultar banco apenas se necessário
+        const { data: profile } = await supabase
+          .from('users')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+
+        userRole = profile?.role || null;
+      }
+
+      // Salvar no cache se obteve o role
+      if (userRole) {
+        supabaseResponse.cookies.set('user-role', userRole, {
+          maxAge: 5 * 60, // 5 minutos
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax'
+        });
+        supabaseResponse.cookies.set('user-role-timestamp', now.toString(), {
+          maxAge: 5 * 60, // 5 minutos
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax'
+        });
+      }
+    }
+
+    if (!userRole) {
+      // Se não tem role, redirecionar para auth (erro)
       const url = request.nextUrl.clone();
       url.pathname = '/auth';
       const response = NextResponse.redirect(url);
       response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
       return response;
     }
-
-    const userRole = profile.role;
 
     // Verificar permissões por rota
     if (pathname.startsWith('/gestor')) {

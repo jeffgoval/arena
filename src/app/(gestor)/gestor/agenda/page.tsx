@@ -1,12 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, ChevronLeft, ChevronRight, Clock, Users, MapPin } from "lucide-react";
+import { Calendar, ChevronLeft, ChevronRight, Clock, Users, MapPin, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ReservationModal } from "@/components/modules/core/agenda/ReservationModal";
+import { useReservasGestor, useCreateReservaGestor, useUpdateReservaGestor, useDeleteReservaGestor } from "@/hooks/core/useReservasGestor";
+import { useQuadras, useAllHorarios } from "@/hooks/core/useQuadrasHorarios";
+import { useToast } from "@/hooks/use-toast";
 
 type PeriodType = "dia" | "semana" | "mes";
 
@@ -26,7 +29,7 @@ interface Reservation {
 export default function AgendaPage() {
   const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>("semana");
   const [currentDate, setCurrentDate] = useState(new Date());
-  
+
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
@@ -35,7 +38,10 @@ export default function AgendaPage() {
   const today = new Date();
   const currentWeek = Array.from({ length: 7 }, (_, i) => {
     const date = new Date(currentDate);
-    date.setDate(currentDate.getDate() - currentDate.getDay() + i);
+    // Ajustar para segunda-feira ser o primeiro dia (0)
+    const dayOfWeek = currentDate.getDay();
+    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; // Se domingo (0), volta 6 dias; senão, vai para segunda
+    date.setDate(currentDate.getDate() + mondayOffset + i);
     return date;
   });
 
@@ -48,66 +54,66 @@ export default function AgendaPage() {
 
   // Simulação de reservas com estado
   const [reservations, setReservations] = useState<Reservation[]>([
-    { 
-      id: "1", 
-      court: "Society 1", 
-      day: 1, 
-      time: "19:00", 
-      organizer: "João Silva", 
-      participants: 8, 
+    {
+      id: "1",
+      court: "Society 1",
+      day: 1,
+      time: "19:00",
+      organizer: "João Silva",
+      participants: 8,
       status: "confirmada",
       phone: "(11) 99999-1111",
       email: "joao@email.com",
       notes: "Pelada dos amigos"
     },
-    { 
-      id: "2", 
-      court: "Society 1", 
-      day: 1, 
-      time: "20:00", 
-      organizer: "Maria Santos", 
-      participants: 6, 
+    {
+      id: "2",
+      court: "Society 1",
+      day: 1,
+      time: "20:00",
+      organizer: "Maria Santos",
+      participants: 6,
       status: "pendente",
       phone: "(11) 99999-2222",
       email: "maria@email.com"
     },
-    { 
-      id: "3", 
-      court: "Futsal", 
-      day: 2, 
-      time: "19:00", 
-      organizer: "Pedro Costa", 
-      participants: 10, 
+    {
+      id: "3",
+      court: "Futsal",
+      day: 2,
+      time: "19:00",
+      organizer: "Pedro Costa",
+      participants: 10,
       status: "confirmada",
       phone: "(11) 99999-3333"
     },
-    { 
-      id: "4", 
-      court: "Society 2", 
-      day: 3, 
-      time: "20:00", 
-      organizer: "Ana Silva", 
-      participants: 12, 
+    {
+      id: "4",
+      court: "Society 2",
+      day: 3,
+      time: "20:00",
+      organizer: "Ana Silva",
+      participants: 12,
       status: "confirmada",
       email: "ana@email.com",
       notes: "Aniversário da Ana"
     },
-    { 
-      id: "5", 
-      court: "Society 1", 
-      day: 4, 
-      time: "19:00", 
-      organizer: "Carlos Lima", 
-      participants: 8, 
+    {
+      id: "5",
+      court: "Society 1",
+      day: 4,
+      time: "19:00",
+      organizer: "Carlos Lima",
+      participants: 8,
       status: "confirmada"
     },
-    { 
-      id: "6", 
-      court: "Society 1", 
-      day: 5, 
-      time: "21:00", 
-      organizer: "Bruno Santos", 
-      participants: 14, 
+    {
+      id: "6",
+      court: "Society 1",
+      day: 5,
+      time: "21:00",
+      organizer: "Bruno Santos",
+      participants: 14,
       status: "pendente",
       phone: "(11) 99999-6666",
       notes: "Confirmar até amanhã"
@@ -128,22 +134,32 @@ export default function AgendaPage() {
 
   // Modal functions
   const openReservationModal = (reservation: Reservation) => {
+    console.log("openReservationModal called with:", reservation);
     setSelectedReservation(reservation);
     setModalMode("view");
     setIsModalOpen(true);
+    console.log("Modal state set - isOpen:", true, "mode:", "view");
   };
 
   const openCreateModal = (court: string, day: number, time: string) => {
-    setSelectedReservation({
+    console.log("openCreateModal called with:", { court, day, time });
+    const newReservation: Reservation = {
       court,
       day,
       time,
       organizer: "",
       participants: 1,
-      status: "pendente"
-    });
+      status: "pendente",
+      phone: "",
+      email: "",
+      notes: ""
+    };
+
+    console.log("New reservation created:", newReservation);
+    setSelectedReservation(newReservation);
     setModalMode("create");
     setIsModalOpen(true);
+    console.log("Modal state set - isOpen:", true, "mode:", "create");
   };
 
   const handleSaveReservation = (reservation: Reservation) => {
@@ -154,7 +170,7 @@ export default function AgendaPage() {
       };
       setReservations([...reservations, newReservation]);
     } else {
-      setReservations(reservations.map(r => 
+      setReservations(reservations.map(r =>
         r.id === reservation.id ? reservation : r
       ));
     }
@@ -167,6 +183,41 @@ export default function AgendaPage() {
   const closeModal = () => {
     setIsModalOpen(false);
     setSelectedReservation(null);
+  };
+
+  // Função para verificar se uma data/hora já passou
+  const isPastDateTime = (date: Date, time?: string) => {
+    const now = new Date();
+    const checkDate = new Date(date);
+    
+    if (time) {
+      const [hours, minutes] = time.split(':').map(Number);
+      checkDate.setHours(hours, minutes, 0, 0);
+    } else {
+      // Se não tem horário específico, considera o final do dia
+      checkDate.setHours(23, 59, 59, 999);
+    }
+    
+    return checkDate < now;
+  };
+
+  // Função para obter classes CSS baseadas no estado da data/hora
+  const getSlotClasses = (date: Date, time?: string, hasReservation?: boolean) => {
+    const isPast = isPastDateTime(date, time);
+    const baseClasses = "rounded text-xs transition-all duration-200";
+    
+    if (isPast) {
+      // Horários/datas passados - não clicáveis, com visual diferenciado
+      return `${baseClasses} bg-muted/30 text-muted-foreground/50 cursor-not-allowed opacity-60 ${hasReservation ? 'line-through' : ''} relative after:absolute after:inset-0 after:bg-gradient-to-br after:from-transparent after:via-muted-foreground/10 after:to-muted-foreground/20 after:pointer-events-none`;
+    }
+    
+    if (hasReservation) {
+      // Reservas futuras - clicáveis
+      return `${baseClasses} cursor-pointer hover:scale-105 hover:shadow-sm`;
+    }
+    
+    // Horários disponíveis futuros - clicáveis
+    return `${baseClasses} bg-muted/50 border border-border hover:bg-muted hover:border-primary/30 hover:shadow-sm cursor-pointer`;
   };
 
   const getPeriodLabel = () => {
@@ -192,7 +243,7 @@ export default function AgendaPage() {
   // Funções de navegação
   const navigatePeriod = (direction: 'prev' | 'next') => {
     const newDate = new Date(currentDate);
-    
+
     switch (selectedPeriod) {
       case "dia":
         newDate.setDate(currentDate.getDate() + (direction === 'next' ? 1 : -1));
@@ -204,18 +255,12 @@ export default function AgendaPage() {
         newDate.setMonth(currentDate.getMonth() + (direction === 'next' ? 1 : -1));
         break;
     }
-    
+
     setCurrentDate(newDate);
   };
 
   const goToToday = () => {
     setCurrentDate(new Date());
-  };
-
-  const handleNewReservation = () => {
-    setSelectedReservation(null); // Limpar reserva selecionada
-    setModalMode("create");
-    setIsModalOpen(true);
   };
 
   // Gerar dados baseados no período selecionado
@@ -271,16 +316,16 @@ export default function AgendaPage() {
         <div className="flex items-center gap-4">
           {/* Navigation chevrons with period indicator in the middle */}
           <div className="flex items-center gap-1">
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               className="h-8 w-8 p-0"
               onClick={() => navigatePeriod('prev')}
             >
               <ChevronLeft className="w-4 h-4" />
             </Button>
 
-            <div 
+            <div
               className="text-center min-w-[180px] px-3 cursor-pointer hover:bg-muted/50 rounded-md py-1 transition-colors"
               onClick={goToToday}
               title="Clique para voltar para hoje"
@@ -295,9 +340,9 @@ export default function AgendaPage() {
               </p>
             </div>
 
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               className="h-8 w-8 p-0"
               onClick={() => navigatePeriod('next')}
             >
@@ -306,38 +351,39 @@ export default function AgendaPage() {
           </div>
 
           {/* Period selector */}
-          <div className="flex items-center gap-2 bg-muted rounded-lg p-1">
-            <Button
-              variant={selectedPeriod === "dia" ? "default" : "ghost"}
-              size="sm"
+          <div className="flex items-center gap-2 bg-muted rounded-lg p-1 relative z-10">
+            <button
               onClick={() => setSelectedPeriod("dia")}
-              className={selectedPeriod === "dia" ? "bg-background shadow-sm" : ""}
+              className={`px-3 py-1 rounded text-sm font-medium transition-colors ${selectedPeriod === "dia"
+                  ? "bg-background shadow-sm text-foreground"
+                  : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                }`}
             >
               Dia
-            </Button>
-            <Button
-              variant={selectedPeriod === "semana" ? "default" : "ghost"}
-              size="sm"
+            </button>
+            <button
               onClick={() => setSelectedPeriod("semana")}
-              className={selectedPeriod === "semana" ? "bg-background shadow-sm" : ""}
+              className={`px-3 py-1 rounded text-sm font-medium transition-colors ${selectedPeriod === "semana"
+                  ? "bg-background shadow-sm text-foreground"
+                  : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                }`}
             >
               Semana
-            </Button>
-            <Button
-              variant={selectedPeriod === "mes" ? "default" : "ghost"}
-              size="sm"
+            </button>
+            <button
               onClick={() => setSelectedPeriod("mes")}
-              className={selectedPeriod === "mes" ? "bg-background shadow-sm" : ""}
+              className={`px-3 py-1 rounded text-sm font-medium transition-colors ${selectedPeriod === "mes"
+                  ? "bg-background shadow-sm text-foreground"
+                  : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                }`}
             >
               Mês
-            </Button>
+            </button>
           </div>
 
-          <Button onClick={handleNewReservation}>Nova Reserva</Button>
+
         </div>
       </div>
-
-
 
       <Tabs defaultValue="semanal" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
@@ -413,32 +459,56 @@ export default function AgendaPage() {
                                     reservation = getReservation(court, columnIndex, time);
                                   }
 
+                                  const currentSlotDate = selectedPeriod === "dia" ? currentDate : periodData.columns[columnIndex];
+                                  const isPast = isPastDateTime(currentSlotDate, selectedPeriod === "mes" ? undefined : time);
+                                  
                                   return (
                                     <div
                                       key={court}
                                       onClick={() => {
+                                        console.log("Slot clicked:", { court, time, reservation, isPast, selectedPeriod });
+                                        if (isPast) return; // Não permite clique em horários passados
+                                        
                                         if (reservation) {
+                                          console.log("Opening reservation modal for:", reservation);
                                           openReservationModal(reservation);
                                         } else if (selectedPeriod !== "mes") {
-                                          openCreateModal(court, columnIndex, time);
+                                          const dayToUse = selectedPeriod === "dia" ? currentDate.getDay() : columnIndex;
+                                          console.log("Opening create modal for:", { court, dayToUse, time });
+                                          openCreateModal(court, dayToUse, time);
                                         }
                                       }}
-                                      className={`${selectedPeriod === "mes" ? "p-1" : "p-2"} rounded text-xs cursor-pointer transition-colors ${selectedPeriod === "mes" ? "" :
+                                      className={`${selectedPeriod === "mes" ? "p-1" : "p-2"} ${
+                                        selectedPeriod === "mes" ? "" :
+                                        isPast ? getSlotClasses(currentSlotDate, time, !!reservation) :
                                         reservation
                                           ? reservation.status === 'confirmada'
-                                            ? 'bg-success/10 border border-success/20 hover:bg-success/20'
-                                            : 'bg-warning/10 border border-warning/20 hover:bg-warning/20'
-                                          : 'bg-muted/50 border border-border hover:bg-muted'
-                                        }`}
+                                            ? 'bg-success/10 border border-success/20 hover:bg-success/20 hover:scale-105 cursor-pointer rounded text-xs transition-all duration-200'
+                                            : reservation.status === 'pendente'
+                                            ? 'bg-warning/10 border border-warning/20 hover:bg-warning/20 hover:scale-105 cursor-pointer rounded text-xs transition-all duration-200'
+                                            : 'bg-destructive/10 border border-destructive/20 hover:bg-destructive/20 hover:scale-105 cursor-pointer rounded text-xs transition-all duration-200'
+                                          : getSlotClasses(currentSlotDate, time, false)
+                                      }`}
+                                      title={
+                                        isPast ? "Horário já passou" :
+                                        reservation ?
+                                        `${reservation.organizer} - ${reservation.participants} pessoas - ${reservation.status}` :
+                                        `Clique para agendar ${court} às ${time}`
+                                      }
                                     >
                                       {reservation ? (
-                                        <div>
+                                        <div className={isPast ? "relative" : ""}>
                                           <div className="font-medium truncate">{selectedPeriod === "dia" ? court : court}</div>
                                           <div className="truncate">{reservation.organizer}</div>
                                           <div className="flex items-center gap-1 mt-1">
                                             <Users className="w-3 h-3" />
                                             <span>{reservation.participants}</span>
                                           </div>
+                                          {isPast && (
+                                            <div className="absolute inset-0 flex items-center justify-center">
+                                              <div className="w-full h-0.5 bg-muted-foreground/40 rotate-12 transform"></div>
+                                            </div>
+                                          )}
                                         </div>
                                       ) : selectedPeriod === "mes" ? (
                                         (() => {
@@ -570,7 +640,7 @@ export default function AgendaPage() {
 
                   {/* Rows based on period type */}
                   {selectedPeriod === "semana" ? (
-                    // Para semana: dias da semana nas linhas, quadras nas colunas
+
                     currentWeek.map((date, dayIndex) => (
                       <div key={dayIndex} className="grid grid-cols-5 border-b border-border" style={{ gridTemplateColumns: `120px repeat(4, 1fr)` }}>
                         <div className="p-3 bg-muted/50 font-medium text-sm flex items-center">
@@ -586,24 +656,46 @@ export default function AgendaPage() {
                             getReservation(court, dayIndex, time)
                           ).filter(Boolean);
 
+                          const isPastDay = isPastDateTime(date);
+
                           return (
                             <div key={courtIndex} className="p-3 min-h-[80px] flex items-center">
                               <div
                                 onClick={() => {
-                                  if (dayReservations.length === 1) {
+                                  console.log("Week view slot clicked:", { court, dayIndex, dayReservations, isPastDay });
+                                  if (isPastDay) return; // Não permite clique em dias passados
+                                  
+                                  if (dayReservations.length === 1 && dayReservations[0]) {
+                                    console.log("Opening single reservation:", dayReservations[0]);
                                     openReservationModal(dayReservations[0]);
-                                  } else if (dayReservations.length > 1) {
-                                    // Para múltiplas reservas, abrir a primeira por enquanto
+                                  } else if (dayReservations.length > 1 && dayReservations[0]) {
+                                    console.log("Opening first of multiple reservations:", dayReservations[0]);
                                     openReservationModal(dayReservations[0]);
                                   } else {
-                                    // Slot vazio - criar nova reserva para o primeiro horário disponível
-                                    openCreateModal(court, dayIndex, timeSlots[0]);
+                                    const firstAvailableTime = timeSlots.find(time =>
+                                      !getReservation(court, dayIndex, time)
+                                    ) || timeSlots[0];
+                                    console.log("Opening create modal for week view:", { court, dayIndex, firstAvailableTime });
+                                    openCreateModal(court, dayIndex, firstAvailableTime);
                                   }
                                 }}
-                                className={`w-full p-3 rounded-lg text-sm cursor-pointer transition-colors ${dayReservations.length > 0
-                                  ? 'bg-success/10 border border-success/20 hover:bg-success/20'
-                                  : 'bg-muted/50 border border-border hover:bg-muted'
-                                  }`}
+                                className={`w-full p-3 rounded-lg text-sm transition-all duration-200 ${
+                                  isPastDay 
+                                    ? 'bg-muted/30 text-muted-foreground/50 cursor-not-allowed opacity-60 relative after:absolute after:inset-0 after:bg-gradient-to-br after:from-transparent after:via-muted-foreground/10 after:to-muted-foreground/20 after:pointer-events-none'
+                                    : dayReservations.length > 0
+                                      ? dayReservations[0]?.status === 'confirmada'
+                                        ? 'bg-success/10 border border-success/20 hover:bg-success/20 hover:scale-105 cursor-pointer'
+                                        : dayReservations[0]?.status === 'pendente'
+                                        ? 'bg-warning/10 border border-warning/20 hover:bg-warning/20 hover:scale-105 cursor-pointer'
+                                        : 'bg-destructive/10 border border-destructive/20 hover:bg-destructive/20 hover:scale-105 cursor-pointer'
+                                      : 'bg-muted/50 border border-border hover:bg-muted hover:border-primary/30 hover:shadow-sm cursor-pointer'
+                                }`}
+                                title={
+                                  isPastDay ? "Data já passou" :
+                                  dayReservations.length > 0 ?
+                                  `${dayReservations.length} reserva(s) - ${dayReservations[0]?.organizer}${dayReservations.length > 1 ? ` +${dayReservations.length - 1}` : ''}` :
+                                  `Clique para agendar ${court} - ${getDayName(date)}`
+                                }
                               >
                                 {dayReservations.length > 0 ? (
                                   <div className="text-center">
@@ -648,9 +740,8 @@ export default function AgendaPage() {
                           if (selectedPeriod === "dia") {
                             reservation = getReservation(court, today.getDay(), time);
                           } else if (selectedPeriod === "mes") {
-                            // Para mês, mostrar estatísticas por semana
                             const weekReservations = Math.floor(Math.random() * 15) + 3;
-                            const occupancyRate = Math.floor((weekReservations / 21) * 100); // 21 = 7 dias × 3 turnos
+                            const occupancyRate = Math.floor((weekReservations / 21) * 100);
 
                             displayContent = (
                               <div className="text-center">
@@ -670,16 +761,37 @@ export default function AgendaPage() {
                             <div key={courtIndex} className="p-3 min-h-[80px] flex items-center">
                               <div
                                 onClick={() => {
+                                  console.log("Month/Day view slot clicked:", { court, time, reservation, selectedPeriod });
+                                  if (selectedPeriod === "dia") {
+                                    const isPast = isPastDateTime(currentDate, time);
+                                    if (isPast) return; // Não permite clique em horários passados
+                                  }
+                                  
                                   if (reservation) {
+                                    console.log("Opening reservation from month/day view:", reservation);
                                     openReservationModal(reservation);
                                   } else if (selectedPeriod === "dia") {
+                                    console.log("Opening create modal from day view:", { court, day: currentDate.getDay(), time });
                                     openCreateModal(court, currentDate.getDay(), time);
                                   }
                                 }}
-                                className={`w-full p-3 rounded-lg text-sm cursor-pointer transition-colors ${reservation || displayContent
-                                  ? 'bg-success/10 border border-success/20 hover:bg-success/20'
-                                  : 'bg-muted/50 border border-border hover:bg-muted'
-                                  }`}
+                                className={`w-full p-3 rounded-lg text-sm transition-all duration-200 ${
+                                  selectedPeriod === "dia" && isPastDateTime(currentDate, time)
+                                    ? 'bg-muted/30 text-muted-foreground/50 cursor-not-allowed opacity-60 relative after:absolute after:inset-0 after:bg-gradient-to-br after:from-transparent after:via-muted-foreground/10 after:to-muted-foreground/20 after:pointer-events-none'
+                                    : reservation || displayContent
+                                      ? reservation?.status === 'confirmada'
+                                        ? 'bg-success/10 border border-success/20 hover:bg-success/20 hover:scale-105 cursor-pointer'
+                                        : reservation?.status === 'pendente'
+                                        ? 'bg-warning/10 border border-warning/20 hover:bg-warning/20 hover:scale-105 cursor-pointer'
+                                        : 'bg-destructive/10 border border-destructive/20 hover:bg-destructive/20 hover:scale-105 cursor-pointer'
+                                      : 'bg-muted/50 border border-border hover:bg-muted hover:border-primary/30 hover:shadow-sm cursor-pointer'
+                                }`}
+                                title={
+                                  selectedPeriod === "dia" && isPastDateTime(currentDate, time) ? "Horário já passou" :
+                                  reservation ?
+                                  `${reservation.organizer} - ${reservation.participants} pessoas - ${reservation.status}` :
+                                  selectedPeriod === "dia" ? `Clique para agendar ${court} às ${time}` : "Clique para ver detalhes"
+                                }
                               >
                                 {reservation ? (
                                   <div className="text-center">

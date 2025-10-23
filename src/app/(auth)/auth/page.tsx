@@ -191,7 +191,6 @@ export default function AuthPage() {
                       <p>💡 <strong>Contas de Teste:</strong></p>
                       <p>• Cliente: cliente@arena.com (senha: 123456)</p>
                       <p>• Gestor: gestor@arena.com (senha: 123456)</p>
-                      <p>• Admin: admin@arena.com (senha: 123456)</p>
                     </div>
                   </div>
 
