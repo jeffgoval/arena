@@ -65,9 +65,11 @@ export async function GET(
       .eq('user_id', user.id)
       .single();
 
+    const quadra = Array.isArray(reserva.quadra) ? reserva.quadra[0] : reserva.quadra;
+    
     const info = {
       id: reserva.id,
-      quadra_nome: reserva.quadra?.nome || 'Quadra',
+      quadra_nome: quadra?.nome || 'Quadra',
       data: reserva.data,
       ja_avaliada: !!avaliacaoExistente,
     };
