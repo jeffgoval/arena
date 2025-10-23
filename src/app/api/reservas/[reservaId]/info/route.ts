@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/server';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { reservaId: string } }
+  { params }: { params: Promise<{ reservaId: string }> }
 ) {
   try {
     const supabase = await createClient();
@@ -21,7 +21,7 @@ export async function GET(
       );
     }
 
-    const { reservaId } = params;
+    const { reservaId } = await params;
 
     // Buscar reserva
     const { data: reserva, error: reservaError } = await supabase

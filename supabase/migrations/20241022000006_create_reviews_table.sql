@@ -1,3 +1,8 @@
+-- =====================================================
+-- MIGRATION: Criar tabela de avaliações (reviews)
+-- Depende de: 20241022000001_create_base_tables.sql
+-- =====================================================
+
 -- Criar tabela de avaliações (reviews)
 CREATE TABLE IF NOT EXISTS reviews (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

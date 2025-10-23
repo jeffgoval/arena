@@ -75,9 +75,9 @@ export async function GET() {
     // Calcular por quadra
     const quadrasMap = new Map<string, { nome: string; ratings: number[] }>();
     
-    avaliacoes.forEach((avaliacao) => {
+    avaliacoes.forEach((avaliacao: any) => {
       if (avaliacao.reserva?.quadra) {
-        const quadraId = avaliacao.reserva.quadra_id;
+        const quadraId = avaliacao.reserva.quadra.id;
         const quadraNome = avaliacao.reserva.quadra.nome;
         
         if (!quadrasMap.has(quadraId)) {
