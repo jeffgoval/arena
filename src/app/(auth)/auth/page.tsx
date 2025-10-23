@@ -155,6 +155,7 @@ function AuthPageContent() {
         options: {
           data: {
             nome_completo: data.nome_completo,
+            role: 'cliente', // Adicionar role no JWT para middleware pegar instantaneamente
           }
         }
       });
@@ -192,7 +193,7 @@ function AuthPageContent() {
       // 2. Criar perfil na tabela users (com delay para evitar race condition)
       await new Promise(resolve => setTimeout(resolve, 500));
 
-      const { error: profileError } = await supabase
+      const { data: profileData, error: profileError } = await supabase
         .from('users')
         .insert({
           id: authData.user.id,
@@ -211,15 +212,28 @@ function AuthPageContent() {
           estado: data.estado,
           role: 'cliente',
           saldo_creditos: 0
-        });
+        })
+        .select()
+        .single();
 
       if (profileError) {
-        console.error('Erro ao criar perfil:', profileError);
+        console.error('❌ ERRO AO CRIAR PERFIL:', profileError);
+        console.error('Code:', profileError.code);
+        console.error('Details:', profileError.details);
+        console.error('Hint:', profileError.hint);
+        console.error('Message:', profileError.message);
+
         toast({
-          title: "Aviso",
-          description: "Conta criada, mas complete seu perfil depois",
+          title: "Erro ao criar perfil",
+          description: profileError.message || "Erro desconhecido. Verifique o console.",
+          variant: "destructive",
         });
+
+        setSignupLoading(false);
+        return;
       }
+
+      console.log('✅ Perfil criado com sucesso:', profileData);
 
       // 3. Se houver código de indicação, aplicar
       if (data.codigoIndicacao) {
