@@ -39,7 +39,7 @@ function AuthPageContent() {
     }
   }, [codigoIndicacao, toast]);
 
-  // Login direto sem API para demo
+  // Login com Supabase Auth
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -59,77 +59,201 @@ function AuthPageContent() {
       return;
     }
 
-    // Verificar credenciais para demo
-    const validCredentials = [
-      { email: 'cliente@arena.com', role: 'cliente', path: '/cliente' },
-      { email: 'gestor@arena.com', role: 'gestor', path: '/gestor' },
-      { email: 'admin@arena.com', role: 'admin', path: '/gestor' }
-    ];
+    try {
+      const { createClient } = await import('@/lib/supabase/client');
+      const supabase = createClient();
 
-    const user = validCredentials.find(u => u.email === email);
+      // Tentar fazer login
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
 
-    if (!user) {
+      if (authError) {
+        toast({
+          title: "Erro no login",
+          description: authError.message === 'Invalid login credentials'
+            ? 'Email ou senha incorretos'
+            : authError.message,
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
+      if (!authData.user) {
+        toast({
+          title: "Erro",
+          description: "Falha ao autenticar usuário",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
+      // Buscar perfil do usuário
+      const { data: profile, error: profileError } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', authData.user.id)
+        .single();
+
+      if (profileError || !profile) {
+        // Se não tem perfil, criar um básico
+        const { error: insertError } = await supabase
+          .from('users')
+          .insert({
+            id: authData.user.id,
+            email: authData.user.email,
+            nome_completo: authData.user.email?.split('@')[0] || 'Usuário',
+            cpf: '000.000.000-00', // temporário
+            role: 'cliente'
+          });
+
+        if (!insertError) {
+          router.push('/cliente');
+        } else {
+          toast({
+            title: "Aviso",
+            description: "Complete seu cadastro",
+          });
+          router.push('/cliente');
+        }
+        return;
+      }
+
+      // Redirecionar baseado no role real
+      if (profile.role === 'gestor' || profile.role === 'admin') {
+        router.push('/gestor');
+      } else {
+        router.push('/cliente');
+      }
+
+    } catch (error: any) {
+      console.error('Erro no login:', error);
       toast({
         title: "Erro",
-        description: "Email não encontrado. Use: cliente@arena.com, gestor@arena.com ou admin@arena.com",
+        description: error.message || "Erro ao fazer login. Tente novamente.",
         variant: "destructive",
       });
       setLoading(false);
-      return;
     }
-
-    // Redirecionar diretamente sem delay
-    router.push(user.path);
   };
 
-  // Cadastro com integração do sistema de indicação
+  // Cadastro com Supabase Auth + Sistema de Indicação
   const handleSignupSubmit = async (data: SignupFormData & { codigoIndicacao?: string }) => {
     setSignupLoading(true);
 
     try {
-      // Simular criação de usuário (aqui você integraria com Supabase Auth)
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const { createClient } = await import('@/lib/supabase/client');
+      const supabase = createClient();
 
-      // Se houver código de indicação, aplicar
+      // 1. Criar usuário no Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+        options: {
+          data: {
+            nome_completo: data.nome_completo,
+          }
+        }
+      });
+
+      if (authError) {
+        let errorMsg = authError.message;
+
+        if (authError.message === 'User already registered') {
+          errorMsg = 'Este email já está cadastrado';
+        } else if (authError.message.includes('Password')) {
+          errorMsg = 'A senha deve ter no mínimo 6 caracteres';
+        } else if (authError.message.includes('password')) {
+          errorMsg = 'Senha inválida. Use no mínimo 6 caracteres';
+        }
+
+        toast({
+          title: "Erro no cadastro",
+          description: errorMsg,
+          variant: "destructive",
+        });
+        setSignupLoading(false);
+        return;
+      }
+
+      if (!authData.user) {
+        toast({
+          title: "Erro",
+          description: "Falha ao criar conta",
+          variant: "destructive",
+        });
+        setSignupLoading(false);
+        return;
+      }
+
+      // 2. Criar perfil na tabela users (com delay para evitar race condition)
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      const { error: profileError } = await supabase
+        .from('users')
+        .insert({
+          id: authData.user.id,
+          email: data.email,
+          nome_completo: data.nome_completo,
+          cpf: data.cpf,
+          rg: data.rg || null,
+          data_nascimento: data.data_nascimento,
+          whatsapp: data.whatsapp,
+          cep: data.cep,
+          logradouro: data.logradouro,
+          numero: data.numero,
+          complemento: data.complemento || null,
+          bairro: data.bairro,
+          cidade: data.cidade,
+          estado: data.estado,
+          role: 'cliente',
+          saldo_creditos: 0
+        });
+
+      if (profileError) {
+        console.error('Erro ao criar perfil:', profileError);
+        toast({
+          title: "Aviso",
+          description: "Conta criada, mas complete seu perfil depois",
+        });
+      }
+
+      // 3. Se houver código de indicação, aplicar
       if (data.codigoIndicacao) {
-        // Simular ID do usuário criado
-        const novoUsuarioId = 'user-' + Date.now();
-        
         const sucesso = await IndicacoesService.aplicarCodigoIndicacao(
           data.codigoIndicacao,
-          novoUsuarioId
+          authData.user.id
         );
 
         if (sucesso) {
           toast({
-            title: "Sucesso!",
-            description: "Conta criada com sucesso! Código de indicação aplicado e créditos concedidos!",
+            title: "Sucesso! 🎉",
+            description: "Conta criada! Código de indicação aplicado e créditos concedidos!",
           });
         } else {
           toast({
-            title: "Sucesso!",
-            description: "Conta criada com sucesso!",
-          });
-          toast({
-            title: "Aviso",
-            description: "Não foi possível aplicar o código de indicação.",
-            variant: "destructive",
+            title: "Conta criada!",
+            description: "Bem-vindo à Arena Dona Santa!",
           });
         }
       } else {
         toast({
-          title: "Sucesso!",
-          description: "Conta criada com sucesso!",
+          title: "Conta criada! 🎉",
+          description: "Bem-vindo à Arena Dona Santa!",
         });
       }
 
-      // Redirecionar para área do cliente
+      // 4. Fazer login automático e redirecionar
       router.push('/cliente');
-    } catch (error) {
+
+    } catch (error: any) {
       console.error('Erro no cadastro:', error);
       toast({
         title: "Erro",
-        description: "Erro ao criar conta. Tente novamente.",
+        description: error.message || "Erro ao criar conta. Tente novamente.",
         variant: "destructive",
       });
     } finally {
@@ -267,11 +391,6 @@ function AuthPageContent() {
                         className="pl-10"
                         required
                       />
-                    </div>
-                    <div className="text-xs text-muted-foreground space-y-1">
-                      <p>💡 <strong>Contas de Teste:</strong></p>
-                      <p>• Cliente: cliente@arena.com (senha: 123456)</p>
-                      <p>• Gestor: gestor@arena.com (senha: 123456)</p>
                     </div>
                   </div>
 

@@ -58,8 +58,9 @@ export const signupSchema = z.object({
 
   whatsapp: z
     .string()
-    .min(14, 'WhatsApp inválido')
-    .max(15, 'WhatsApp inválido'),
+    .min(10, 'WhatsApp deve ter no mínimo 10 dígitos')
+    .max(11, 'WhatsApp deve ter no máximo 11 dígitos')
+    .regex(/^\d+$/, 'WhatsApp deve conter apenas números'),
 
   // Endereço
   cep: z

@@ -20,6 +20,8 @@ import { signupSchema, type SignupFormData } from '@/lib/validations/auth.schema
 import { InputCEP } from '@/components/shared/forms/InputCEP';
 import { useCEP } from '@/hooks/useCEP';
 import { formatCEP } from '@/lib/utils/cep';
+import { formatPhone } from '@/lib/utils/phone';
+import { formatCPF } from '@/lib/utils/cpf';
 
 interface SignupFormProps {
   onSubmit: (data: SignupFormData & { codigoIndicacao?: string }) => Promise<void>;
@@ -109,8 +111,13 @@ export function SignupForm({ onSubmit, loading = false, codigoIndicacaoInicial }
             <Label htmlFor="cpf">CPF *</Label>
             <Input
               id="cpf"
-              {...form.register('cpf')}
+              value={formatCPF(form.watch('cpf') || '')}
+              onChange={(e) => {
+                const numbers = e.target.value.replace(/\D/g, '');
+                form.setValue('cpf', numbers);
+              }}
               placeholder="000.000.000-00"
+              maxLength={14}
             />
             {form.formState.errors.cpf && (
               <p className="text-sm text-destructive mt-1">
@@ -178,8 +185,13 @@ export function SignupForm({ onSubmit, loading = false, codigoIndicacaoInicial }
           <Label htmlFor="whatsapp">WhatsApp *</Label>
           <Input
             id="whatsapp"
-            {...form.register('whatsapp')}
+            value={formatPhone(form.watch('whatsapp') || '')}
+            onChange={(e) => {
+              const numbers = e.target.value.replace(/\D/g, '');
+              form.setValue('whatsapp', numbers);
+            }}
             placeholder="(33) 99999-9999"
+            maxLength={15}
           />
           {form.formState.errors.whatsapp && (
             <p className="text-sm text-destructive mt-1">
