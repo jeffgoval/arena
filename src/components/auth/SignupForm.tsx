@@ -16,6 +16,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { signupSchema, type SignupFormData } from '@/lib/validations/auth.schema';
+import { InputCEP } from '@/components/shared/forms/InputCEP';
+import { useCEP } from '@/hooks/useCEP';
+import { formatCEP } from '@/lib/utils/cep';
 
 interface SignupFormProps {
   onSubmit: (data: SignupFormData) => Promise<void>;
@@ -23,7 +26,8 @@ interface SignupFormProps {
 }
 
 export function SignupForm({ onSubmit, loading = false }: SignupFormProps) {
-  const [loadingCEP, setLoadingCEP] = useState(false);
+  const { loading: loadingCEP, error: cepError, fetchAddress, clearError } = useCEP();
+  const [cepSuccess, setCepSuccess] = useState(false);
 
   const form = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
@@ -48,21 +52,17 @@ export function SignupForm({ onSubmit, loading = false }: SignupFormProps) {
 
   const handleCEPChange = async (cep: string) => {
     if (cep.length === 8) {
-      setLoadingCEP(true);
-      try {
-        const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
-        const data = await response.json();
-        
-        if (!data.erro) {
-          form.setValue('logradouro', data.logradouro || '');
-          form.setValue('bairro', data.bairro || '');
-          form.setValue('cidade', data.localidade || '');
-          form.setValue('estado', data.uf || '');
-        }
-      } catch (error) {
-        console.error('Erro ao buscar CEP:', error);
-      } finally {
-        setLoadingCEP(false);
+      clearError();
+      setCepSuccess(false);
+      
+      const address = await fetchAddress(cep);
+      
+      if (address) {
+        form.setValue('logradouro', address.logradouro || '');
+        form.setValue('bairro', address.bairro || '');
+        form.setValue('cidade', address.cidade || '');
+        form.setValue('estado', address.estado || '');
+        setCepSuccess(true);
       }
     }
   };
@@ -184,26 +184,34 @@ export function SignupForm({ onSubmit, loading = false }: SignupFormProps) {
 
         <div>
           <Label htmlFor="cep">CEP *</Label>
-          <div className="relative">
-            <Input
-              id="cep"
-              {...form.register('cep')}
-              placeholder="00000-000"
-              onChange={(e) => {
-                const value = e.target.value.replace(/\D/g, '');
-                form.setValue('cep', value);
-                if (value.length === 8) {
-                  handleCEPChange(value);
-                }
-              }}
-            />
-            {loadingCEP && (
-              <Loader2 className="absolute right-3 top-3 w-4 h-4 animate-spin text-primary" />
-            )}
-          </div>
+          <InputCEP
+            id="cep"
+            value={formatCEP(form.watch('cep') || '')}
+            onChange={(value) => {
+              const numbers = value.replace(/\D/g, '');
+              form.setValue('cep', numbers);
+              clearError();
+              setCepSuccess(false);
+            }}
+            onCEPChange={handleCEPChange}
+            loading={loadingCEP}
+            error={!!cepError}
+            success={cepSuccess}
+          />
           {form.formState.errors.cep && (
             <p className="text-sm text-destructive mt-1">
               {form.formState.errors.cep.message}
+            </p>
+          )}
+          {cepError && (
+            <p className="text-sm text-amber-600 mt-1 flex items-center gap-1">
+              <MapPin className="w-3 h-3" />
+              {cepError}
+            </p>
+          )}
+          {cepSuccess && (
+            <p className="text-sm text-green-600 mt-1">
+              Endereço encontrado! Verifique os dados abaixo.
             </p>
           )}
         </div>
