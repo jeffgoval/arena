@@ -52,12 +52,18 @@ export default function ExemploResponsivoPage() {
     }
   ]);
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    title: string;
+    description: string;
+    type: 'reserva' | 'turma' | 'jogo';
+    date: string;
+    status: 'ativo' | 'pendente' | 'concluido';
+  }>({
     title: '',
     description: '',
-    type: 'reserva' as const,
+    type: 'reserva',
     date: '',
-    status: 'ativo' as const
+    status: 'ativo'
   });
 
   const { isOpen, open, close } = useMobileModal();
