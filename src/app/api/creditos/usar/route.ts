@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
       .eq('status', 'ativo')
       .gt('valor', 0)
       .or('data_expiracao.is.null,data_expiracao.gt.' + new Date().toISOString())
-      .order('data_expiracao', { ascending: true, nullsLast: true });
+      .order('data_expiracao', { ascending: true });
 
     if (saldoError) {
       console.error('Erro ao verificar saldo:', saldoError);
