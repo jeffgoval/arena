@@ -214,6 +214,129 @@
     @apply bg-primary/80;
   }
 
+  /* Mobile-specific utilities */
+  .safe-area-pt {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-area-pb {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .safe-area-pl {
+    padding-left: env(safe-area-inset-left);
+  }
+
+  .safe-area-pr {
+    padding-right: env(safe-area-inset-right);
+  }
+
+  .safe-area-p {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* Mobile touch utilities */
+  .touch-manipulation {
+    touch-action: manipulation;
+  }
+
+  .touch-pan-x {
+    touch-action: pan-x;
+  }
+
+  .touch-pan-y {
+    touch-action: pan-y;
+  }
+
+  .touch-none {
+    touch-action: none;
+  }
+
+  /* Mobile-friendly tap targets */
+  .tap-target {
+    @apply min-h-[44px] min-w-[44px] flex items-center justify-center;
+  }
+
+  .tap-target-sm {
+    @apply min-h-[36px] min-w-[36px] flex items-center justify-center;
+  }
+
+  /* Mobile spacing */
+  .mobile-padding {
+    @apply px-4 md:px-6 lg:px-8;
+  }
+
+  .mobile-margin {
+    @apply mx-4 md:mx-6 lg:mx-8;
+  }
+
+  /* Mobile typography */
+  .mobile-heading {
+    @apply text-2xl md:text-3xl lg:text-4xl font-bold;
+  }
+
+  .mobile-subheading {
+    @apply text-lg md:text-xl lg:text-2xl font-semibold;
+  }
+
+  .mobile-body {
+    @apply text-sm md:text-base;
+  }
+
+  /* Mobile cards */
+  .mobile-card {
+    @apply rounded-lg md:rounded-xl border border-border bg-card p-4 md:p-6;
+  }
+
+  .mobile-card-compact {
+    @apply rounded-lg border border-border bg-card p-3 md:p-4;
+  }
+
+  /* Mobile buttons */
+  .mobile-button {
+    @apply h-12 md:h-10 px-6 md:px-4 text-base md:text-sm font-medium rounded-lg;
+  }
+
+  .mobile-button-sm {
+    @apply h-10 md:h-8 px-4 md:px-3 text-sm md:text-xs font-medium rounded-md;
+  }
+
+  /* Mobile forms */
+  .mobile-input {
+    @apply h-12 md:h-10 px-4 md:px-3 text-base md:text-sm rounded-lg;
+  }
+
+  .mobile-select {
+    @apply h-12 md:h-10 px-4 md:px-3 text-base md:text-sm rounded-lg;
+  }
+
+  /* Mobile modals */
+  .mobile-modal {
+    @apply fixed inset-0 z-50 md:relative md:inset-auto md:z-auto;
+    @apply bg-background md:bg-card;
+    @apply md:rounded-lg md:border md:border-border md:shadow-lg;
+    @apply md:max-w-lg md:max-h-[90vh];
+  }
+
+  .mobile-modal-header {
+    @apply sticky top-0 z-10 bg-card/95 backdrop-blur-md border-b border-border;
+    @apply p-4 md:p-6;
+  }
+
+  .mobile-modal-content {
+    @apply flex-1 overflow-y-auto p-4 md:p-6;
+  }
+
+  /* Mobile navigation */
+  .mobile-nav-item {
+    @apply flex flex-col items-center justify-center p-2 rounded-lg;
+    @apply min-h-[60px] min-w-[60px] text-xs font-medium;
+    @apply transition-all duration-200;
+  }
+
   /* Selection */
   .selection-primary ::selection {
     @apply bg-primary text-primary-foreground;
@@ -231,6 +354,29 @@
 
   .text-pretty {
     text-wrap: pretty;
+  }
+
+  /* Mobile-specific breakpoints */
+  .mobile-only {
+    @apply block md:hidden;
+  }
+
+  .desktop-only {
+    @apply hidden md:block;
+  }
+
+  .tablet-up {
+    @apply hidden md:block;
+  }
+
+  .mobile-landscape {
+    @apply hidden;
+  }
+
+  @media (max-width: 767px) and (orientation: landscape) {
+    .mobile-landscape {
+      @apply block;
+    }
   }
 }
 
@@ -250,10 +396,158 @@
   }
 }
 
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
 .animate-in {
   animation: fadeIn 0.15s ease-out;
 }
 
 .fade-in {
   animation: fadeIn 0.15s ease-out;
+}
+
+.slide-up {
+  animation: slideUp 0.3s ease-out;
+}
+
+.slide-down {
+  animation: slideDown 0.3s ease-out;
+}
+
+.scale-in {
+  animation: scaleIn 0.2s ease-out;
+}
+
+/* Mobile-specific styles */
+@media (max-width: 767px) {
+  /* Improve touch targets */
+  button, a, input, select, textarea {
+    min-height: 44px;
+  }
+
+  /* Better mobile typography */
+  body {
+    font-size: 16px; /* Prevent zoom on iOS */
+  }
+
+  /* Mobile-friendly forms */
+  input, select, textarea {
+    font-size: 16px; /* Prevent zoom on iOS */
+  }
+
+  /* Mobile modal animations */
+  .mobile-modal-enter {
+    animation: slideUp 0.3s ease-out;
+  }
+
+  .mobile-modal-exit {
+    animation: slideUp 0.3s ease-out reverse;
+  }
+
+  /* Mobile navigation */
+  .bottom-nav-enter {
+    animation: slideUp 0.2s ease-out;
+  }
+
+  /* Mobile cards */
+  .card {
+    border-radius: 12px;
+  }
+
+  /* Mobile buttons */
+  .btn {
+    border-radius: 12px;
+    font-weight: 600;
+  }
+
+  /* Mobile spacing adjustments */
+  .container {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
+
+/* Tablet styles */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .container {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+}
+
+/* Desktop styles */
+@media (min-width: 1024px) {
+  .container {
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+}
+
+/* High DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  /* Sharper borders and shadows for retina displays */
+  .border {
+    border-width: 0.5px;
+  }
+}
+
+/* Dark mode mobile adjustments */
+@media (prefers-color-scheme: dark) {
+  @media (max-width: 767px) {
+    /* Darker backgrounds for better battery life on OLED */
+    .bg-background {
+      background-color: hsl(0 0% 2%);
+    }
+    
+    .bg-card {
+      background-color: hsl(0 0% 4%);
+    }
+  }
+}
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .border {
+    border-width: 2px;
+  }
+  
+  .shadow-soft {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
 }

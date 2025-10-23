@@ -6,6 +6,8 @@ import { LayoutDashboard, Users, Calendar, Trophy, CreditCard, Gift, LogOut, Men
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { CreditosHeader } from "@/components/modules/indicacoes/CreditosHeader";
+import { BottomNavigation } from "@/components/shared/layout/BottomNavigation";
+import { ResponsiveLayout } from "@/components/shared/layout/ResponsiveLayout";
 
 export default function DashboardLayout({
   children,
@@ -44,111 +46,102 @@ export default function DashboardLayout({
   ];
 
   return (
-    <div className="min-h-screen bg-background flex">
-      {/* Mobile Sidebar Overlay */}
-      {sidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+    <ResponsiveLayout showBottomNav={true} bottomNavVariant="dashboard">
+      <div className="min-h-screen bg-background flex">
+        {/* Mobile Sidebar Overlay */}
+        {sidebarOpen && (
+          <div 
+            className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
 
-      {/* Sidebar */}
-      <aside className={`
-        fixed lg:static inset-y-0 left-0 z-50 w-72 bg-card border-r border-border flex flex-col shadow-soft
-        transform transition-transform duration-300 ease-in-out lg:translate-x-0
-        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-      `}>
-        {/* Header */}
-        <div className="p-6 bg-gradient-to-br from-primary to-secondary">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-background rounded-xl flex items-center justify-center shadow-medium">
-                <span className="text-primary font-bold text-xl">A</span>
-              </div>
-              <div>
-                <h1 className="heading-4 text-primary-foreground">Arena Dona Santa</h1>
-                <p className="text-xs text-primary-foreground/90 font-medium">Painel de Controle</p>
+        {/* Sidebar - Hidden on mobile, visible on desktop */}
+        <aside className={`
+          fixed lg:static inset-y-0 left-0 z-50 w-72 bg-card border-r border-border flex flex-col shadow-soft
+          transform transition-transform duration-300 ease-in-out lg:translate-x-0
+          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+          hidden md:flex
+        `}>
+          {/* Header */}
+          <div className="p-6 bg-gradient-to-br from-primary to-secondary">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-background rounded-xl flex items-center justify-center shadow-medium">
+                  <span className="text-primary font-bold text-xl">A</span>
+                </div>
+                <div>
+                  <h1 className="heading-4 text-primary-foreground">Arena Dona Santa</h1>
+                  <p className="text-xs text-primary-foreground/90 font-medium">Painel de Controle</p>
+                </div>
               </div>
             </div>
+          </div>
+
+          {/* Navigation */}
+          <nav className="flex-1 p-4 overflow-y-auto scrollbar-thin">
+            <div className="space-y-2">
+              {navItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setSidebarOpen(false)}
+                  className={`
+                    flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200
+                    ${item.active 
+                      ? 'bg-primary text-primary-foreground shadow-soft' 
+                      : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                    }
+                  `}
+                >
+                  <item.icon className="w-5 h-5" />
+                  <span className="font-medium">{item.label}</span>
+                </Link>
+              ))}
+            </div>
+          </nav>
+
+          {/* Footer */}
+          <div className="p-4 border-t border-border">
             <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setSidebarOpen(false)}
-              className="lg:hidden text-primary-foreground hover:bg-primary-foreground/10"
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              variant="outline"
+              className="w-full justify-start gap-3 text-destructive border-destructive/20 hover:bg-destructive/10 hover:text-destructive"
             >
-              <X className="w-5 h-5" />
+              <LogOut className="w-5 h-5" />
+              <span className="font-medium">{isLoggingOut ? "Saindo..." : "Sair"}</span>
             </Button>
           </div>
-        </div>
+        </aside>
 
-        {/* Navigation */}
-        <nav className="flex-1 p-4 overflow-y-auto scrollbar-thin">
-          <div className="space-y-2">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setSidebarOpen(false)}
-                className={`
-                  flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200
-                  ${item.active 
-                    ? 'bg-primary text-primary-foreground shadow-soft' 
-                    : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-                  }
-                `}
-              >
-                <item.icon className="w-5 h-5" />
-                <span className="font-medium">{item.label}</span>
-              </Link>
-            ))}
-
-
-          </div>
-        </nav>
-
-        {/* Footer */}
-        <div className="p-4 border-t border-border">
-          <Button
-            onClick={handleLogout}
-            disabled={isLoggingOut}
-            variant="outline"
-            className="w-full justify-start gap-3 text-destructive border-destructive/20 hover:bg-destructive/10 hover:text-destructive"
-          >
-            <LogOut className="w-5 h-5" />
-            <span className="font-medium">{isLoggingOut ? "Saindo..." : "Sair"}</span>
-          </Button>
-        </div>
-      </aside>
-
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col min-h-screen">
-        {/* Mobile Header */}
-        <header className="lg:hidden bg-card border-b border-border p-4 flex items-center justify-between">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setSidebarOpen(true)}
-          >
-            <Menu className="w-5 h-5" />
-          </Button>
-          <h1 className="heading-4 gradient-text">Arena Dona Santa</h1>
-          <CreditosHeader />
-        </header>
-
-        {/* Desktop Header */}
-        <header className="hidden lg:block bg-card border-b border-border p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex-1" />
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col min-h-screen">
+          {/* Mobile Header */}
+          <header className="md:hidden bg-card border-b border-border mobile-padding py-4 flex items-center justify-between safe-area-pt">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                <span className="text-primary-foreground font-bold text-sm">A</span>
+              </div>
+              <h1 className="mobile-subheading gradient-text">Arena</h1>
+            </div>
             <CreditosHeader />
-          </div>
-        </header>
+          </header>
 
-        {/* Page Content */}
-        <main className="flex-1 bg-background">
-          {children}
-        </main>
+          {/* Desktop Header */}
+          <header className="hidden md:block bg-card border-b border-border p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex-1" />
+              <CreditosHeader />
+            </div>
+          </header>
+
+          {/* Page Content */}
+          <main className="flex-1 bg-background">
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
+    </ResponsiveLayout>
   );
 }
