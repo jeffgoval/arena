@@ -25,9 +25,11 @@ Node version: 20.19.2
 - Use `npx @cloudflare/next-on-pages@1` para compatibilidade com Next.js 15
 - Certifique-se de que o Node.js 20.19.2 está configurado
 
-### 2. Variáveis de Ambiente (Production)
+### 2. Variáveis de Ambiente (OBRIGATÓRIO)
 
-Configure as seguintes variáveis em **Settings → Environment Variables → Production**:
+⚠️ **IMPORTANTE:** Configure as variáveis ANTES do primeiro deploy!
+
+Configure em **Settings → Environment Variables → Production**:
 
 ```
 NEXT_PUBLIC_SUPABASE_URL=https://seu-projeto.supabase.co
@@ -36,9 +38,15 @@ SUPABASE_SERVICE_ROLE_KEY=sua-service-role-key
 ```
 
 **Onde encontrar:**
-- Acesse seu projeto no [Supabase Dashboard](https://supabase.com/dashboard)
-- Vá em **Settings → API**
-- Copie as credenciais
+1. Acesse [Supabase Dashboard](https://supabase.com/dashboard)
+2. Selecione seu projeto
+3. Vá em **Settings → API**
+4. Copie:
+   - **Project URL** → `NEXT_PUBLIC_SUPABASE_URL`
+   - **anon/public key** → `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - **service_role key** → `SUPABASE_SERVICE_ROLE_KEY`
+
+**Nota:** O build usa valores placeholder durante a compilação, mas as variáveis reais são necessárias para o runtime.
 
 ### 3. Node.js Version
 
