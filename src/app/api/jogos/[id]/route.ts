@@ -4,10 +4,11 @@ import { createClient } from '@/lib/supabase/server';
 // Obter detalhes de um jogo específico
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const jogoId = params.id;
+    const { id: jogoId } = await params;
+    const supabase = await createClient();
 
     const { data: jogo, error } = await supabase
       .from('jogos')
@@ -76,10 +77,11 @@ export async function GET(
 // Atualizar jogo
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const jogoId = params.id;
+    const { id: jogoId } = await params;
+    const supabase = await createClient();
     const body = await request.json();
     const {
       resultado,
@@ -130,10 +132,11 @@ export async function PUT(
 // Deletar jogo
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const jogoId = params.id;
+    const { id: jogoId } = await params;
+    const supabase = await createClient();
 
     // Primeiro deletar participantes
     await supabase

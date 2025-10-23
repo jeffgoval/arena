@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 // Listar jogos do usuário
 export async function GET(request: NextRequest) {
   try {
+    const supabase = await createClient();
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
     const modalidade = searchParams.get('modalidade');
@@ -107,6 +108,7 @@ export async function GET(request: NextRequest) {
 // Criar novo jogo
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient();
     const body = await request.json();
     const {
       usuarioId,

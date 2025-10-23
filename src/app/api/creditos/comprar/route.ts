@@ -5,6 +5,7 @@ import { pagamentoService } from '@/services/pagamentoService';
 // Comprar créditos
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient();
     const body = await request.json();
     const {
       usuarioId,

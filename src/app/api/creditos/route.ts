@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 // Obter saldo e histórico de créditos
 export async function GET(request: NextRequest) {
   try {
+    const supabase = await createClient();
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
     const limit = parseInt(searchParams.get('limit') || '50');
@@ -98,6 +99,7 @@ export async function GET(request: NextRequest) {
 // Adicionar créditos (compra, bônus, etc.)
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient();
     const body = await request.json();
     const {
       usuarioId,

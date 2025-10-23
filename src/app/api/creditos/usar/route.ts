@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 // Usar créditos para pagamento de reserva
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient();
     const body = await request.json();
     const { usuarioId, valor, reservaId, descricao } = body;
 
