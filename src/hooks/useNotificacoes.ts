@@ -1,199 +1,206 @@
-import { useState, useEffect, useCallback } from 'react';
-import type { Notificacao, NotificacaoConfig, EstatisticasNotificacao } from '@/types/notificacoes.types';
+import { useState, useCallback } from 'react';
+import { notificacaoService, AgendamentoNotificacao, TemplateNotificacao } from '@/services/notificacaoService';
 
 export function useNotificacoes() {
-  const [notificacoes, setNotificacoes] = useState<Notificacao[]>([]);
-  const [config, setConfig] = useState<NotificacaoConfig>({
-    habilitada: true,
-    tipos: {
-      reserva: true,
-      pagamento: true,
-      indicacao: true,
-      sistema: true,
-      mensalista: true,
-      turma: true,
-    },
-    som: true,
-    desktop: true,
-    email: false,
-  });
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Simular notificações em tempo real
-  useEffect(() => {
-    const notificacoesIniciais: Notificacao[] = [
-      {
-        id: '1',
-        tipo: 'reserva',
-        titulo: 'Nova Reserva Confirmada',
-        descricao: 'Sua reserva para hoje às 14:00 foi confirmada',
-        data: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-        lida: false,
-        prioridade: 'media',
-        acao: {
-          tipo: 'link',
-          url: '/cliente/reservas',
-          texto: 'Ver Reserva'
-        },
-        dados: {
-          reservaId: 'res-123'
-        }
-      },
-      {
-        id: '2',
-        tipo: 'indicacao',
-        titulo: 'Indicação Aceita! 🎉',
-        descricao: 'Maria Silva aceitou sua indicação e você ganhou 50 créditos!',
-        data: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-        lida: false,
-        prioridade: 'alta',
-        acao: {
-          tipo: 'link',
-          url: '/cliente/indicacoes',
-          texto: 'Ver Créditos'
-        },
-        dados: {
-          valor: 50
-        }
-      },
-      {
-        id: '3',
-        tipo: 'pagamento',
-        titulo: 'Pagamento Processado',
-        descricao: 'Seu pagamento de R$ 75,00 foi processado com sucesso',
-        data: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-        lida: true,
-        prioridade: 'media',
-        dados: {
-          valor: 75.00
-        }
-      },
-      {
-        id: '4',
-        tipo: 'sistema',
-        titulo: 'Manutenção Programada',
-        descricao: 'Sistema ficará indisponível das 02:00 às 04:00 para manutenção',
-        data: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-        lida: true,
-        prioridade: 'baixa'
-      },
-      {
-        id: '5',
-        tipo: 'turma',
-        titulo: 'Nova Aula Disponível',
-        descricao: 'Aula de tênis de mesa avançado - Quinta 19:00',
-        data: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
-        lida: false,
-        prioridade: 'media',
-        acao: {
-          tipo: 'link',
-          url: '/cliente/turmas',
-          texto: 'Ver Turmas'
-        }
-      }
-    ];
-
-    setNotificacoes(notificacoesIniciais);
-    setLoading(false);
-
-    // Simular notificações em tempo real
-    const interval = setInterval(() => {
-      if (Math.random() > 0.7) { // 30% de chance a cada 30 segundos
-        const novaNotificacao: Notificacao = {
-          id: Date.now().toString(),
-          tipo: ['reserva', 'pagamento', 'indicacao', 'sistema'][Math.floor(Math.random() * 4)] as any,
-          titulo: 'Nova Notificação',
-          descricao: 'Esta é uma notificação simulada em tempo real',
-          data: new Date().toISOString(),
-          lida: false,
-          prioridade: 'media'
-        };
-
-        setNotificacoes(prev => [novaNotificacao, ...prev]);
-        
-        // Tocar som se habilitado
-        if (config.som) {
-          playNotificationSound();
-        }
-
-        // Mostrar notificação desktop se habilitado
-        if (config.desktop && 'Notification' in window && Notification.permission === 'granted') {
-          new Notification(novaNotificacao.titulo, {
-            body: novaNotificacao.descricao,
-            icon: '/favicon.ico'
-          });
-        }
-      }
-    }, 30000); // A cada 30 segundos
-
-    return () => clearInterval(interval);
-  }, [config.som, config.desktop]);
-
-  // Solicitar permissão para notificações desktop
-  useEffect(() => {
-    if (config.desktop && 'Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission();
+  const agendarLembretes = useCallback(async (
+    reservaId: string,
+    dadosReserva: {
+      telefone: string;
+      quadra: string;
+      data: Date;
+      horario: string;
+      participantes: string[];
     }
-  }, [config.desktop]);
-
-  const playNotificationSound = () => {
+  ) => {
     try {
-      const audio = new Audio('/notification-sound.mp3');
-      audio.volume = 0.3;
-      audio.play().catch(() => {
-        // Ignorar erro se não conseguir tocar o som
-      });
-    } catch (error) {
-      // Ignorar erro
+      setLoading(true);
+      setError(null);
+      
+      await notificacaoService.agendarLembretesReserva(reservaId, dadosReserva);
+      
+      return true;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao agendar lembretes';
+      setError(errorMessage);
+      console.error('Erro ao agendar lembretes:', err);
+      return false;
+    } finally {
+      setLoading(false);
     }
-  };
-
-  const marcarComoLida = useCallback((id: string) => {
-    setNotificacoes(prev => 
-      prev.map(n => n.id === id ? { ...n, lida: true } : n)
-    );
   }, []);
 
-  const marcarTodasComoLidas = useCallback(() => {
-    setNotificacoes(prev => 
-      prev.map(n => ({ ...n, lida: true }))
-    );
+  const notificarAceiteConvite = useCallback(async (dadosConvite: {
+    telefoneOrganizador: string;
+    nomeConvidado: string;
+    quadra: string;
+    data: Date;
+    horario: string;
+    participantesConfirmados: number;
+    totalParticipantes: number;
+  }) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      await notificacaoService.notificarAceiteConvite(dadosConvite);
+      
+      return true;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao notificar aceite';
+      setError(errorMessage);
+      console.error('Erro ao notificar aceite:', err);
+      return false;
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const removerNotificacao = useCallback((id: string) => {
-    setNotificacoes(prev => prev.filter(n => n.id !== id));
+  const cancelarNotificacoes = useCallback(async (reservaId: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      await notificacaoService.cancelarNotificacoesReserva(reservaId);
+      
+      return true;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao cancelar notificações';
+      setError(errorMessage);
+      console.error('Erro ao cancelar notificações:', err);
+      return false;
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const limparTodasLidas = useCallback(() => {
-    setNotificacoes(prev => prev.filter(n => !n.lida));
+  const processarNotificacoesPendentes = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      await notificacaoService.processarNotificacoesPendentes();
+      
+      return true;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao processar notificações';
+      setError(errorMessage);
+      console.error('Erro ao processar notificações:', err);
+      return false;
+    } finally {
+      setLoading(false);
+    }
   }, []);
-
-  const atualizarConfig = useCallback((novaConfig: Partial<NotificacaoConfig>) => {
-    setConfig(prev => ({ ...prev, ...novaConfig }));
-  }, []);
-
-  // Estatísticas
-  const estatisticas: EstatisticasNotificacao = {
-    total: notificacoes.length,
-    naoLidas: notificacoes.filter(n => !n.lida).length,
-    porTipo: notificacoes.reduce((acc, n) => {
-      acc[n.tipo] = (acc[n.tipo] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>),
-    ultimaAtualizacao: new Date().toISOString()
-  };
 
   return {
-    notificacoes,
-    config,
-    estatisticas,
     loading,
     error,
-    marcarComoLida,
-    marcarTodasComoLidas,
-    removerNotificacao,
-    limparTodasLidas,
-    atualizarConfig,
+    agendarLembretes,
+    notificarAceiteConvite,
+    cancelarNotificacoes,
+    processarNotificacoesPendentes
+  };
+}
+
+export function useTemplatesNotificacao() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [templates, setTemplates] = useState<TemplateNotificacao[]>([]);
+
+  const carregarTemplates = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      await notificacaoService.carregarTemplatesPersonalizados();
+      const templatesCarregados = notificacaoService.getTemplates();
+      setTemplates(templatesCarregados);
+      
+      return templatesCarregados;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao carregar templates';
+      setError(errorMessage);
+      console.error('Erro ao carregar templates:', err);
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const atualizarTemplate = useCallback(async (
+    tipo: string,
+    template: Partial<TemplateNotificacao>
+  ) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      await notificacaoService.atualizarTemplate(tipo, template);
+      
+      // Recarregar templates
+      const templatesAtualizados = notificacaoService.getTemplates();
+      setTemplates(templatesAtualizados);
+      
+      return true;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao atualizar template';
+      setError(errorMessage);
+      console.error('Erro ao atualizar template:', err);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const testarTemplate = useCallback(async (
+    tipo: string,
+    dadosTeste: any,
+    telefone: string
+  ) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const mensagem = await notificacaoService.testarTemplate(tipo, dadosTeste, telefone);
+      
+      return mensagem;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao testar template';
+      setError(errorMessage);
+      console.error('Erro ao testar template:', err);
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const obterEstatisticas = useCallback(async (dataInicio: Date, dataFim: Date) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const estatisticas = await notificacaoService.obterEstatisticas(dataInicio, dataFim);
+      
+      return estatisticas;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao obter estatísticas';
+      setError(errorMessage);
+      console.error('Erro ao obter estatísticas:', err);
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  return {
+    loading,
+    error,
+    templates,
+    carregarTemplates,
+    atualizarTemplate,
+    testarTemplate,
+    obterEstatisticas
   };
 }

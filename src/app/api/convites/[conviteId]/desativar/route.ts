@@ -9,7 +9,7 @@ export const runtime = 'edge';
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { conviteId: string } }
+  { params }: { params: Promise<{ conviteId: string }> }
 ) {
   try {
     const supabase = await createClient();
@@ -23,7 +23,7 @@ export async function POST(
       );
     }
 
-    const { conviteId } = params;
+    const { conviteId } = await params;
 
     // Verificar se o convite existe e pertence ao usuário
     const { data: convite, error: conviteError } = await supabase

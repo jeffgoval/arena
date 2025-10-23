@@ -4,6 +4,7 @@ import "./globals.css";
 import { QueryProvider } from '@/components/providers/QueryProvider';
 import { Toaster } from '@/components/ui/toaster';
 import { SessionGuard } from '@/components/auth/SessionGuard';
+import { TooltipProvider } from '@/components/ui/tooltip';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -43,9 +44,11 @@ export default function RootLayout({
     <html lang="pt-BR">
       <body className={inter.className}>
         <QueryProvider>
-          <SessionGuard />
-          {children}
-          <Toaster />
+          <TooltipProvider delayDuration={300} skipDelayDuration={100}>
+            <SessionGuard />
+            {children}
+            <Toaster />
+          </TooltipProvider>
         </QueryProvider>
       </body>
     </html>

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Building2, Calendar, Users, BarChart3, Settings, LogOut, Menu, X, ClipboardList } from "lucide-react";
+import { LayoutDashboard, Building2, Calendar, Users, BarChart3, Settings, LogOut, Menu, X, ClipboardList, Ban, Bell } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
@@ -38,7 +38,9 @@ export default function GestorLayout({
         { href: "/gestor/quadras", icon: Building2, label: "Quadras", active: isActiveStartsWith("/gestor/quadras") },
         { href: "/gestor/agenda", icon: Calendar, label: "Agenda", active: isActive("/gestor/agenda") },
         { href: "/gestor/reservas", icon: ClipboardList, label: "Reservas", active: isActive("/gestor/reservas") },
+        { href: "/gestor/bloqueios", icon: Ban, label: "Bloqueios", active: isActive("/gestor/bloqueios") },
         { href: "/gestor/clientes", icon: Users, label: "Clientes", active: isActive("/gestor/clientes") },
+        { href: "/gestor/notificacoes", icon: Bell, label: "Notificações", active: isActive("/gestor/notificacoes") },
         { href: "/gestor/relatorios", icon: BarChart3, label: "Relatórios", active: isActive("/gestor/relatorios") },
         { href: "/gestor/configuracoes", icon: Settings, label: "Configurações", active: isActive("/gestor/configuracoes") },
     ];
