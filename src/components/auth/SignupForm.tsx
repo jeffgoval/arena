@@ -2,14 +2,15 @@
 
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   User, 
   Calendar, 
   Phone, 
   MapPin, 
   Lock, 
-  Loader2 
+  Loader2,
+  Gift 
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -21,13 +22,15 @@ import { useCEP } from '@/hooks/useCEP';
 import { formatCEP } from '@/lib/utils/cep';
 
 interface SignupFormProps {
-  onSubmit: (data: SignupFormData) => Promise<void>;
+  onSubmit: (data: SignupFormData & { codigoIndicacao?: string }) => Promise<void>;
   loading?: boolean;
+  codigoIndicacaoInicial?: string;
 }
 
-export function SignupForm({ onSubmit, loading = false }: SignupFormProps) {
+export function SignupForm({ onSubmit, loading = false, codigoIndicacaoInicial }: SignupFormProps) {
   const { loading: loadingCEP, error: cepError, fetchAddress, clearError } = useCEP();
   const [cepSuccess, setCepSuccess] = useState(false);
+  const [codigoIndicacao, setCodigoIndicacao] = useState(codigoIndicacaoInicial || '');
 
   const form = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
@@ -50,6 +53,13 @@ export function SignupForm({ onSubmit, loading = false }: SignupFormProps) {
     },
   });
 
+  // Atualizar código de indicação quando prop mudar
+  useEffect(() => {
+    if (codigoIndicacaoInicial) {
+      setCodigoIndicacao(codigoIndicacaoInicial);
+    }
+  }, [codigoIndicacaoInicial]);
+
   const handleCEPChange = async (cep: string) => {
     if (cep.length === 8) {
       clearError();
@@ -67,8 +77,12 @@ export function SignupForm({ onSubmit, loading = false }: SignupFormProps) {
     }
   };
 
+  const handleFormSubmit = (data: SignupFormData) => {
+    return onSubmit({ ...data, codigoIndicacao: codigoIndicacao || undefined });
+  };
+
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4">
       {/* Dados Pessoais */}
       <div className="space-y-3">
         <h3 className="font-semibold text-foreground text-sm flex items-center gap-2">
@@ -298,6 +312,29 @@ export function SignupForm({ onSubmit, loading = false }: SignupFormProps) {
               {form.formState.errors.estado.message}
             </p>
           )}
+        </div>
+      </div>
+
+      {/* Código de Indicação */}
+      <div className="space-y-3">
+        <h3 className="font-semibold text-foreground text-sm flex items-center gap-2">
+          <Gift className="w-4 h-4" />
+          Código de Indicação (Opcional)
+        </h3>
+
+        <div>
+          <Label htmlFor="codigoIndicacao">Código de Indicação</Label>
+          <Input
+            id="codigoIndicacao"
+            value={codigoIndicacao}
+            onChange={(e) => setCodigoIndicacao(e.target.value.toUpperCase())}
+            placeholder="Digite o código aqui"
+            className="font-mono text-center"
+            maxLength={20}
+          />
+          <p className="text-xs text-muted-foreground mt-1">
+            Tem um código de indicação? Use aqui e ganhe créditos!
+          </p>
         </div>
       </div>
 

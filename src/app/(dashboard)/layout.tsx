@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Users, Calendar, Trophy, CreditCard, LogOut, Menu, X } from "lucide-react";
+import { LayoutDashboard, Users, Calendar, Trophy, CreditCard, Gift, LogOut, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { CreditosHeader } from "@/components/modules/indicacoes/CreditosHeader";
 
 export default function DashboardLayout({
   children,
@@ -38,6 +39,7 @@ export default function DashboardLayout({
     { href: "/cliente/reservas", icon: Calendar, label: "Minhas Reservas", active: isActive("/cliente/reservas") },
     { href: "/cliente/turmas", icon: Users, label: "Minhas Turmas", active: isActive("/cliente/turmas") },
     { href: "/cliente/jogos", icon: Trophy, label: "Meus Jogos", active: isActive("/cliente/jogos") },
+    { href: "/cliente/indicacoes", icon: Gift, label: "Indicações", active: isActive("/cliente/indicacoes") },
     { href: "/cliente/creditos", icon: CreditCard, label: "Meus Créditos", active: isActive("/cliente/creditos") },
   ];
 
@@ -131,7 +133,15 @@ export default function DashboardLayout({
             <Menu className="w-5 h-5" />
           </Button>
           <h1 className="heading-4 gradient-text">Arena Dona Santa</h1>
-          <div className="w-10" /> {/* Spacer */}
+          <CreditosHeader />
+        </header>
+
+        {/* Desktop Header */}
+        <header className="hidden lg:block bg-card border-b border-border p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex-1" />
+            <CreditosHeader />
+          </div>
         </header>
 
         {/* Page Content */}
