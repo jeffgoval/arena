@@ -123,7 +123,7 @@ Aceite o convite: ${conviteUrl}`;
           WhatsApp
         </Button>
 
-        {navigator.share && (
+        {typeof navigator !== "undefined" && typeof navigator.share === "function" && (
           <Button
             variant="outline"
             size="sm"
@@ -223,7 +223,7 @@ Aceite o convite: ${conviteUrl}`;
           </div>
 
           {/* Botão de compartilhamento nativo (mobile) */}
-          {navigator.share && (
+          {typeof navigator !== "undefined" && typeof navigator.share === "function" && (
             <Button
               variant="outline"
               onClick={handleNativeShare}

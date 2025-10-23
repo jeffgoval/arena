@@ -11,12 +11,7 @@ export const showToast = {
   // Toast de Sucesso
   success: (message: string, description?: string) => {
     toast({
-      title: (
-        <div className="flex items-center gap-2">
-          <CheckCircle2 className="w-5 h-5 text-green-600" />
-          <span>{message}</span>
-        </div>
-      ),
+      title: message,
       description,
       variant: "default",
     });
@@ -25,12 +20,7 @@ export const showToast = {
   // Toast de Erro
   error: (message: string, description?: string) => {
     toast({
-      title: (
-        <div className="flex items-center gap-2">
-          <XCircle className="w-5 h-5 text-destructive" />
-          <span>{message}</span>
-        </div>
-      ),
+      title: message,
       description,
       variant: "destructive",
     });
@@ -39,12 +29,7 @@ export const showToast = {
   // Toast de Aviso
   warning: (message: string, description?: string) => {
     toast({
-      title: (
-        <div className="flex items-center gap-2">
-          <AlertCircle className="w-5 h-5 text-yellow-600" />
-          <span>{message}</span>
-        </div>
-      ),
+      title: message,
       description,
       variant: "default",
     });
@@ -53,12 +38,7 @@ export const showToast = {
   // Toast de Informação
   info: (message: string, description?: string) => {
     toast({
-      title: (
-        <div className="flex items-center gap-2">
-          <Info className="w-5 h-5 text-blue-600" />
-          <span>{message}</span>
-        </div>
-      ),
+      title: message,
       description,
       variant: "default",
     });
@@ -82,24 +62,14 @@ export const showToast = {
       const result = await promise;
       toastId.update({
         id: toastId.id,
-        title: (
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-5 h-5 text-green-600" />
-            <span>{messages.success}</span>
-          </div>
-        ),
+        title: messages.success,
         description: undefined,
       });
       return result;
     } catch (error) {
       toastId.update({
         id: toastId.id,
-        title: (
-          <div className="flex items-center gap-2">
-            <XCircle className="w-5 h-5 text-destructive" />
-            <span>{messages.error}</span>
-          </div>
-        ),
+        title: messages.error,
         description: error instanceof Error ? error.message : undefined,
         variant: "destructive",
       });
