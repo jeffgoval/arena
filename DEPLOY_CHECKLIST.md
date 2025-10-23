@@ -16,7 +16,9 @@
 - [ ] Build output directory: `.vercel/output/static`
 - [ ] Node version: **20.19.2**
 
-### 2. Variáveis de Ambiente (Production)
+### 2. Variáveis de Ambiente (Production) ⚠️ OBRIGATÓRIO
+
+⚠️ **CONFIGURE ANTES DO DEPLOY!** O build vai funcionar, mas o app não vai rodar sem essas variáveis.
 
 Acesse: **Settings → Environment Variables → Production**
 
@@ -28,7 +30,12 @@ Acesse: **Settings → Environment Variables → Production**
 1. Acesse [Supabase Dashboard](https://supabase.com/dashboard)
 2. Selecione seu projeto
 3. Vá em **Settings → API**
-4. Copie as credenciais
+4. Copie:
+   - **Project URL** → `NEXT_PUBLIC_SUPABASE_URL`
+   - **anon/public key** → `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - **service_role key** → `SUPABASE_SERVICE_ROLE_KEY`
+
+**Nota:** O build usa valores placeholder, mas as variáveis reais são necessárias para o runtime.
 
 ### 3. Deploy
 
