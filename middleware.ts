@@ -138,16 +138,55 @@ export async function middleware(request: NextRequest) {
   // ============================================================
 
   if ((pathname === '/auth' || pathname === '/') && user) {
-    // Buscar role para redirecionar corretamente
-    const { data: profile } = await supabase
-      .from('users')
-      .select('role')
-      .eq('id', user.id)
-      .single();
+    // Otimização: usar cache de role em vez de query ao banco
+    let userRole: string | null = null;
+
+    // 1. Tentar obter role do cookie cache (mais rápido)
+    const cachedRole = request.cookies.get('user-role')?.value;
+    const cacheTimestamp = request.cookies.get('user-role-timestamp')?.value;
+    const now = Date.now();
+    const cacheAge = cacheTimestamp ? now - parseInt(cacheTimestamp) : Infinity;
+
+    // Cache válido por 5 minutos
+    if (cachedRole && cacheAge < 5 * 60 * 1000) {
+      userRole = cachedRole;
+    } else {
+      // 2. Tentar obter role do JWT metadata
+      if (user.user_metadata?.role) {
+        userRole = user.user_metadata.role;
+      } else if (user.app_metadata?.role) {
+        userRole = user.app_metadata.role;
+      } else {
+        // 3. Fallback: consultar banco apenas se necessário
+        const { data: profile } = await supabase
+          .from('users')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+
+        userRole = profile?.role || null;
+      }
+
+      // Salvar no cache se obteve o role
+      if (userRole) {
+        supabaseResponse.cookies.set('user-role', userRole, {
+          maxAge: 5 * 60, // 5 minutos
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax'
+        });
+        supabaseResponse.cookies.set('user-role-timestamp', now.toString(), {
+          maxAge: 5 * 60, // 5 minutos
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax'
+        });
+      }
+    }
 
     const url = request.nextUrl.clone();
 
-    if (profile?.role === 'admin' || profile?.role === 'gestor') {
+    if (userRole === 'admin' || userRole === 'gestor') {
       url.pathname = '/gestor'; // Admin e Gestor vão para área de gestão
     } else {
       url.pathname = '/cliente'; // Cliente vai para área do cliente

@@ -13,6 +13,15 @@ const nextConfig = {
   // Otimizações de performance
   poweredByHeader: false,
   compress: true,
+
+  // Otimizações para desenvolvimento local
+  onDemandEntries: {
+    // Período que uma página fica em memória (ms)
+    maxInactiveAge: 25 * 1000,
+    // Número de páginas mantidas em memória
+    pagesBufferLength: 2,
+  },
+
   // Variáveis de ambiente com fallback para build
   env: {
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
