@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAvaliacaoSchema } from '@/lib/validations/avaliacao.schema';
 
+export const runtime = 'edge';
+
 /**
  * POST /api/avaliacoes
  * Criar uma nova avaliação

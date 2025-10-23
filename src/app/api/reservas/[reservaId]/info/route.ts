@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
+export const runtime = 'edge';
+
 /**
  * GET /api/reservas/[reservaId]/info
  * Obter informações básicas da reserva para avaliação
