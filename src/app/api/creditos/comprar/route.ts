@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
 
     // Criar cliente no Asaas se necessário
     let clienteAsaasId = usuario.asaas_customer_id;
-    
+
     if (!clienteAsaasId) {
       clienteAsaasId = await pagamentoService.criarOuAtualizarCliente({
         nome: usuario.nome,
@@ -148,7 +148,7 @@ export async function POST(request: NextRequest) {
 
     // Processar pagamento
     let resultadoPagamento;
-    
+
     try {
       switch (metodoPagamento) {
         case 'PIX':
@@ -215,7 +215,7 @@ export async function POST(request: NextRequest) {
         }
 
         return NextResponse.json(
-          { 
+          {
             error: 'Erro ao processar pagamento',
             detalhes: resultadoPagamento.erro
           },
@@ -226,7 +226,7 @@ export async function POST(request: NextRequest) {
       // Salvar dados do pagamento
       await supabase
         .from('creditos')
-        .update({ 
+        .update({
           asaas_payment_id: resultadoPagamento.dados?.id,
           status: metodoPagamento === 'CREDIT_CARD' ? 'ativo' : 'aguardando_pagamento'
         })
@@ -235,7 +235,7 @@ export async function POST(request: NextRequest) {
       if (bonusCredito) {
         await supabase
           .from('creditos')
-          .update({ 
+          .update({
             status: metodoPagamento === 'CREDIT_CARD' ? 'ativo' : 'aguardando_pagamento'
           })
           .eq('id', bonusCredito.id);
@@ -251,7 +251,7 @@ export async function POST(request: NextRequest) {
 
     } catch (error) {
       console.error('Erro no pagamento:', error);
-      
+
       // Cancelar compra em caso de erro
       await supabase
         .from('creditos')

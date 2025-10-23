@@ -1,7 +1,0 @@
-name = "arena-dona-santa"
-compatibility_date = "2024-09-23"
-
-[build]
-command = "npx @opennextjs/cloudflare"
-
-pages_build_output_dir = ".worker-next/assets"

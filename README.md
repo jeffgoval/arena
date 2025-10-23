@@ -121,20 +121,18 @@ Slider automático de depoimentos (5s). Customize em `components/Testimonials.ts
 
 ## Deploy
 
-### Cloudflare Pages (Recomendado)
+### Vercel (Recomendado)
 
-1. Conecte seu repositório no Cloudflare Pages
-2. Configure o build:
-   - Framework preset: Next.js
-   - Build command: `npx @cloudflare/next-on-pages@1`
-   - Build output directory: `.vercel/output/static`
-   - Node version: `20.19.2`
+1. Conecte seu repositório no Vercel
+2. As configurações são detectadas automaticamente via `vercel.json`
+3. Adicione as variáveis de ambiente:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `SUPABASE_SERVICE_ROLE_KEY`
 
-3. Adicione as variáveis de ambiente necessárias no painel do Cloudflare
+4. Deploy automático a cada push na branch `main`
 
-Para mais detalhes, consulte `docs/CLOUDFLARE_SETUP.md`
-
-### Outros
+### Outras Plataformas
 
 A aplicação pode ser deployada em qualquer plataforma que suporte Next.js:
 - Netlify
