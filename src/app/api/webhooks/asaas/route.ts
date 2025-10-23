@@ -120,6 +120,8 @@ async function processarPagamentoRecebido(payment: WebhookPagamento['payment']) 
 async function processarPagamentoConfirmado(payment: WebhookPagamento['payment']) {
   console.log(`Pagamento confirmado: ${payment.id}`);
   
+  const supabase = await createClient();
+  
   try {
     // Atualizar status no banco de dados
     const { data: pagamentoData, error: pagamentoError } = await supabase
@@ -149,24 +151,32 @@ async function processarPagamentoConfirmado(payment: WebhookPagamento['payment']
           updated_at: new Date().toISOString()
         })
         .eq('id', pagamentoData.reserva_id)
-        .select(`
-          id,
-          data_hora,
-          quadras (nome),
-          usuarios (nome, telefone)
-        `)
+        .select('id, data_hora, usuario_id, quadra_id')
         .single();
 
       if (reservaError) {
         console.error('Erro ao confirmar reserva:', reservaError);
         return;
       }
+      
+      // Buscar dados do usuário e quadra separadamente
+      const { data: usuarioData } = await supabase
+        .from('usuarios')
+        .select('nome, telefone')
+        .eq('id', reservaData?.usuario_id)
+        .single();
+      
+      const { data: quadraData } = await supabase
+        .from('quadras')
+        .select('nome')
+        .eq('id', reservaData?.quadra_id)
+        .single();
 
       // Enviar notificação de pagamento confirmado
-      if (reservaData?.usuarios?.telefone) {
+      if (usuarioData?.telefone) {
         try {
           await whatsappService.notificarPagamentoRecebido(
-            reservaData.usuarios.telefone,
+            usuarioData.telefone,
             {
               id: payment.id,
               valor: payment.value,
@@ -180,14 +190,14 @@ async function processarPagamentoConfirmado(payment: WebhookPagamento['payment']
           await notificacaoService.agendarLembretesReserva(
             reservaData.id,
             {
-              telefone: reservaData.usuarios.telefone,
-              quadra: reservaData.quadras.nome,
+              telefone: usuarioData.telefone,
+              quadra: quadraData?.nome || '',
               data: new Date(reservaData.data_hora),
               horario: new Date(reservaData.data_hora).toLocaleTimeString('pt-BR', {
                 hour: '2-digit',
                 minute: '2-digit'
               }),
-              participantes: [reservaData.usuarios.nome]
+              participantes: [usuarioData.nome]
             }
           );
 
@@ -204,6 +214,8 @@ async function processarPagamentoConfirmado(payment: WebhookPagamento['payment']
 
 async function processarPagamentoVencido(payment: WebhookPagamento['payment']) {
   console.log(`Pagamento vencido: ${payment.id}`);
+  
+  const supabase = await createClient();
   
   try {
     // Atualizar status no banco de dados
@@ -232,10 +244,14 @@ async function processarPagamentoVencido(payment: WebhookPagamento['payment']) {
           updated_at: new Date().toISOString()
         })
         .eq('id', pagamentoData.reserva_id)
-        .select(`
-          id,
-          usuarios (telefone)
-        `)
+        .select('id, usuario_id')
+        .single();
+      
+      // Buscar telefone do usuário
+      const { data: usuarioData } = await supabase
+        .from('usuarios')
+        .select('telefone')
+        .eq('id', reservaData?.usuario_id)
         .single();
 
       if (reservaError) {
@@ -247,10 +263,10 @@ async function processarPagamentoVencido(payment: WebhookPagamento['payment']) {
       await notificacaoService.cancelarNotificacoesReserva(pagamentoData.reserva_id);
 
       // Notificar cancelamento por vencimento
-      if (reservaData?.usuarios?.telefone) {
+      if (usuarioData?.telefone) {
         try {
           await whatsappService.notificarCancelamento(
-            reservaData.usuarios.telefone,
+            usuarioData.telefone,
             {
               tipo: 'reserva',
               id: reservaData.id,

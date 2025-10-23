@@ -119,6 +119,7 @@ export function FormReservaRecorrente() {
     try {
       const configuracao = {
         ...data,
+        tipo: data.tipo_recorrencia,
         dias_semana: (data.tipo_recorrencia === 'semanal' || data.tipo_recorrencia === 'quinzenal') 
           ? diasSelecionados 
           : undefined,

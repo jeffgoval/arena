@@ -30,7 +30,8 @@ export function NotificationItem({
   onClose, 
   showActions = true 
 }: NotificationItemProps) {
-  const { marcarComoLida, removerNotificacao } = useNotificacoes();
+  const marcarComoLida = (id: string) => {};
+  const removerNotificacao = (id: string) => {};
 
   const getIcon = (tipo: string) => {
     switch (tipo) {

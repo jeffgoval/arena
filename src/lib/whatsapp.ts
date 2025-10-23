@@ -223,7 +223,28 @@ class WhatsAppAPI {
     telefone: string, 
     templateName: string, 
     languageCode = 'pt_BR',
-    components?: WhatsAppMessage['template']['components']
+    components?: Array<{
+      type: 'header' | 'body' | 'button';
+      parameters?: Array<{
+        type: 'text' | 'currency' | 'date_time' | 'image' | 'document';
+        text?: string;
+        currency?: {
+          fallback_value: string;
+          code: string;
+          amount_1000: number;
+        };
+        date_time?: {
+          fallback_value: string;
+        };
+        image?: {
+          link: string;
+        };
+        document?: {
+          link: string;
+          filename: string;
+        };
+      }>;
+    }>
   ) {
     try {
       const message: WhatsAppMessage = {

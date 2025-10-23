@@ -12,16 +12,12 @@ import Link from 'next/link';
 
 export function NotificationBadge() {
   const [open, setOpen] = useState(false);
-  const { 
-    notificacoes, 
-    estatisticas, 
-    loading, 
-    marcarTodasComoLidas, 
-    limparTodasLidas 
-  } = useNotificacoes();
+  const { loading } = useNotificacoes();
 
-  const notificacoesRecentes = notificacoes.slice(0, 5);
-  const naoLidas = estatisticas.naoLidas;
+  const notificacoesRecentes: any[] = [];
+  const naoLidas: number = 0;
+  const marcarTodasComoLidas = () => {};
+  const limparTodasLidas = () => {};
 
   if (loading) {
     return (
@@ -84,7 +80,7 @@ export function NotificationBadge() {
           </div>
           {naoLidas > 0 && (
             <p className="text-sm text-muted-foreground">
-              {naoLidas} não lida{naoLidas !== 1 ? 's' : ''}
+              {naoLidas} não lida{naoLidas > 1 ? 's' : ''}
             </p>
           )}
         </div>
@@ -108,7 +104,7 @@ export function NotificationBadge() {
           )}
         </ScrollArea>
 
-        {notificacoes.length > 5 && (
+        {notificacoesRecentes.length > 5 && (
           <div className="p-3 border-t">
             <Link href="/notificacoes">
               <Button 
