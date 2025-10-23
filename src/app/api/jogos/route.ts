@@ -74,14 +74,16 @@ export async function GET(request: NextRequest) {
       console.error('Erro ao calcular estatísticas:', statsError);
     }
 
+    const jogosComAvaliacao = estatisticas?.filter(j => j.avaliacao) || [];
+    
     const stats = {
       total: estatisticas?.length || 0,
       vitorias: estatisticas?.filter(j => j.resultado === 'vitoria').length || 0,
       derrotas: estatisticas?.filter(j => j.resultado === 'derrota').length || 0,
       empates: estatisticas?.filter(j => j.resultado === 'empate').length || 0,
       tempoTotal: estatisticas?.reduce((acc, jogo) => acc + (jogo.duracao || 0), 0) || 0,
-      avaliacaoMedia: estatisticas?.filter(j => j.avaliacao).length > 0 
-        ? estatisticas.filter(j => j.avaliacao).reduce((acc, jogo) => acc + (jogo.avaliacao || 0), 0) / estatisticas.filter(j => j.avaliacao).length
+      avaliacaoMedia: jogosComAvaliacao.length > 0 
+        ? jogosComAvaliacao.reduce((acc, jogo) => acc + (jogo.avaliacao || 0), 0) / jogosComAvaliacao.length
         : 0
     };
 
