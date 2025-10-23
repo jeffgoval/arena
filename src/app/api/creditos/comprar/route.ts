@@ -154,6 +154,7 @@ export async function POST(request: NextRequest) {
         case 'PIX':
           resultadoPagamento = await pagamentoService.criarPagamentoPix({
             clienteId: clienteAsaasId,
+            tipoPagamento: 'PIX',
             valor: pacoteEscolhido.valor,
             dataVencimento: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 24h
             descricao: `Compra de créditos - ${pacoteEscolhido.nome}`,
@@ -171,6 +172,7 @@ export async function POST(request: NextRequest) {
 
           resultadoPagamento = await pagamentoService.criarPagamentoCartao({
             clienteId: clienteAsaasId,
+            tipoPagamento: 'CREDIT_CARD',
             valor: pacoteEscolhido.valor,
             dataVencimento: new Date().toISOString().split('T')[0],
             descricao: `Compra de créditos - ${pacoteEscolhido.nome}`,
@@ -183,6 +185,7 @@ export async function POST(request: NextRequest) {
         case 'BOLETO':
           resultadoPagamento = await pagamentoService.criarPagamentoBoleto({
             clienteId: clienteAsaasId,
+            tipoPagamento: 'BOLETO',
             valor: pacoteEscolhido.valor,
             dataVencimento: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 3 dias
             descricao: `Compra de créditos - ${pacoteEscolhido.nome}`,
