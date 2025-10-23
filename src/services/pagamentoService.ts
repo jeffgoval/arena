@@ -67,9 +67,19 @@ export class PagamentoService {
         dueDate: dados.dataVencimento,
         description: dados.descricao,
         externalReference: dados.referencia,
-        discount: dados.desconto,
-        interest: dados.juros,
-        fine: dados.multa
+        discount: dados.desconto ? {
+          value: dados.desconto.valor,
+          dueDateLimitDays: dados.desconto.diasLimite,
+          type: dados.desconto.tipo
+        } : undefined,
+        interest: dados.juros ? {
+          value: dados.juros.valor,
+          type: dados.juros.tipo
+        } : undefined,
+        fine: dados.multa ? {
+          value: dados.multa.valor,
+          type: dados.multa.tipo
+        } : undefined
       });
 
       // Gerar QR Code PIX
@@ -123,9 +133,19 @@ export class PagamentoService {
         externalReference: dados.referencia,
         installmentCount: dados.parcelas,
         installmentValue: dados.valorParcela,
-        discount: dados.desconto,
-        interest: dados.juros,
-        fine: dados.multa,
+        discount: dados.desconto ? {
+          value: dados.desconto.valor,
+          dueDateLimitDays: dados.desconto.diasLimite,
+          type: dados.desconto.tipo
+        } : undefined,
+        interest: dados.juros ? {
+          value: dados.juros.valor,
+          type: dados.juros.tipo
+        } : undefined,
+        fine: dados.multa ? {
+          value: dados.multa.valor,
+          type: dados.multa.tipo
+        } : undefined,
         creditCard: {
           holderName: dados.dadosCartao.nomePortador,
           number: dados.dadosCartao.numero,
@@ -186,9 +206,19 @@ export class PagamentoService {
         dueDate: dados.dataVencimento,
         description: dados.descricao,
         externalReference: dados.referencia,
-        discount: dados.desconto,
-        interest: dados.juros,
-        fine: dados.multa,
+        discount: dados.desconto ? {
+          value: dados.desconto.valor,
+          dueDateLimitDays: dados.desconto.diasLimite,
+          type: dados.desconto.tipo
+        } : undefined,
+        interest: dados.juros ? {
+          value: dados.juros.valor,
+          type: dados.juros.tipo
+        } : undefined,
+        fine: dados.multa ? {
+          value: dados.multa.valor,
+          type: dados.multa.tipo
+        } : undefined,
         postalService: false
       });
 

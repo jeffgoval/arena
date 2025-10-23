@@ -11,12 +11,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **Implemented Features:**
 - Landing page with modular components (Hero, Infrastructure, Academia do Galo, Day Use, etc.)
 - Supabase authentication system with SSR
-- Route-based authentication middleware
+- Route-based authentication middleware with role-based caching
 - Dashboard layouts for Cliente (Customer) and Gestor (Manager)
 - Courts (Quadras) management with schedules and blocks
 - Teams (Turmas) management
 - Reservations (Reservas) system with cost-sharing (rateio) and invitations
 - Public invitation acceptance flow
+- Referral system (Indicações)
+- Monthly members (Mensalistas) management
+- Payment integration structure (Asaas)
+- WhatsApp notifications service
+- Evaluation/review system (Avaliações)
 - shadcn/ui component library integration
 - React Query (TanStack Query) for data fetching
 - Zod validation schemas
@@ -42,15 +47,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - shadcn/ui components
 - Lucide React icons
 - date-fns (date utilities)
+- Axios (HTTP client)
 
-**Future Integrations:**
+**Active Integrations:**
 - Asaas payment gateway
 - WhatsApp Business API
 - ViaCEP (Brazilian postal code API)
 
 **Deployment:**
+- Platform: Vercel
+- Region: São Paulo (gru1) - optimized for Brazil
 - Node.js version: 20 (configured via `.node-version`)
-- Supports SSR (no longer static export)
+- SSR enabled (no static export)
 
 ## Development Commands
 
@@ -125,7 +133,8 @@ arena-dona-santa/
 │   │   │   │   └── turmas/            # Teams module
 │   │   │   ├── gestor/                # Manager dashboard
 │   │   │   │   ├── page.tsx
-│   │   │   │   └── quadras/           # Courts management
+│   │   │   │   ├── quadras/           # Courts management
+│   │   │   │   └── metricas/          # Metrics dashboard
 │   │   │   └── layout.tsx             # Dashboard layout
 │   │   ├── (public)/                  # Public route group
 │   │   │   ├── convite/[token]/       # Invitation acceptance
@@ -144,6 +153,16 @@ arena-dona-santa/
 │   ├── hooks/
 │   │   ├── auth/                      # Auth hooks (useUser)
 │   │   ├── core/                      # Business hooks with React Query
+│   │   │   ├── useTurmas.ts
+│   │   │   ├── useQuadras.ts
+│   │   │   ├── useHorarios.ts
+│   │   │   ├── useReservas.ts
+│   │   │   ├── useConvites.ts
+│   │   │   ├── useReservasGestor.ts
+│   │   │   ├── useQuadrasHorarios.ts
+│   │   │   ├── useMetricasGestor.ts
+│   │   │   ├── useAvaliacoes.ts
+│   │   │   └── useCourts.ts
 │   │   └── use-toast.ts               # Toast notifications
 │   ├── lib/
 │   │   ├── supabase/                  # Supabase clients
@@ -156,8 +175,15 @@ arena-dona-santa/
 │   │   │   └── cep.ts                 # CEP validation
 │   │   └── utils.ts                   # cn() helper
 │   ├── services/
-│   │   └── core/                      # API service layer
-│   │       └── courts.service.ts      # Courts CRUD operations
+│   │   ├── core/
+│   │   │   └── courts.service.ts      # Courts CRUD operations
+│   │   ├── auth/
+│   │   │   └── auth.service.ts        # Authentication service
+│   │   ├── indicacoes.service.ts      # Referral service
+│   │   ├── mensalistas.service.ts     # Monthly members service
+│   │   ├── pagamentoService.ts        # Payment service (Asaas)
+│   │   ├── whatsappService.ts         # WhatsApp notifications
+│   │   └── notificacaoService.ts      # General notifications
 │   └── types/
 │       ├── *.types.ts                 # TypeScript type definitions
 │       └── database.types.ts          # Generated Supabase types (if exists)
@@ -168,6 +194,8 @@ arena-dona-santa/
 ├── SETUP/                             # Setup guides and specifications
 │   ├── PRD.md                         # Product Requirements (Portuguese)
 │   └── PROMPT.md                      # Technical specs (Portuguese)
+├── vercel.json                        # Vercel deployment config
+├── next.config.js                     # Next.js configuration
 └── CLAUDE.md                          # This file
 ```
 
@@ -197,7 +225,9 @@ Component → Hook (useCreateCourt) → Service (courtsService.create) → Supab
 **Authentication:**
 - Middleware protects `/cliente/*` and `/gestor/*` routes
 - Redirects unauthenticated users to `/auth`
-- Redirects authenticated users from `/auth` to `/cliente`
+- **Important:** Authenticated users are redirected from `/` (landing) and `/auth` based on role
+  - Admin/Gestor → `/gestor`
+  - Cliente → `/cliente`
 - Uses Supabase SSR with cookie-based sessions
 
 ## Critical Implementation Details
@@ -207,7 +237,15 @@ Component → Hook (useCreateCourt) → Service (courtsService.create) → Supab
 **Middleware** (`middleware.ts`):
 - Checks authentication for protected routes
 - Uses `@supabase/ssr` for server-side auth
-- Matches `/cliente/:path*`, `/gestor/:path*`, `/auth`
+- Matches `/cliente/:path*`, `/gestor/:path*`, `/auth`, and `/`
+- **Role-based caching optimization:**
+  - Caches user role in HTTP-only cookies for 5 minutes
+  - Reduces database queries by checking role from:
+    1. Cookie cache (fastest)
+    2. JWT metadata
+    3. Database query (fallback)
+  - Cache timestamp tracked to ensure freshness
+- **Critical:** All responses have `Cache-Control: no-store` headers to prevent cross-user data leaks
 
 **Supabase Clients:**
 - **Client-side** (`lib/supabase/client.ts`): For client components
@@ -290,6 +328,11 @@ export type CourtFormData = z.infer<typeof courtSchema>;
 - `rateios` - Cost sharing configurations
 - `convites` - Invitation batches
 - `aceites_convite` - Invitation acceptances
+- `indicacoes` - Referral system
+- `mensalistas` - Monthly members
+- `avaliacoes` - Reviews and ratings
+- `pagamentos` - Payment records
+- `notificacoes` - User notifications
 
 **Important:** Database migrations are not fully tracked in `supabase/migrations`. Reference the remote database schema or docs for complete structure.
 
@@ -300,17 +343,46 @@ export type CourtFormData = z.infer<typeof courtSchema>;
 **Key Settings:**
 - **NO** `output: 'export'` (removed to support SSR)
 - `images.unoptimized: true` (for Supabase images)
-- `experimental.serverActions` enabled
-- `typescript.ignoreBuildErrors: false` (enforces type safety)
+- `reactStrictMode: true` (development best practice)
+- `compiler.removeConsole: true` (in production only)
+- `experimental.optimizePackageImports` for `lucide-react` and UI components
+- `poweredByHeader: false` (security)
+- `compress: true` (performance)
+- Environment variable fallbacks for build time
+- `typescript.ignoreBuildErrors: false` (enforces type safety - default)
+
+### Vercel Configuration
+
+**vercel.json:**
+- Region: `gru1` (São Paulo, Brazil) for optimal latency
+- Framework auto-detected as Next.js
+- Build/dev/install commands configured
 
 ### Environment Variables
 
 Required in `.env.local` (see `.env.example`):
 ```
+# Supabase
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
+
+# Next.js
 NEXT_PUBLIC_APP_URL=
+NEXT_PUBLIC_APP_NAME=
+
+# Asaas Payment Gateway
+ASAAS_API_KEY=
+ASAAS_ENVIRONMENT=         # "sandbox" or "production"
+ASAAS_WEBHOOK_SECRET=
+
+# WhatsApp Business API
+WHATSAPP_ACCESS_TOKEN=
+WHATSAPP_PHONE_NUMBER_ID=
+WHATSAPP_VERIFY_TOKEN=
+
+# System
+CRON_SECRET_TOKEN=         # For scheduled notifications
 ```
 
 ### Color Palette
@@ -353,27 +425,7 @@ Defined in `tailwind.config.ts`:
 - Use `createClient()` from `lib/supabase/server.ts` in server components
 - Check `user.profile.role` for authorization
 - Middleware handles route protection automatically
-
-## Landing Page
-
-**Current Components:**
-- `Hero` - Hero section with parallax
-- `Infrastructure` - Arena facilities showcase
-- `Modalidades` - Sports modalities
-- `AcademiaGalo` - Academia do Galo section
-- `Escolinha` - Sports school info
-- `DayUse` - Day use packages
-- `Patrocinadores` - Sponsors section
-- `Features` - Platform features
-- `Diferenciais` - Differentiators
-- `Contact` - Contact form
-- `FinalCTA` - Final call-to-action
-- `Footer` - Footer with links
-
-**Animation System:**
-- `AnimationObserver` component handles scroll animations
-- CSS animations with GPU acceleration (transform/opacity only)
-- Intersection Observer API for scroll triggers
+- Remember: role is cached for 5 minutes in middleware
 
 ## Debugging Tips
 
@@ -389,29 +441,28 @@ const supabase = await createClient();
 const { data: { user } } = await supabase.auth.getUser();
 ```
 
-### Test Database Connection
-
-Use helper scripts in project root:
-- `inspect-db.mjs` - Inspect database schema
-- `test-auth-flow.mjs` - Test authentication flow
-- `check-trigger.mjs` - Check database triggers
-
 ### Common Issues
 
 **"User not authenticated":**
 - Check `.env.local` has correct Supabase keys
 - Verify middleware is running
 - Check cookie storage in browser
+- Clear role cache cookies (`user-role`, `user-role-timestamp`)
 
 **TypeScript errors:**
 - Run `npm run lint` to see all errors
 - Ensure types are imported from correct locations
-- Regenerate database types if schema changed
+- Regenerate database types if schema changed: `npx supabase gen types typescript --linked > src/types/database.types.ts`
 
 **Build errors:**
 - Clear `.next` folder: `rd /s /q .next` (Windows) or `rm -rf .next` (Unix)
+- Clear build info: `del tsconfig.tsbuildinfo` (Windows) or `rm tsconfig.tsbuildinfo` (Unix)
 - Reinstall dependencies: `npm install`
 - Check for missing environment variables
+
+**Dependency warnings:**
+- Project uses ESLint 9+ (not v8) to avoid deprecation warnings
+- Old glob/rimraf warnings may appear from nested dependencies - these are safe to ignore
 
 ## Important Reference Files
 
@@ -431,12 +482,6 @@ Sports school management for Academia do Galo (classes, students, attendance, te
 ### Day Use Module
 Day-use package management with pool and bar access (packages, addons, check-ins)
 
-### Payment Integration
-Asaas payment gateway (Pix, credit/debit cards, security deposits)
-
-### WhatsApp Notifications
-WhatsApp Business API integration (reminders, confirmations, reviews)
-
 ## Notes
 
 - Project is in **active development** - Phase 2 implementation
@@ -444,3 +489,4 @@ WhatsApp Business API integration (reminders, confirmations, reviews)
 - Database schema is maintained remotely (Supabase hosted)
 - All user-facing text is in Portuguese (Brazilian)
 - Focus is on CORE module (reservations, teams, invitations)
+- Deployed on **Vercel** in São Paulo region for optimal Brazilian performance

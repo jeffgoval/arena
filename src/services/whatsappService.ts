@@ -339,7 +339,8 @@ Guarde este comprovante para seus registros. 📁`;
         }
       } catch (error) {
         console.error(`Erro ao enviar para ${telefone}:`, error);
-        resultados.push({ telefone, sucesso: false, erro: error.message });
+        const mensagemErro = error instanceof Error ? error.message : 'Erro desconhecido';
+        resultados.push({ telefone, sucesso: false, erro: mensagemErro });
       }
     }
 

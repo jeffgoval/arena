@@ -1,8 +1,8 @@
-# Fix: Erro de Build do Calendar no Cloudflare Pages
+# Fix: Erro de Build do Calendar
 
 ## Problema
 
-Erro durante o build no Cloudflare Pages:
+Erro durante o build:
 
 ```
 Type error: Object literal may only specify known properties, and 'IconLeft' does not exist in type 'Partial<CustomComponents>'.
@@ -45,18 +45,10 @@ O arquivo já está correto. Para garantir que o build funcione:
    npm run build
    ```
 
-2. **No Cloudflare Pages**:
+2. **No ambiente de deploy**:
    - Faça um novo commit e push
    - O build deve funcionar automaticamente
-   - Se ainda falhar, tente "Retry deployment" no painel
-
-## Mudanças Adicionais
-
-Todas as referências ao Vercel foram removidas da documentação:
-
-- ✅ `README.md` - Atualizado para Cloudflare Pages como recomendado
-- ✅ `SETUP/PRD.md` - Referências ao Vercel substituídas por Cloudflare Pages
-- ✅ `docs/CLOUDFLARE_SETUP.md` - Instruções atualizadas
+   - Se ainda falhar, tente fazer retry do deployment
 
 ## Status
 
