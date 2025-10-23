@@ -542,7 +542,7 @@ Integrações:
 	• Asaas SDK
 	• WhatsApp Business API
 	• ViaCEP API
-	• Vercel (deploy)
+	• Cloudflare Pages (deploy)
 6.2 Estrutura de Banco de Dados (ATUALIZADA)
 Tabelas Principais:
 users
@@ -1347,7 +1347,7 @@ Geral:
 	• Contato e suporte
 15.3 Para Operação
 Deploy e Infraestrutura:
-	• Runbook de deploy (Vercel + Supabase)
+	• Runbook de deploy (Cloudflare Pages + Supabase)
 	• Variáveis de ambiente necessárias
 	• Configuração de domínio e SSL
 	• Setup de CDN

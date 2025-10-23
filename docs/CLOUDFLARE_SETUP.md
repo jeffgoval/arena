@@ -16,11 +16,14 @@ Acesse seu projeto no Cloudflare Pages Dashboard e configure:
 
 ```
 Framework preset: Next.js
-Build command: npx @cloudflare/next-on-pages
+Build command: npx @cloudflare/next-on-pages@1
 Build output directory: .vercel/output/static
+Node version: 20.19.2
 ```
 
-**Importante:** Use `npx @cloudflare/next-on-pages` (sem a versão `@1`), que é compatível com Next.js 15 e SSR.
+**Importante:** 
+- Use `npx @cloudflare/next-on-pages@1` para compatibilidade com Next.js 15
+- Certifique-se de que o Node.js 20.19.2 está configurado
 
 ### 2. Variáveis de Ambiente (Production)
 

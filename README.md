@@ -121,21 +121,18 @@ Slider automático de depoimentos (5s). Customize em `components/Testimonials.ts
 
 ## Deploy
 
-### Vercel (Recomendado)
+### Cloudflare Pages (Recomendado)
 
-```bash
-npm install -g vercel
-vercel
-```
+1. Conecte seu repositório no Cloudflare Pages
+2. Configure o build:
+   - Framework preset: Next.js
+   - Build command: `npx @cloudflare/next-on-pages@1`
+   - Build output directory: `.vercel/output/static`
+   - Node version: `20.19.2`
 
-### Cloudflare Pages
+3. Adicione as variáveis de ambiente necessárias no painel do Cloudflare
 
-1. Build:
-   ```bash
-   npm run build
-   ```
-
-2. Upload da pasta `.next` para Cloudflare Pages
+Para mais detalhes, consulte `docs/CLOUDFLARE_SETUP.md`
 
 ### Outros
 
