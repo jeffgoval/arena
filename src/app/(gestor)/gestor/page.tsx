@@ -83,17 +83,17 @@ export default function GestorDashboard() {
 
   const quickActions = [
     {
-      title: "Nova Reserva",
-      description: "Criar reserva manual",
-      href: "/gestor/reservas/nova",
-      icon: Plus,
+      title: "Agenda",
+      description: "Ver agenda completa",
+      href: "/gestor/agenda",
+      icon: Calendar,
       color: "text-white",
       bgColor: "bg-gradient-to-br from-primary to-primary/80",
     },
     {
-      title: "Agenda",
-      description: "Ver agenda completa",
-      href: "/gestor/agenda",
+      title: "Reservas",
+      description: "Gerenciar reservas",
+      href: "/gestor/reservas",
       icon: Calendar,
       color: "text-primary",
       bgColor: "bg-primary/10",
@@ -107,28 +107,28 @@ export default function GestorDashboard() {
       bgColor: "bg-secondary/10",
     },
     {
-      title: "Clientes",
-      description: "Ver todos os clientes",
-      href: "/gestor/clientes",
+      title: "Turmas",
+      description: "Gerenciar turmas",
+      href: "/gestor/turmas",
       icon: Users,
-      color: "text-accent",
-      bgColor: "bg-accent/10",
+      color: "text-purple-600",
+      bgColor: "bg-purple-100",
     },
     {
-      title: "Relatórios",
-      description: "Análises e relatórios",
-      href: "/gestor/relatorios",
+      title: "Avaliações",
+      description: "Ver avaliações",
+      href: "/gestor/avaliacoes",
       icon: FileText,
-      color: "text-info",
-      bgColor: "bg-info/10",
+      color: "text-amber-600",
+      bgColor: "bg-amber-100",
     },
     {
-      title: "Configurações",
-      description: "Parâmetros do sistema",
-      href: "/gestor/configuracoes",
-      icon: Settings,
-      color: "text-muted-foreground",
-      bgColor: "bg-muted",
+      title: "Financeiro",
+      description: "Gestão financeira",
+      href: "/gestor/financeiro",
+      icon: DollarSign,
+      color: "text-green-600",
+      bgColor: "bg-green-100",
     },
   ];
 
@@ -252,46 +252,44 @@ export default function GestorDashboard() {
                 };
 
                 return (
-                  <Link key={reserva.id} href={`/gestor/reservas/${reserva.id}`}>
-                    <Card className="card-interactive border-0 shadow-soft">
-                      <CardContent className="p-4">
-                        <div className="flex items-center gap-4">
-                          <div className="w-16 h-16 rounded-xl bg-primary/10 flex flex-col items-center justify-center flex-shrink-0">
-                            <Clock className="w-5 h-5 text-primary mb-1" />
-                            <p className="text-xs font-bold text-primary">
-                              {reserva.horario?.hora_inicio}
-                            </p>
+                  <Card key={reserva.id} className="card-interactive border-0 shadow-soft">
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-4">
+                        <div className="w-16 h-16 rounded-xl bg-primary/10 flex flex-col items-center justify-center flex-shrink-0">
+                          <Clock className="w-5 h-5 text-primary mb-1" />
+                          <p className="text-xs font-bold text-primary">
+                            {reserva.horario?.hora_inicio}
+                          </p>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-2 mb-1">
+                            <h4 className="font-bold text-foreground">
+                              {reserva.quadra?.nome}
+                            </h4>
+                            <Badge className={statusColors[reserva.status]}>
+                              {reserva.status === 'confirmada' ? 'Confirmada' :
+                                reserva.status === 'pendente' ? 'Pendente' : 'Cancelada'}
+                            </Badge>
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between gap-2 mb-1">
-                              <h4 className="font-bold text-foreground">
-                                {reserva.quadra?.nome}
-                              </h4>
-                              <Badge className={statusColors[reserva.status]}>
-                                {reserva.status === 'confirmada' ? 'Confirmada' :
-                                  reserva.status === 'pendente' ? 'Pendente' : 'Cancelada'}
-                              </Badge>
+                          <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                            <div className="flex items-center gap-1">
+                              <UserCheck className="w-4 h-4" />
+                              <span>{reserva.organizador?.nome_completo}</span>
                             </div>
-                            <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                              <div className="flex items-center gap-1">
-                                <UserCheck className="w-4 h-4" />
-                                <span>{reserva.organizador?.nome_completo}</span>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <Users className="w-4 h-4" />
-                                <span>{reserva.participantes_count || 0} participantes</span>
-                              </div>
+                            <div className="flex items-center gap-1">
+                              <Users className="w-4 h-4" />
+                              <span>{reserva.participantes_count || 0} participantes</span>
                             </div>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-lg font-bold text-primary">
-                              R$ {reserva.valor_total?.toFixed(2)}
-                            </p>
                           </div>
                         </div>
-                      </CardContent>
-                    </Card>
-                  </Link>
+                        <div className="text-right">
+                          <p className="text-lg font-bold text-primary">
+                            R$ {reserva.valor_total?.toFixed(2)}
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
                 );
               })}
             </div>

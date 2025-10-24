@@ -24,7 +24,16 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const statusFilter = searchParams.get('status') as ConviteStatus | null;
 
-    // Buscar convites do usuário
+    // Buscar perfil do usuário para verificar role
+    const { data: userProfile } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+
+    const isGestor = userProfile?.role === 'gestor' || userProfile?.role === 'admin';
+
+    // Buscar convites (gestor vê todos, cliente vê apenas os seus)
     let query = supabase
       .from('convites')
       .select(`
@@ -49,9 +58,14 @@ export async function GET(request: NextRequest) {
           nome_completo,
           email
         )
-      `)
-      .eq('criado_por', user.id)
-      .order('created_at', { ascending: false });
+      `);
+
+    // Filtrar por criador apenas se não for gestor
+    if (!isGestor) {
+      query = query.eq('criado_por', user.id);
+    }
+
+    query = query.order('created_at', { ascending: false });
 
     if (statusFilter) {
       query = query.eq('status', statusFilter);

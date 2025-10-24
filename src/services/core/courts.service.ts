@@ -137,12 +137,23 @@ export const schedulesService = {
 // ============================================================
 
 export const courtBlocksService = {
+  // Listar TODOS os bloqueios
+  async getAll(): Promise<CourtBlock[]> {
+    const { data, error } = await supabase
+      .from('court_blocks')
+      .select('*')
+      .order('data_inicio', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  },
+
   // Listar bloqueios de uma quadra
   async getByCourt(courtId: string): Promise<CourtBlock[]> {
     const { data, error } = await supabase
       .from('court_blocks')
       .select('*')
-      .eq('court_id', courtId)
+      .eq('quadra_id', courtId)
       .order('data_inicio', { ascending: false });
 
     if (error) throw error;
@@ -161,9 +172,22 @@ export const courtBlocksService = {
     return data;
   },
 
+  // Atualizar bloqueio
+  async update(id: string, blockData: Partial<CourtBlockFormData>): Promise<CourtBlock> {
+    const { data, error } = await supabase
+      .from('court_blocks')
+      .update(blockData)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
   // Deletar bloqueio
   async delete(id: string): Promise<void> {
-    const { error } = await supabase
+    const { error} = await supabase
       .from('court_blocks')
       .delete()
       .eq('id', id);

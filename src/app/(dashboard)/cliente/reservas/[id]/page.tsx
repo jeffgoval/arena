@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { useReserva, useCancelReserva, useVincularTurma, useAddParticipant, useRemoveParticipant } from '@/hooks/core/useReservas';
 import { useTurmas } from '@/hooks/core/useTurmas';
+import { useConfirm } from '@/hooks/useConfirm';
 import { RESERVA_STATUS_LABELS, PAYMENT_STATUS_LABELS } from '@/types/reservas.types';
 import { QUADRA_TIPO_LABELS, type QuadraTipo } from '@/types/quadras.types';
 
@@ -39,6 +40,7 @@ export default function GerenciarReservaPage() {
   const vincularTurma = useVincularTurma();
   const addParticipant = useAddParticipant();
   const removeParticipant = useRemoveParticipant();
+  const { confirm, ConfirmDialog } = useConfirm();
 
   const [showAddParticipant, setShowAddParticipant] = useState(false);
   const [novoParticipante, setNovoParticipante] = useState({ nome: '', email: '', whatsapp: '' });
@@ -128,7 +130,15 @@ export default function GerenciarReservaPage() {
   };
 
   const handleRemoveParticipant = async (participante_id: string) => {
-    if (!confirm('Deseja remover este participante?')) return;
+    const confirmed = await confirm({
+      title: 'Remover Participante',
+      description: 'Deseja realmente remover este participante da reserva? Esta ação não pode ser desfeita.',
+      confirmText: 'Remover',
+      cancelText: 'Cancelar',
+      variant: 'destructive',
+    });
+
+    if (!confirmed) return;
 
     try {
       await removeParticipant.mutateAsync({
@@ -523,6 +533,9 @@ export default function GerenciarReservaPage() {
           </div>
         </div>
       </div>
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog />
     </div>
   );
 }

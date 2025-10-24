@@ -1,169 +1,100 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Users, Search, Mail, Phone, Calendar, TrendingUp, Eye, Edit, Plus, DollarSign, AlertCircle, History, MapPin } from "lucide-react";
+import { Users, Search, Mail, Phone, Calendar, TrendingUp, Eye, Edit, Plus, DollarSign, AlertCircle, History, MapPin, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-interface Cliente {
-  id: number;
-  nome: string;
-  email: string;
-  telefone: string;
-  cpf: string;
-  endereco: string;
-  cadastro: string;
-  ultimoJogo: string;
-  totalJogos: number;
-  saldo: number;
-  status: "ativo" | "devedor" | "novo" | "inativo";
-  observacoes?: string;
-}
-
-interface Reserva {
-  id: string;
-  quadra: string;
-  data: string;
-  horario: string;
-  valor: number;
-  status: string;
-}
-
-interface Pagamento {
-  id: string;
-  data: string;
-  valor: number;
-  tipo: "credito" | "debito";
-  metodo: string;
-  descricao: string;
-}
+import { useClients, useClientReservas, useClientTransacoes, useCreateClient, useUpdateClient, useAdjustClientCredits } from "@/hooks/core/useClients";
+import type { ClientWithStats } from "@/services/core/clients.service";
+import { useDebounce } from "@/hooks/useDebounce";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 export default function ClientesPage() {
   const { toast } = useToast();
+
+  // Hooks de dados
+  const { data: clientes, isLoading: isLoadingClientes } = useClients();
+  const createClientMutation = useCreateClient();
+  const updateClientMutation = useUpdateClient();
+  const adjustCreditsMutation = useAdjustClientCredits();
+
+  // Estado local
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todos");
-  
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
+
   // Modals
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-  const [selectedCliente, setSelectedCliente] = useState<Cliente | null>(null);
+  const [selectedCliente, setSelectedCliente] = useState<ClientWithStats | null>(null);
+
+  // Dados do cliente selecionado
+  const { data: clienteReservas, isLoading: isLoadingReservas } = useClientReservas(selectedCliente?.id || '');
+  const { data: clienteTransacoes, isLoading: isLoadingTransacoes } = useClientTransacoes(selectedCliente?.id || '');
 
   // Payment form
   const [paymentAmount, setPaymentAmount] = useState("");
-  const [paymentType, setPaymentType] = useState<"credito" | "debito">("credito");
+  const [paymentType, setPaymentType] = useState<"adicao" | "uso">("adicao");
   const [paymentMethod, setPaymentMethod] = useState("dinheiro");
   const [paymentDescription, setPaymentDescription] = useState("");
 
-  const [clientes, setClientes] = useState<Cliente[]>([
-    {
-      id: 1,
-      nome: "João Silva",
-      email: "joao@email.com",
-      telefone: "(33) 99999-1111",
-      cpf: "123.456.789-00",
-      endereco: "Rua A, 123 - Centro",
-      cadastro: "2024-01-15",
-      ultimoJogo: "2024-12-18",
-      totalJogos: 23,
-      saldo: 45.50,
-      status: "ativo",
-      observacoes: "Cliente frequente, sempre pontual"
-    },
-    {
-      id: 2,
-      nome: "Maria Santos",
-      email: "maria@email.com",
-      telefone: "(33) 99999-2222",
-      cpf: "987.654.321-00",
-      endereco: "Av. B, 456 - Bairro X",
-      cadastro: "2024-02-20",
-      ultimoJogo: "2024-12-17",
-      totalJogos: 15,
-      saldo: -30.00,
-      status: "devedor",
-      observacoes: "Pendência de pagamento da última reserva"
-    },
-    {
-      id: 3,
-      nome: "Pedro Costa",
-      email: "pedro@email.com",
-      telefone: "(33) 99999-3333",
-      cpf: "456.789.123-00",
-      endereco: "Rua C, 789 - Vila Y",
-      cadastro: "2024-03-10",
-      ultimoJogo: "2024-12-16",
-      totalJogos: 8,
-      saldo: 120.00,
-      status: "ativo"
-    },
-    {
-      id: 4,
-      nome: "Ana Oliveira",
-      email: "ana@email.com",
-      telefone: "(33) 99999-4444",
-      cpf: "321.654.987-00",
-      endereco: "Av. D, 321 - Centro",
-      cadastro: "2024-11-01",
-      ultimoJogo: "2024-12-15",
-      totalJogos: 3,
-      saldo: 0.00,
-      status: "novo"
-    },
-    {
-      id: 5,
-      nome: "Carlos Lima",
-      email: "carlos@email.com",
-      telefone: "(33) 99999-5555",
-      cpf: "789.123.456-00",
-      endereco: "Rua E, 654 - Bairro Z",
-      cadastro: "2024-01-05",
-      ultimoJogo: "2024-11-20",
-      totalJogos: 45,
-      saldo: 25.00,
-      status: "inativo",
-      observacoes: "Não joga há mais de 30 dias"
-    }
-  ]);
-
-  // Mock data para histórico
-  const mockReservas: Reserva[] = [
-    { id: "R001", quadra: "Society 1", data: "2024-12-18", horario: "19:00", valor: 150.00, status: "concluida" },
-    { id: "R002", quadra: "Futsal", data: "2024-12-10", horario: "20:00", valor: 180.00, status: "concluida" },
-    { id: "R003", quadra: "Society 2", data: "2024-12-05", horario: "18:00", valor: 150.00, status: "concluida" }
-  ];
-
-  const mockPagamentos: Pagamento[] = [
-    { id: "P001", data: "2024-12-18", valor: 150.00, tipo: "debito", metodo: "PIX", descricao: "Pagamento reserva R001" },
-    { id: "P002", data: "2024-12-01", valor: 200.00, tipo: "credito", metodo: "Dinheiro", descricao: "Crédito adicionado" }
-  ];
-
-  const stats = [
-    { title: "Total de Clientes", value: clientes.length, icon: Users, color: "text-primary" },
-    { title: "Clientes Ativos", value: clientes.filter(c => c.status === "ativo").length, icon: TrendingUp, color: "text-success" },
-    { title: "Novos este Mês", value: clientes.filter(c => c.status === "novo").length, icon: Calendar, color: "text-primary" },
-    { title: "Com Saldo Devedor", value: clientes.filter(c => c.saldo < 0).length, icon: AlertCircle, color: "text-destructive" },
-  ];
-
-  const filteredClientes = clientes.filter(cliente => {
-    const matchesSearch = 
-      cliente.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      cliente.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      cliente.telefone.includes(searchTerm) ||
-      cliente.cpf.includes(searchTerm);
-    
-    const matchesStatus = statusFilter === "todos" || cliente.status === statusFilter;
-    
-    return matchesSearch && matchesStatus;
+  // Create client form
+  const [newClientData, setNewClientData] = useState({
+    nome_completo: "",
+    email: "",
+    cpf: "",
+    whatsapp: "",
+    logradouro: "",
+    numero: "",
+    bairro: "",
+    cidade: "",
+    estado: "",
+    cep: "",
   });
+
+  // Estatísticas
+  const stats = useMemo(() => {
+    if (!clientes) return [
+      { title: "Total de Clientes", value: 0, icon: Users, color: "text-primary" },
+      { title: "Clientes Ativos", value: 0, icon: TrendingUp, color: "text-success" },
+      { title: "Novos este Mês", value: 0, icon: Calendar, color: "text-primary" },
+      { title: "Com Saldo Devedor", value: 0, icon: AlertCircle, color: "text-destructive" },
+    ];
+
+    return [
+      { title: "Total de Clientes", value: clientes.length, icon: Users, color: "text-primary" },
+      { title: "Clientes Ativos", value: clientes.filter(c => c.status_cliente === "ativo").length, icon: TrendingUp, color: "text-success" },
+      { title: "Novos este Mês", value: clientes.filter(c => c.status_cliente === "novo").length, icon: Calendar, color: "text-primary" },
+      { title: "Com Saldo Devedor", value: clientes.filter(c => c.saldo_creditos < 0).length, icon: AlertCircle, color: "text-destructive" },
+    ];
+  }, [clientes]);
+
+  // Filtros
+  const filteredClientes = useMemo(() => {
+    if (!clientes) return [];
+
+    return clientes.filter(cliente => {
+      const matchesSearch =
+        cliente.nome_completo?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        cliente.email.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        cliente.whatsapp?.includes(debouncedSearchTerm) ||
+        cliente.cpf?.includes(debouncedSearchTerm);
+
+      const matchesStatus = statusFilter === "todos" || cliente.status_cliente === statusFilter;
+
+      return matchesSearch && matchesStatus;
+    });
+  }, [clientes, debouncedSearchTerm, statusFilter]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -188,37 +119,76 @@ export default function ClientesPage() {
     return new Date(dateString).toLocaleDateString('pt-BR');
   };
 
-  const handleRegisterPayment = () => {
+  const handleRegisterPayment = async () => {
     if (!selectedCliente || !paymentAmount) {
       toast({ title: "Erro", description: "Informe o valor", variant: "destructive" });
       return;
     }
 
     const amount = parseFloat(paymentAmount);
-    const newSaldo = paymentType === "credito" 
-      ? selectedCliente.saldo + amount 
-      : selectedCliente.saldo - amount;
 
-    setClientes(clientes.map(c => 
-      c.id === selectedCliente.id 
-        ? { ...c, saldo: newSaldo, status: newSaldo < 0 ? "devedor" : c.status }
-        : c
-    ));
+    try {
+      await adjustCreditsMutation.mutateAsync({
+        clientId: selectedCliente.id,
+        valor: amount,
+        tipo: paymentType,
+        descricao: paymentDescription || `${paymentType === 'adicao' ? 'Crédito' : 'Débito'} via ${paymentMethod}`,
+      });
 
-    toast({ 
-      title: "Sucesso", 
-      description: `${paymentType === "credito" ? "Crédito" : "Débito"} de ${formatCurrency(amount)} registrado` 
-    });
-    
-    setIsPaymentModalOpen(false);
-    setPaymentAmount("");
-    setPaymentDescription("");
+      setIsPaymentModalOpen(false);
+      setPaymentAmount("");
+      setPaymentDescription("");
+    } catch (error) {
+      // Erro já tratado pelo hook
+    }
   };
 
-  const handleSaveCliente = () => {
-    toast({ title: "Sucesso", description: "Cliente salvo com sucesso" });
-    setIsEditModalOpen(false);
-    setIsCreateModalOpen(false);
+  const handleSaveCliente = async () => {
+    // Modo criação
+    if (isCreateModalOpen) {
+      if (!newClientData.nome_completo || !newClientData.email) {
+        toast({
+          title: "Erro",
+          description: "Nome e email são obrigatórios",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      try {
+        await createClientMutation.mutateAsync(newClientData);
+        setIsCreateModalOpen(false);
+        setNewClientData({
+          nome_completo: "",
+          email: "",
+          cpf: "",
+          whatsapp: "",
+          logradouro: "",
+          numero: "",
+          bairro: "",
+          cidade: "",
+          estado: "",
+          cep: "",
+        });
+      } catch (error) {
+        // Erro já tratado pelo hook
+      }
+    }
+    // Modo edição
+    else if (selectedCliente) {
+      try {
+        await updateClientMutation.mutateAsync({
+          id: selectedCliente.id,
+          data: {
+            // TODO: Implementar edição com valores reais do form
+          },
+        });
+
+        setIsEditModalOpen(false);
+      } catch (error) {
+        // Erro já tratado pelo hook
+      }
+    }
   };
 
   return (
@@ -287,106 +257,127 @@ export default function ClientesPage() {
         </CardContent>
       </Card>
 
-      {/* Clients Table */}
+      {/* Clients List */}
       <Card className="border-0 shadow-soft">
         <CardHeader>
           <CardTitle className="heading-3">Lista de Clientes ({filteredClientes.length})</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left p-4 font-semibold">Cliente</th>
-                  <th className="text-left p-4 font-semibold">Contato</th>
-                  <th className="text-left p-4 font-semibold">Cadastro</th>
-                  <th className="text-left p-4 font-semibold">Último Jogo</th>
-                  <th className="text-left p-4 font-semibold">Total Jogos</th>
-                  <th className="text-left p-4 font-semibold">Saldo</th>
-                  <th className="text-left p-4 font-semibold">Status</th>
-                  <th className="text-left p-4 font-semibold">Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredClientes.map((cliente) => (
-                  <tr key={cliente.id} className="border-b border-border hover:bg-muted/50">
-                    <td className="p-4">
-                      <div>
-                        <p className="font-semibold">{cliente.nome}</p>
-                        <p className="text-sm text-muted-foreground">CPF: {cliente.cpf}</p>
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2 text-sm">
-                          <Mail className="w-4 h-4 text-muted-foreground" />
-                          {cliente.email}
+          {isLoadingClientes ? (
+            <div className="p-12 text-center">
+              <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
+              <p className="text-muted-foreground">Carregando clientes...</p>
+            </div>
+          ) : filteredClientes.length === 0 ? (
+            <div className="text-center py-12">
+              <Users className="w-16 h-16 text-muted-foreground/20 mx-auto mb-4" />
+              <p className="text-muted-foreground">Nenhum cliente encontrado</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {filteredClientes.map((cliente) => (
+                <Card key={cliente.id} className="border border-border hover:border-primary/30 transition-colors">
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between gap-4">
+                      {/* Info Principal */}
+                      <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {/* Nome e Status */}
+                        <div className="space-y-2">
+                          <div className="flex items-start gap-2">
+                            <Users className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                            <div className="min-w-0">
+                              <h3 className="font-semibold text-base leading-tight truncate">
+                                {cliente.nome_completo || 'Sem nome'}
+                              </h3>
+                              <p className="text-xs text-muted-foreground mt-0.5">
+                                {cliente.cpf || 'CPF não informado'}
+                              </p>
+                              <div className="mt-2">
+                                {getStatusBadge(cliente.status_cliente)}
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2 text-sm">
-                          <Phone className="w-4 h-4 text-muted-foreground" />
-                          {cliente.telefone}
+
+                        {/* Contato */}
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <Mail className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                            <span className="text-sm truncate">{cliente.email}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Phone className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                            <span className="text-sm">{cliente.whatsapp || 'Não informado'}</span>
+                          </div>
+                        </div>
+
+                        {/* Estatísticas */}
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="bg-muted/50 rounded-lg p-2">
+                            <p className="text-xs text-muted-foreground">Jogos</p>
+                            <p className="text-lg font-bold text-primary">{cliente.total_jogos}</p>
+                          </div>
+                          <div className="bg-muted/50 rounded-lg p-2">
+                            <p className="text-xs text-muted-foreground">Saldo</p>
+                            <p className={`text-lg font-bold ${
+                              cliente.saldo_creditos > 0 ? 'text-success' :
+                              cliente.saldo_creditos < 0 ? 'text-destructive' : 'text-muted-foreground'
+                            }`}>
+                              {formatCurrency(cliente.saldo_creditos)}
+                            </p>
+                          </div>
+                          <div className="col-span-2">
+                            <p className="text-xs text-muted-foreground">Último jogo</p>
+                            <p className="text-sm font-medium">
+                              {cliente.ultimo_jogo ? formatDate(cliente.ultimo_jogo) : 'Nunca jogou'}
+                            </p>
+                          </div>
                         </div>
                       </div>
-                    </td>
-                    <td className="p-4 text-sm">{formatDate(cliente.cadastro)}</td>
-                    <td className="p-4 text-sm">{formatDate(cliente.ultimoJogo)}</td>
-                    <td className="p-4 text-center font-semibold">{cliente.totalJogos}</td>
-                    <td className="p-4">
-                      <span className={`font-semibold ${
-                        cliente.saldo > 0 ? 'text-success' : 
-                        cliente.saldo < 0 ? 'text-destructive' : 'text-muted-foreground'
-                      }`}>
-                        {formatCurrency(cliente.saldo)}
-                      </span>
-                    </td>
-                    <td className="p-4">{getStatusBadge(cliente.status)}</td>
-                    <td className="p-4">
-                      <div className="flex gap-2">
-                        <Button 
-                          variant="outline" 
+
+                      {/* Ações */}
+                      <div className="flex flex-col gap-2">
+                        <Button
+                          variant="outline"
                           size="sm"
                           onClick={() => {
                             setSelectedCliente(cliente);
                             setIsDetailsModalOpen(true);
                           }}
-                          title="Ver Detalhes"
+                          className="w-full"
                         >
-                          <Eye className="w-4 h-4" />
+                          <Eye className="w-4 h-4 mr-2" />
+                          Detalhes
                         </Button>
-                        <Button 
-                          variant="outline" 
+                        <Button
+                          variant="outline"
                           size="sm"
                           onClick={() => {
                             setSelectedCliente(cliente);
                             setIsEditModalOpen(true);
                           }}
-                          title="Editar"
+                          className="w-full"
                         >
-                          <Edit className="w-4 h-4" />
+                          <Edit className="w-4 h-4 mr-2" />
+                          Editar
                         </Button>
-                        <Button 
-                          variant="outline" 
+                        <Button
+                          variant="outline"
                           size="sm"
                           onClick={() => {
                             setSelectedCliente(cliente);
                             setIsPaymentModalOpen(true);
                           }}
-                          title="Pagamento"
+                          className="w-full"
                         >
-                          <DollarSign className="w-4 h-4" />
+                          <DollarSign className="w-4 h-4 mr-2" />
+                          Créditos
                         </Button>
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          
-          {filteredClientes.length === 0 && (
-            <div className="text-center py-12">
-              <Users className="w-16 h-16 text-muted-foreground/20 mx-auto mb-4" />
-              <p className="text-muted-foreground">Nenhum cliente encontrado</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           )}
         </CardContent>
@@ -414,66 +405,64 @@ export default function ClientesPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label className="text-muted-foreground">Nome Completo</Label>
-                    <p className="font-semibold">{selectedCliente.nome}</p>
+                    <p className="font-semibold">{selectedCliente.nome_completo || 'N/A'}</p>
                   </div>
                   <div>
                     <Label className="text-muted-foreground">CPF</Label>
-                    <p className="font-semibold">{selectedCliente.cpf}</p>
+                    <p className="font-semibold">{selectedCliente.cpf || 'N/A'}</p>
                   </div>
                   <div>
                     <Label className="text-muted-foreground">Email</Label>
                     <p className="font-semibold">{selectedCliente.email}</p>
                   </div>
                   <div>
-                    <Label className="text-muted-foreground">Telefone</Label>
-                    <p className="font-semibold">{selectedCliente.telefone}</p>
+                    <Label className="text-muted-foreground">WhatsApp</Label>
+                    <p className="font-semibold">{selectedCliente.whatsapp || 'N/A'}</p>
                   </div>
                   <div className="col-span-2">
                     <Label className="text-muted-foreground">Endereço</Label>
                     <p className="font-semibold flex items-center gap-2">
                       <MapPin className="w-4 h-4" />
-                      {selectedCliente.endereco}
+                      {selectedCliente.logradouro ?
+                        `${selectedCliente.logradouro}${selectedCliente.numero ? `, ${selectedCliente.numero}` : ''}${selectedCliente.bairro ? ` - ${selectedCliente.bairro}` : ''}${selectedCliente.cidade ? ` - ${selectedCliente.cidade}` : ''}` :
+                        'N/A'
+                      }
                     </p>
                   </div>
                   <div>
                     <Label className="text-muted-foreground">Data de Cadastro</Label>
-                    <p className="font-semibold">{formatDate(selectedCliente.cadastro)}</p>
+                    <p className="font-semibold">{formatDate(selectedCliente.created_at)}</p>
                   </div>
                   <div>
                     <Label className="text-muted-foreground">Status</Label>
-                    <div className="mt-1">{getStatusBadge(selectedCliente.status)}</div>
+                    <div className="mt-1">{getStatusBadge(selectedCliente.status_cliente)}</div>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-3 gap-4 pt-4 border-t">
                   <Card className="border-0 shadow-soft">
                     <CardContent className="p-4 text-center">
-                      <p className="text-2xl font-bold text-primary">{selectedCliente.totalJogos}</p>
+                      <p className="text-2xl font-bold text-primary">{selectedCliente.total_jogos}</p>
                       <p className="text-xs text-muted-foreground">Total de Jogos</p>
                     </CardContent>
                   </Card>
                   <Card className="border-0 shadow-soft">
                     <CardContent className="p-4 text-center">
-                      <p className="text-2xl font-bold text-success">{formatDate(selectedCliente.ultimoJogo)}</p>
+                      <p className="text-2xl font-bold text-success">
+                        {selectedCliente.ultimo_jogo ? formatDate(selectedCliente.ultimo_jogo) : 'N/A'}
+                      </p>
                       <p className="text-xs text-muted-foreground">Último Jogo</p>
                     </CardContent>
                   </Card>
                   <Card className="border-0 shadow-soft">
                     <CardContent className="p-4 text-center">
-                      <p className={`text-2xl font-bold ${selectedCliente.saldo >= 0 ? 'text-success' : 'text-destructive'}`}>
-                        {formatCurrency(selectedCliente.saldo)}
+                      <p className={`text-2xl font-bold ${selectedCliente.saldo_creditos >= 0 ? 'text-success' : 'text-destructive'}`}>
+                        {formatCurrency(selectedCliente.saldo_creditos)}
                       </p>
                       <p className="text-xs text-muted-foreground">Saldo Atual</p>
                     </CardContent>
                   </Card>
                 </div>
-
-                {selectedCliente.observacoes && (
-                  <div className="pt-4 border-t">
-                    <Label className="text-muted-foreground">Observações</Label>
-                    <p className="mt-2 text-sm bg-muted p-3 rounded-lg">{selectedCliente.observacoes}</p>
-                  </div>
-                )}
               </TabsContent>
 
               <TabsContent value="historico" className="space-y-4 mt-4">
@@ -482,22 +471,31 @@ export default function ClientesPage() {
                     <History className="w-4 h-4" />
                     Histórico de Reservas
                   </h3>
-                  <div className="space-y-2">
-                    {mockReservas.map((reserva) => (
-                      <div key={reserva.id} className="flex items-center justify-between p-3 border border-border rounded-lg">
-                        <div>
-                          <p className="font-semibold text-sm">{reserva.quadra}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {formatDate(reserva.data)} às {reserva.horario}
-                          </p>
+                  {isLoadingReservas ? (
+                    <div className="text-center py-8">
+                      <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-2" />
+                      <p className="text-sm text-muted-foreground">Carregando reservas...</p>
+                    </div>
+                  ) : clienteReservas && clienteReservas.length > 0 ? (
+                    <div className="space-y-2">
+                      {clienteReservas.map((reserva) => (
+                        <div key={reserva.id} className="flex items-center justify-between p-3 border border-border rounded-lg">
+                          <div>
+                            <p className="font-semibold text-sm">{reserva.quadra?.nome || 'Quadra'}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {formatDate(reserva.data)} - {reserva.horario?.hora_inicio} às {reserva.horario?.hora_fim}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-semibold text-sm">{formatCurrency(reserva.valor_total)}</p>
+                            <Badge variant="outline" className="text-xs">{reserva.status}</Badge>
+                          </div>
                         </div>
-                        <div className="text-right">
-                          <p className="font-semibold text-sm">{formatCurrency(reserva.valor)}</p>
-                          <Badge variant="outline" className="text-xs">{reserva.status}</Badge>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground text-center py-8">Nenhuma reserva encontrada</p>
+                  )}
                 </div>
               </TabsContent>
 
@@ -505,11 +503,11 @@ export default function ClientesPage() {
                 <div className="bg-muted p-4 rounded-lg">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm text-muted-foreground">Saldo Atual</span>
-                    <span className={`text-2xl font-bold ${selectedCliente.saldo >= 0 ? 'text-success' : 'text-destructive'}`}>
-                      {formatCurrency(selectedCliente.saldo)}
+                    <span className={`text-2xl font-bold ${selectedCliente.saldo_creditos >= 0 ? 'text-success' : 'text-destructive'}`}>
+                      {formatCurrency(selectedCliente.saldo_creditos)}
                     </span>
                   </div>
-                  {selectedCliente.saldo < 0 && (
+                  {selectedCliente.saldo_creditos < 0 && (
                     <div className="flex items-center gap-2 text-sm text-destructive mt-2">
                       <AlertCircle className="w-4 h-4" />
                       Cliente com saldo devedor
@@ -520,26 +518,35 @@ export default function ClientesPage() {
                 <div>
                   <h3 className="font-semibold mb-3 flex items-center gap-2">
                     <DollarSign className="w-4 h-4" />
-                    Histórico de Pagamentos
+                    Histórico de Transações
                   </h3>
-                  <div className="space-y-2">
-                    {mockPagamentos.map((pagamento) => (
-                      <div key={pagamento.id} className="flex items-center justify-between p-3 border border-border rounded-lg">
-                        <div>
-                          <p className="font-semibold text-sm">{pagamento.descricao}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {formatDate(pagamento.data)} - {pagamento.metodo}
-                          </p>
+                  {isLoadingTransacoes ? (
+                    <div className="text-center py-8">
+                      <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-2" />
+                      <p className="text-sm text-muted-foreground">Carregando transações...</p>
+                    </div>
+                  ) : clienteTransacoes && clienteTransacoes.length > 0 ? (
+                    <div className="space-y-2">
+                      {clienteTransacoes.map((transacao) => (
+                        <div key={transacao.id} className="flex items-center justify-between p-3 border border-border rounded-lg">
+                          <div>
+                            <p className="font-semibold text-sm">{transacao.descricao || transacao.tipo}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {formatDate(transacao.created_at)}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className={`font-semibold text-sm ${transacao.tipo === 'adicao' || transacao.tipo === 'bonus_indicacao' ? 'text-success' : 'text-destructive'}`}>
+                              {transacao.tipo === 'adicao' || transacao.tipo === 'bonus_indicacao' ? '+' : '-'} {formatCurrency(transacao.valor)}
+                            </p>
+                            <Badge variant="outline" className="text-xs">{transacao.tipo}</Badge>
+                          </div>
                         </div>
-                        <div className="text-right">
-                          <p className={`font-semibold text-sm ${pagamento.tipo === 'credito' ? 'text-success' : 'text-destructive'}`}>
-                            {pagamento.tipo === 'credito' ? '+' : '-'} {formatCurrency(pagamento.valor)}
-                          </p>
-                          <Badge variant="outline" className="text-xs">{pagamento.tipo}</Badge>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground text-center py-8">Nenhuma transação encontrada</p>
+                  )}
                 </div>
               </TabsContent>
             </Tabs>
@@ -567,23 +574,23 @@ export default function ClientesPage() {
             <div className="space-y-4">
               <div>
                 <p className="text-sm text-muted-foreground mb-2">
-                  Cliente: <strong>{selectedCliente.nome}</strong>
+                  Cliente: <strong>{selectedCliente.nome_completo || 'N/A'}</strong>
                 </p>
                 <div className="bg-muted p-3 rounded-lg">
-                  <p className="text-sm">Saldo Atual: <strong className={selectedCliente.saldo >= 0 ? 'text-success' : 'text-destructive'}>{formatCurrency(selectedCliente.saldo)}</strong></p>
+                  <p className="text-sm">Saldo Atual: <strong className={selectedCliente.saldo_creditos >= 0 ? 'text-success' : 'text-destructive'}>{formatCurrency(selectedCliente.saldo_creditos)}</strong></p>
                 </div>
               </div>
 
               <div>
                 <Label htmlFor="paymentType">Tipo de Operação *</Label>
-                <select 
+                <select
                   id="paymentType"
                   className="w-full px-3 py-2 border border-border rounded-lg"
                   value={paymentType}
-                  onChange={(e) => setPaymentType(e.target.value as "credito" | "debito")}
+                  onChange={(e) => setPaymentType(e.target.value as "adicao" | "uso")}
                 >
-                  <option value="credito">Crédito (Adicionar saldo)</option>
-                  <option value="debito">Débito (Remover saldo)</option>
+                  <option value="adicao">Crédito (Adicionar saldo)</option>
+                  <option value="uso">Débito (Remover saldo)</option>
                 </select>
               </div>
 
@@ -629,16 +636,16 @@ export default function ClientesPage() {
                 <div className="bg-primary/10 p-3 rounded-lg">
                   <p className="text-sm">
                     Novo saldo: <strong className={
-                      (paymentType === "credito" 
-                        ? selectedCliente.saldo + parseFloat(paymentAmount) 
-                        : selectedCliente.saldo - parseFloat(paymentAmount)) >= 0 
-                        ? 'text-success' 
+                      (paymentType === "adicao"
+                        ? selectedCliente.saldo_creditos + parseFloat(paymentAmount)
+                        : selectedCliente.saldo_creditos - parseFloat(paymentAmount)) >= 0
+                        ? 'text-success'
                         : 'text-destructive'
                     }>
                       {formatCurrency(
-                        paymentType === "credito" 
-                          ? selectedCliente.saldo + parseFloat(paymentAmount) 
-                          : selectedCliente.saldo - parseFloat(paymentAmount)
+                        paymentType === "adicao"
+                          ? selectedCliente.saldo_creditos + parseFloat(paymentAmount)
+                          : selectedCliente.saldo_creditos - parseFloat(paymentAmount)
                       )}
                     </strong>
                   </p>
@@ -670,44 +677,39 @@ export default function ClientesPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="editNome">Nome Completo *</Label>
-                  <Input id="editNome" defaultValue={selectedCliente.nome} />
+                  <Input id="editNome" defaultValue={selectedCliente.nome_completo || ''} />
                 </div>
                 <div>
                   <Label htmlFor="editCpf">CPF *</Label>
-                  <Input id="editCpf" defaultValue={selectedCliente.cpf} />
+                  <Input id="editCpf" defaultValue={selectedCliente.cpf || ''} />
                 </div>
                 <div>
                   <Label htmlFor="editEmail">Email *</Label>
                   <Input id="editEmail" type="email" defaultValue={selectedCliente.email} />
                 </div>
                 <div>
-                  <Label htmlFor="editTelefone">Telefone *</Label>
-                  <Input id="editTelefone" defaultValue={selectedCliente.telefone} />
+                  <Label htmlFor="editTelefone">WhatsApp *</Label>
+                  <Input id="editTelefone" defaultValue={selectedCliente.whatsapp || ''} />
                 </div>
                 <div className="col-span-2">
-                  <Label htmlFor="editEndereco">Endereço</Label>
-                  <Input id="editEndereco" defaultValue={selectedCliente.endereco} />
+                  <Label htmlFor="editEndereco">Logradouro</Label>
+                  <Input id="editEndereco" defaultValue={selectedCliente.logradouro || ''} />
                 </div>
                 <div>
-                  <Label htmlFor="editStatus">Status</Label>
-                  <select 
-                    id="editStatus"
-                    className="w-full px-3 py-2 border border-border rounded-lg"
-                    defaultValue={selectedCliente.status}
-                  >
-                    <option value="ativo">Ativo</option>
-                    <option value="inativo">Inativo</option>
-                    <option value="devedor">Devedor</option>
-                    <option value="novo">Novo</option>
-                  </select>
+                  <Label htmlFor="editNumero">Número</Label>
+                  <Input id="editNumero" defaultValue={selectedCliente.numero || ''} />
                 </div>
-                <div className="col-span-2">
-                  <Label htmlFor="editObservacoes">Observações</Label>
-                  <Textarea 
-                    id="editObservacoes" 
-                    defaultValue={selectedCliente.observacoes}
-                    rows={3}
-                  />
+                <div>
+                  <Label htmlFor="editBairro">Bairro</Label>
+                  <Input id="editBairro" defaultValue={selectedCliente.bairro || ''} />
+                </div>
+                <div>
+                  <Label htmlFor="editCidade">Cidade</Label>
+                  <Input id="editCidade" defaultValue={selectedCliente.cidade || ''} />
+                </div>
+                <div>
+                  <Label htmlFor="editEstado">Estado</Label>
+                  <Input id="editEstado" defaultValue={selectedCliente.estado || ''} />
                 </div>
               </div>
             </div>
@@ -735,30 +737,85 @@ export default function ClientesPage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="createNome">Nome Completo *</Label>
-                <Input id="createNome" placeholder="João Silva" />
+                <Input
+                  id="createNome"
+                  placeholder="João Silva"
+                  value={newClientData.nome_completo}
+                  onChange={(e) => setNewClientData({ ...newClientData, nome_completo: e.target.value })}
+                />
               </div>
               <div>
-                <Label htmlFor="createCpf">CPF *</Label>
-                <Input id="createCpf" placeholder="000.000.000-00" />
+                <Label htmlFor="createCpf">CPF</Label>
+                <Input
+                  id="createCpf"
+                  placeholder="000.000.000-00"
+                  value={newClientData.cpf}
+                  onChange={(e) => setNewClientData({ ...newClientData, cpf: e.target.value })}
+                />
               </div>
               <div>
                 <Label htmlFor="createEmail">Email *</Label>
-                <Input id="createEmail" type="email" placeholder="cliente@email.com" />
+                <Input
+                  id="createEmail"
+                  type="email"
+                  placeholder="cliente@email.com"
+                  value={newClientData.email}
+                  onChange={(e) => setNewClientData({ ...newClientData, email: e.target.value })}
+                />
               </div>
               <div>
-                <Label htmlFor="createTelefone">Telefone *</Label>
-                <Input id="createTelefone" placeholder="(33) 99999-9999" />
+                <Label htmlFor="createWhatsApp">WhatsApp</Label>
+                <Input
+                  id="createWhatsApp"
+                  placeholder="(33) 99999-9999"
+                  value={newClientData.whatsapp}
+                  onChange={(e) => setNewClientData({ ...newClientData, whatsapp: e.target.value })}
+                />
               </div>
               <div className="col-span-2">
-                <Label htmlFor="createEndereco">Endereço</Label>
-                <Input id="createEndereco" placeholder="Rua, número - Bairro" />
+                <Label htmlFor="createLogradouro">Logradouro</Label>
+                <Input
+                  id="createLogradouro"
+                  placeholder="Rua Exemplo"
+                  value={newClientData.logradouro}
+                  onChange={(e) => setNewClientData({ ...newClientData, logradouro: e.target.value })}
+                />
               </div>
-              <div className="col-span-2">
-                <Label htmlFor="createObservacoes">Observações</Label>
-                <Textarea 
-                  id="createObservacoes" 
-                  placeholder="Informações adicionais sobre o cliente..."
-                  rows={3}
+              <div>
+                <Label htmlFor="createNumero">Número</Label>
+                <Input
+                  id="createNumero"
+                  placeholder="123"
+                  value={newClientData.numero}
+                  onChange={(e) => setNewClientData({ ...newClientData, numero: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="createBairro">Bairro</Label>
+                <Input
+                  id="createBairro"
+                  placeholder="Centro"
+                  value={newClientData.bairro}
+                  onChange={(e) => setNewClientData({ ...newClientData, bairro: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="createCidade">Cidade</Label>
+                <Input
+                  id="createCidade"
+                  placeholder="Governador Valadares"
+                  value={newClientData.cidade}
+                  onChange={(e) => setNewClientData({ ...newClientData, cidade: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="createEstado">Estado</Label>
+                <Input
+                  id="createEstado"
+                  placeholder="MG"
+                  maxLength={2}
+                  value={newClientData.estado}
+                  onChange={(e) => setNewClientData({ ...newClientData, estado: e.target.value.toUpperCase() })}
                 />
               </div>
             </div>
@@ -768,8 +825,18 @@ export default function ClientesPage() {
             <Button variant="outline" onClick={() => setIsCreateModalOpen(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleSaveCliente}>
-              Criar Cliente
+            <Button
+              onClick={handleSaveCliente}
+              disabled={createClientMutation.isPending}
+            >
+              {createClientMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  Criando...
+                </>
+              ) : (
+                "Criar Cliente"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

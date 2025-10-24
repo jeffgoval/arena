@@ -44,6 +44,67 @@ export function useTurmas() {
 }
 
 /**
+ * Hook para gestor buscar TODAS as turmas da arena
+ */
+export function useTurmasGestor() {
+  const supabase = createClient();
+
+  return useQuery({
+    queryKey: ['turmas-gestor'],
+    queryFn: async () => {
+      try {
+        const { data, error } = await supabase
+          .from('turmas')
+          .select(`
+            id,
+            nome,
+            descricao,
+            created_at,
+            organizador_id,
+            users!turmas_organizador_id_fkey(id, nome_completo)
+          `)
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('Error fetching turmas:', error);
+          throw error;
+        }
+
+        // Buscar membros separadamente para cada turma
+        const turmasComMembros = await Promise.all(
+          (data || []).map(async (turma: any) => {
+            const { data: membros, error: membrosError } = await supabase
+              .from('turma_membros')
+              .select('id, nome, email, whatsapp, status')
+              .eq('turma_id', turma.id);
+
+            if (membrosError) {
+              console.error('Error fetching membros:', membrosError);
+            }
+
+            return {
+              ...turma,
+              organizador: turma.users,
+              membros: membros || [],
+              total_membros: membros?.length || 0,
+              total_fixos: membros?.filter((m: any) => m.status === 'fixo').length || 0,
+              total_variaveis: membros?.filter((m: any) => m.status === 'variavel').length || 0,
+            };
+          })
+        );
+
+        return turmasComMembros as Team[];
+      } catch (error) {
+        console.error('useTurmasGestor error:', error);
+        throw error;
+      }
+    },
+    staleTime: 30 * 1000, // 30 segundos
+    gcTime: 5 * 60 * 1000, // 5 minutos
+  });
+}
+
+/**
  * Hook para buscar uma turma específica
  */
 export function useTurma(id: string) {

@@ -180,6 +180,13 @@ export function useDeleteSchedule() {
 // COURT_BLOCKS
 // ============================================================
 
+export function useAllCourtBlocks() {
+  return useQuery({
+    queryKey: ['court_blocks_all'],
+    queryFn: () => courtBlocksService.getAll(),
+  });
+}
+
 export function useCourtBlocks(courtId: string) {
   return useQuery({
     queryKey: ['court_blocks', courtId],
@@ -196,7 +203,8 @@ export function useCreateCourtBlock() {
     mutationFn: (data: CourtBlockFormData & { created_by?: string }) =>
       courtBlocksService.create(data),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['court_blocks', variables.quadra_id] });
+      queryClient.invalidateQueries({ queryKey: ['court_blocks'] });
+      queryClient.invalidateQueries({ queryKey: ['court_blocks_all'] });
       toast({
         title: 'Bloqueio criado!',
         description: 'O horário foi bloqueado com sucesso.',
@@ -212,6 +220,31 @@ export function useCreateCourtBlock() {
   });
 }
 
+export function useUpdateCourtBlock() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<CourtBlockFormData> }) =>
+      courtBlocksService.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['court_blocks'] });
+      queryClient.invalidateQueries({ queryKey: ['court_blocks_all'] });
+      toast({
+        title: 'Bloqueio atualizado!',
+        description: 'As alterações foram salvas.',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Erro ao atualizar bloqueio',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+}
+
 export function useDeleteCourtBlock() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -220,6 +253,7 @@ export function useDeleteCourtBlock() {
     mutationFn: (id: string) => courtBlocksService.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['court_blocks'] });
+      queryClient.invalidateQueries({ queryKey: ['court_blocks_all'] });
       toast({
         title: 'Bloqueio removido!',
         description: 'O bloqueio foi excluído.',

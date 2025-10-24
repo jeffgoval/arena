@@ -10,15 +10,25 @@ import { TurmaSkeletonList } from "@/components/shared/loading/TurmaSkeleton";
 import { useTurmas, useDeleteTurma } from "@/hooks/core/useTurmas";
 import { useToast } from "@/hooks/use-toast";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
+import { useConfirm } from "@/hooks/useConfirm";
 
 export default function TurmasPage() {
   const { data: turmas, isLoading } = useTurmas();
   const deleteTurma = useDeleteTurma();
   const { handleError, handleSuccess } = useErrorHandler();
+  const { confirm, ConfirmDialog } = useConfirm();
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const handleDelete = async (id: string, nome: string) => {
-    if (!confirm(`Tem certeza que deseja excluir a turma "${nome}"?`)) return;
+    const confirmed = await confirm({
+      title: 'Excluir Turma',
+      description: `Tem certeza que deseja excluir a turma "${nome}"? Todos os membros e configurações serão perdidos. Esta ação não pode ser desfeita.`,
+      confirmText: 'Excluir',
+      cancelText: 'Cancelar',
+      variant: 'destructive',
+    });
+
+    if (!confirmed) return;
 
     setDeletingId(id);
     try {
@@ -172,6 +182,9 @@ export default function TurmasPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog />
     </div>
   );
 }

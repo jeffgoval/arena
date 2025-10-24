@@ -9,6 +9,7 @@ import { ArrowLeft, Plus, Link2, Users, Calendar, DollarSign, Copy, Check, Ban, 
 import { useReserva } from '@/hooks/core/useReservas';
 import { useConvitesReserva, useCancelarConvite } from '@/hooks/core/useConvites';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
+import { useConfirm } from '@/hooks/useConfirm';
 import { CONVITE_STATUS_LABELS, CONVITE_STATUS_COLORS, type Convite } from '@/types/convites.types';
 
 export const dynamic = 'force-dynamic';
@@ -20,6 +21,8 @@ export default function ConvitesReservaPage() {
   const { data: reserva, isLoading: isLoadingReserva } = useReserva(reserva_id);
   const { data: convites, isLoading: isLoadingConvites } = useConvitesReserva(reserva_id);
   const cancelarConvite = useCancelarConvite();
+  const { handleError, handleSuccess } = useErrorHandler();
+  const { confirm, ConfirmDialog } = useConfirm();
 
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
 
@@ -30,10 +33,16 @@ export default function ConvitesReservaPage() {
     setTimeout(() => setCopiedToken(null), 2000);
   };
 
-  const { handleError, handleSuccess } = useErrorHandler();
-
   const handleCancelar = async (convite_id: string) => {
-    if (!confirm('Deseja realmente cancelar este convite? Esta ação não pode ser desfeita.')) return;
+    const confirmed = await confirm({
+      title: 'Cancelar Convite',
+      description: 'Deseja realmente cancelar este convite? Esta ação não pode ser desfeita e as pessoas que usaram o link não poderão mais aceitar.',
+      confirmText: 'Cancelar Convite',
+      cancelText: 'Voltar',
+      variant: 'destructive',
+    });
+
+    if (!confirmed) return;
 
     try {
       await cancelarConvite.mutateAsync(convite_id);
@@ -262,6 +271,9 @@ export default function ConvitesReservaPage() {
           </div>
         )}
       </div>
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog />
     </div>
   );
 }

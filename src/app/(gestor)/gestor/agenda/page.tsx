@@ -10,6 +10,7 @@ import { ReservationModal } from "@/components/modules/core/agenda/ReservationMo
 import { useReservasGestor, useCreateReservaGestor, useUpdateReservaGestor, useDeleteReservaGestor } from "@/hooks/core/useReservasGestor";
 import { useQuadras, useAllHorarios } from "@/hooks/core/useQuadrasHorarios";
 import { useToast } from "@/hooks/use-toast";
+import { useErrorHandler } from "@/hooks/useErrorHandler";
 
 type PeriodType = "dia" | "semana" | "mes";
 
@@ -27,6 +28,8 @@ interface Reservation {
 }
 
 export default function AgendaPage() {
+  const { toast } = useToast();
+  const { handleError, handleSuccess } = useErrorHandler();
   const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>("semana");
   const [currentDate, setCurrentDate] = useState(new Date());
 
@@ -45,80 +48,92 @@ export default function AgendaPage() {
     return date;
   });
 
-  const timeSlots = [
-    "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00",
-    "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00"
-  ];
+  // Calcular filtros de data baseado no período
+  const dateFilters = useMemo(() => {
+    const formatDate = (date: Date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
 
-  const courts = ["Society 1", "Society 2", "Futsal", "Beach Tennis"];
+    switch (selectedPeriod) {
+      case "dia":
+        return {
+          data_inicio: formatDate(currentDate),
+          data_fim: formatDate(currentDate),
+        };
+      case "semana":
+        return {
+          data_inicio: formatDate(currentWeek[0]),
+          data_fim: formatDate(currentWeek[6]),
+        };
+      case "mes":
+        const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+        const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+        return {
+          data_inicio: formatDate(firstDay),
+          data_fim: formatDate(lastDay),
+        };
+      default:
+        return {};
+    }
+  }, [selectedPeriod, currentDate, currentWeek]);
 
-  // Simulação de reservas com estado
-  const [reservations, setReservations] = useState<Reservation[]>([
-    {
-      id: "1",
-      court: "Society 1",
-      day: 1,
-      time: "19:00",
-      organizer: "João Silva",
-      participants: 8,
-      status: "confirmada",
-      phone: "(11) 99999-1111",
-      email: "joao@email.com",
-      notes: "Pelada dos amigos"
-    },
-    {
-      id: "2",
-      court: "Society 1",
-      day: 1,
-      time: "20:00",
-      organizer: "Maria Santos",
-      participants: 6,
-      status: "pendente",
-      phone: "(11) 99999-2222",
-      email: "maria@email.com"
-    },
-    {
-      id: "3",
-      court: "Futsal",
-      day: 2,
-      time: "19:00",
-      organizer: "Pedro Costa",
-      participants: 10,
-      status: "confirmada",
-      phone: "(11) 99999-3333"
-    },
-    {
-      id: "4",
-      court: "Society 2",
-      day: 3,
-      time: "20:00",
-      organizer: "Ana Silva",
-      participants: 12,
-      status: "confirmada",
-      email: "ana@email.com",
-      notes: "Aniversário da Ana"
-    },
-    {
-      id: "5",
-      court: "Society 1",
-      day: 4,
-      time: "19:00",
-      organizer: "Carlos Lima",
-      participants: 8,
-      status: "confirmada"
-    },
-    {
-      id: "6",
-      court: "Society 1",
-      day: 5,
-      time: "21:00",
-      organizer: "Bruno Santos",
-      participants: 14,
-      status: "pendente",
-      phone: "(11) 99999-6666",
-      notes: "Confirmar até amanhã"
-    },
-  ]);
+  // Buscar dados reais
+  const { data: quadrasData, isLoading: isLoadingQuadras } = useQuadras();
+  const { data: reservasData, isLoading: isLoadingReservas } = useReservasGestor(dateFilters);
+  const { data: horariosData, isLoading: isLoadingHorarios } = useAllHorarios();
+
+  const isLoading = isLoadingQuadras || isLoadingReservas || isLoadingHorarios;
+
+  // Mapear quadras para array de strings
+  const courts = useMemo(() => {
+    return quadrasData?.map(q => q.nome) || [];
+  }, [quadrasData]);
+
+  // Gerar time slots baseado nos horários reais
+  const timeSlots = useMemo(() => {
+    if (!horariosData || horariosData.length === 0) {
+      return [
+        "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00",
+        "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00"
+      ];
+    }
+
+    // Extrair todos os horários únicos e ordenar
+    const horariosUnicos = new Set<string>();
+    horariosData.forEach(h => {
+      horariosUnicos.add(h.hora_inicio);
+    });
+
+    return Array.from(horariosUnicos).sort();
+  }, [horariosData]);
+
+  // Mapear reservas para formato compatível com a UI
+  const reservations = useMemo(() => {
+    if (!reservasData) return [];
+
+    return reservasData.map(r => {
+      const reservaDate = new Date(r.data + 'T00:00:00');
+      const dayOfWeek = reservaDate.getDay();
+
+      return {
+        id: r.id,
+        court: r.quadra?.nome || '',
+        day: dayOfWeek,
+        time: r.horario?.hora_inicio || '',
+        organizer: r.organizador?.nome_completo || 'Sem nome',
+        participants: r.participantes_count || 0,
+        status: r.status,
+        phone: r.organizador?.telefone || '',
+        email: r.organizador?.email || '',
+        notes: r.observacoes || '',
+        // Dados extras para integração
+        realData: r, // Guardar dados originais
+      };
+    }) as Reservation[];
+  }, [reservasData]);
 
   const getReservation = (court: string, day: number, time: string) => {
     return reservations.find(r => r.court === court && r.day === day && r.time === time);
@@ -162,22 +177,33 @@ export default function AgendaPage() {
     console.log("Modal state set - isOpen:", true, "mode:", "create");
   };
 
-  const handleSaveReservation = (reservation: Reservation) => {
-    if (modalMode === "create") {
-      const newReservation = {
-        ...reservation,
-        id: Date.now().toString() // Simple ID generation
-      };
-      setReservations([...reservations, newReservation]);
-    } else {
-      setReservations(reservations.map(r =>
-        r.id === reservation.id ? reservation : r
-      ));
+  const createReservaMutation = useCreateReservaGestor();
+  const updateReservaMutation = useUpdateReservaGestor();
+  const deleteReservaMutation = useDeleteReservaGestor();
+
+  const handleSaveReservation = async (reservation: Reservation) => {
+    try {
+      if (modalMode === "create") {
+        // TODO: Integrar com hook real de criação
+        handleSuccess("Funcionalidade de criação será implementada em breve");
+      } else {
+        // TODO: Integrar com hook real de atualização
+        handleSuccess("Funcionalidade de edição será implementada em breve");
+      }
+      closeModal();
+    } catch (error) {
+      handleError(error, 'AgendaPage', 'Erro ao salvar reserva');
     }
   };
 
-  const handleDeleteReservation = (reservationId: string) => {
-    setReservations(reservations.filter(r => r.id !== reservationId));
+  const handleDeleteReservation = async (reservationId: string) => {
+    try {
+      await deleteReservaMutation.mutateAsync(reservationId);
+      handleSuccess("Reserva excluída com sucesso");
+      closeModal();
+    } catch (error) {
+      handleError(error, 'AgendaPage', 'Erro ao excluir reserva');
+    }
   };
 
   const closeModal = () => {
@@ -416,7 +442,18 @@ export default function AgendaPage() {
             </CardContent>
           </Card>
 
+          {/* Loading State */}
+          {isLoading && (
+            <Card className="border-0 shadow-soft">
+              <CardContent className="p-12 text-center">
+                <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
+                <p className="text-muted-foreground">Carregando agenda...</p>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Calendar Grid */}
+          {!isLoading && (
           <Card className="border-0 shadow-soft overflow-hidden">
             <CardContent className="p-0">
               <div className="overflow-x-auto">
@@ -512,7 +549,13 @@ export default function AgendaPage() {
                                         </div>
                                       ) : selectedPeriod === "mes" ? (
                                         (() => {
-                                          const occupancyRate = Math.floor(Math.random() * 100);
+                                          // Calcular taxa de ocupação real
+                                          const periodReservations = reservations.filter(r => r.court === court);
+                                          const totalSlots = timeSlots.length * 30; // Aproximadamente 30 dias
+                                          const occupancyRate = totalSlots > 0
+                                            ? Math.floor((periodReservations.length / totalSlots) * 100)
+                                            : 0;
+
                                           const getOccupancyColor = (rate: number) => {
                                             if (rate >= 80) return 'bg-success/20 border-success/30 text-success';
                                             if (rate >= 50) return 'bg-warning/20 border-warning/30 text-warning';
@@ -523,6 +566,9 @@ export default function AgendaPage() {
                                             <div className={`text-center p-3 rounded-lg ${getOccupancyColor(occupancyRate)}`}>
                                               <div className="text-2xl font-bold mb-1">{occupancyRate}%</div>
                                               <div className="text-xs">ocupação</div>
+                                              <div className="text-xs text-muted-foreground mt-1">
+                                                {periodReservations.length} reservas
+                                              </div>
                                             </div>
                                           );
                                         })()
@@ -541,8 +587,10 @@ export default function AgendaPage() {
               </div>
             </CardContent>
           </Card>
+          )}
 
           {/* Current Day Reservations */}
+          {!isLoading && (
           <Card className="border-0 shadow-soft">
             <CardHeader>
               <CardTitle className="heading-3">
@@ -587,6 +635,7 @@ export default function AgendaPage() {
               </div>
             </CardContent>
           </Card>
+          )}
         </TabsContent>
 
         <TabsContent value="quadras" className="space-y-6 mt-6">
@@ -614,7 +663,18 @@ export default function AgendaPage() {
             </CardContent>
           </Card>
 
+          {/* Loading State */}
+          {isLoading && (
+            <Card className="border-0 shadow-soft">
+              <CardContent className="p-12 text-center">
+                <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
+                <p className="text-muted-foreground">Carregando agenda...</p>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Courts Calendar Grid */}
+          {!isLoading && (
           <Card className="border-0 shadow-soft overflow-hidden">
             <CardContent className="p-0">
               <div className="overflow-x-auto">
@@ -740,8 +800,12 @@ export default function AgendaPage() {
                           if (selectedPeriod === "dia") {
                             reservation = getReservation(court, today.getDay(), time);
                           } else if (selectedPeriod === "mes") {
-                            const weekReservations = Math.floor(Math.random() * 15) + 3;
-                            const occupancyRate = Math.floor((weekReservations / 21) * 100);
+                            // Calcular reservas reais da quadra
+                            const weekReservations = reservations.filter(r => r.court === court).length;
+                            const possibleReservations = timeSlots.length * 7; // 7 dias x horários
+                            const occupancyRate = possibleReservations > 0
+                              ? Math.floor((weekReservations / possibleReservations) * 100)
+                              : 0;
 
                             displayContent = (
                               <div className="text-center">
@@ -828,8 +892,10 @@ export default function AgendaPage() {
               </div>
             </CardContent>
           </Card>
+          )}
 
           {/* Courts Summary */}
+          {!isLoading && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {courts.map((court, index) => {
               const courtReservations = reservations.filter(r => r.court === court);
@@ -870,6 +936,7 @@ export default function AgendaPage() {
               );
             })}
           </div>
+          )}
         </TabsContent>
       </Tabs>
 

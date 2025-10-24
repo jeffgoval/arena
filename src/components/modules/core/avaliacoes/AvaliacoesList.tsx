@@ -24,10 +24,23 @@ export function AvaliacoesList({ avaliacoes, loading }: AvaliacoesListProps) {
   if (loading) {
     return (
       <Card>
-        <CardContent className="p-6">
-          <div className="flex items-center justify-center">
-            <p className="text-muted-foreground">Carregando avaliações...</p>
-          </div>
+        <CardHeader>
+          <CardTitle className="text-lg">Avaliações Recentes</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="p-4 border border-border rounded-lg animate-pulse">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 bg-muted rounded-full" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 w-32 bg-muted rounded" />
+                  <div className="h-3 w-20 bg-muted rounded" />
+                  <div className="h-3 w-full bg-muted rounded" />
+                  <div className="h-3 w-2/3 bg-muted rounded" />
+                </div>
+              </div>
+            </div>
+          ))}
         </CardContent>
       </Card>
     );

@@ -16,12 +16,14 @@ import {
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
+import { useConfirm } from '@/hooks/useConfirm';
 import { useMensalistas } from '@/hooks/useMensalistas';
 import type { ReservaRecorrente } from '@/types/mensalistas.types';
 
 export function ListaReservasRecorrentes() {
   const { reservasRecorrentes, pausarReservaRecorrente, cancelarReservaRecorrente } = useMensalistas();
   const { toast } = useToast();
+  const { confirm, ConfirmDialog } = useConfirm();
 
   const handlePausar = async (reservaId: string) => {
     const resultado = await pausarReservaRecorrente(reservaId);
@@ -41,21 +43,29 @@ export function ListaReservasRecorrentes() {
   };
 
   const handleCancelar = async (reservaId: string) => {
-    if (confirm('Tem certeza que deseja cancelar esta reserva recorrente? Esta ação não pode ser desfeita.')) {
-      const resultado = await cancelarReservaRecorrente(reservaId);
-      
-      if (resultado.success) {
-        toast({
-          title: "Reserva Cancelada",
-          description: "A reserva recorrente foi cancelada com sucesso",
-        });
-      } else {
-        toast({
-          title: "Erro",
-          description: resultado.error || 'Erro ao cancelar reserva',
-          variant: "destructive",
-        });
-      }
+    const confirmed = await confirm({
+      title: 'Cancelar Reserva Recorrente',
+      description: 'Tem certeza que deseja cancelar esta reserva recorrente? Esta ação não pode ser desfeita e todas as reservas futuras serão canceladas.',
+      confirmText: 'Cancelar Reserva',
+      cancelText: 'Voltar',
+      variant: 'destructive',
+    });
+
+    if (!confirmed) return;
+
+    const resultado = await cancelarReservaRecorrente(reservaId);
+
+    if (resultado.success) {
+      toast({
+        title: "Reserva Cancelada",
+        description: "A reserva recorrente foi cancelada com sucesso",
+      });
+    } else {
+      toast({
+        title: "Erro",
+        description: resultado.error || 'Erro ao cancelar reserva',
+        variant: "destructive",
+      });
     }
   };
 
@@ -251,6 +261,9 @@ export function ListaReservasRecorrentes() {
           </Card>
         ))}
       </div>
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog />
     </div>
   );
 }

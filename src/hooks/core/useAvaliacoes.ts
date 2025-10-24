@@ -31,6 +31,8 @@ export function useAvaliacoes(filters?: AvaliacoesFilters) {
       const data = await response.json();
       return data as Avaliacao[];
     },
+    staleTime: 30 * 1000, // 30 segundos
+    gcTime: 5 * 60 * 1000, // 5 minutos
   });
 }
 
@@ -50,6 +52,8 @@ export function useAvaliacoesStats() {
       const data = await response.json();
       return data as AvaliacaoStats;
     },
+    staleTime: 30 * 1000, // 30 segundos
+    gcTime: 5 * 60 * 1000, // 5 minutos
   });
 }
 
