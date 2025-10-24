@@ -26,25 +26,25 @@ export async function GET(request: NextRequest) {
 
     // Buscar convites do usuário
     let query = supabase
-      .from('invites')
+      .from('convites')
       .select(`
         *,
-        reserva:reservations!invites_reserva_id_fkey(
+        reserva:reservas!convites_reserva_id_fkey(
           id,
           data,
           valor_total,
-          quadra:courts!reservations_quadra_id_fkey(
+          quadra:quadras!reservas_quadra_id_fkey(
             id,
             nome,
             tipo
           ),
-          horario:time_slots!reservations_horario_id_fkey(
+          horario:horarios!reservas_horario_id_fkey(
             id,
             hora_inicio,
             hora_fim
           )
         ),
-        organizador:profiles!invites_criado_por_fkey(
+        organizador:users!convites_criado_por_fkey(
           id,
           nome_completo,
           email
@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
     const convitesComAceites = await Promise.all(
       (convites || []).map(async (convite) => {
         const { count } = await supabase
-          .from('invite_acceptances')
+          .from('aceites_convite')
           .select('*', { count: 'exact', head: true })
           .eq('convite_id', convite.id)
           .eq('confirmado', true);
