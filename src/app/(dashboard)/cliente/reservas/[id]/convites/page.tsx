@@ -9,7 +9,7 @@ import { ArrowLeft, Plus, Link2, Users, Calendar, DollarSign, Copy, Check, Ban, 
 import { useReserva } from '@/hooks/core/useReservas';
 import { useConvitesReserva, useCancelarConvite } from '@/hooks/core/useConvites';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
-import { CONVITE_STATUS_LABELS, CONVITE_STATUS_COLORS } from '@/types/convites.types';
+import { CONVITE_STATUS_LABELS, CONVITE_STATUS_COLORS, type Convite } from '@/types/convites.types';
 
 export const dynamic = 'force-dynamic';
 
@@ -144,7 +144,7 @@ export default function ConvitesReservaPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {convites.map((convite) => {
+            {convites.map((convite: Convite) => {
               const link = `${typeof window !== 'undefined' ? window.location.origin : ''}/convite/${convite.token}`;
               const vagasRestantes = convite.vagas_disponiveis - convite.total_aceites;
               const dataExpiracao = convite.data_expiracao
