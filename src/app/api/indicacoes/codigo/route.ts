@@ -2,7 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { IndicacoesService } from '@/services/indicacoes.service';
 
-// GET - Buscar código de indicação do usuário
+// Gerar código único de 8 caracteres
+function gerarCodigoUnico(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Sem I, O, 0, 1 para evitar confusão
+  let codigo = '';
+  for (let i = 0; i < 8; i++) {
+    codigo += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return codigo;
+}
+
+// GET - Buscar código de indicação do usuário (cria automaticamente se não existir)
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
@@ -15,13 +25,32 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const codigo = await IndicacoesService.buscarCodigoUsuario(user.id);
-    
+    // Tentar buscar código existente
+    let codigo = await IndicacoesService.buscarCodigoUsuario(user.id);
+
+    // Se não existir, criar automaticamente
     if (!codigo) {
-      return NextResponse.json(
-        { error: 'Código de indicação não encontrado' },
-        { status: 404 }
-      );
+      const novoCodigo = gerarCodigoUnico();
+
+      const { data, error } = await supabase
+        .from('codigos_indicacao')
+        .insert({
+          usuario_id: user.id,
+          codigo: novoCodigo,
+          ativo: true,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Erro ao criar código de indicação:', error);
+        return NextResponse.json(
+          { error: 'Erro ao criar código de indicação' },
+          { status: 500 }
+        );
+      }
+
+      codigo = data;
     }
 
     return NextResponse.json({ codigo });
