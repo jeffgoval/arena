@@ -21,7 +21,7 @@ export function Hero() {
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center text-white py-16 md:py-24 lg:py-32 w-full max-w-7xl">
         <div className="mb-4 md:mb-6 fade-in">
-          <span className="inline-flex flex-col sm:flex-row items-center gap-1 sm:gap-2 bg-primary/20 backdrop-blur-md border border-primary/30 px-3 py-2 md:px-6 md:py-2.5 rounded-2xl sm:rounded-full text-xs md:text-sm font-semibold tracking-wide text-center">
+          <span className="inline-flex flex-col sm:flex-row items-center gap-1 sm:gap-2 bg-primary/20 backdrop-blur-md border border-primary/30 px-3 py-2 md:px-6 md:py-2.5 rounded-2xl sm:rounded-full text-base font-semibold tracking-wide text-center">
             <span className="hidden sm:flex items-center gap-2">
               <Sparkles className="w-4 h-4" />
               A Melhor Arena de Governador Valadares
