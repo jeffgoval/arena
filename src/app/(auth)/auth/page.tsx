@@ -191,49 +191,106 @@ function AuthPageContent() {
       }
 
       // 2. Aguardar trigger criar perfil básico (evitar race condition)
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 1500));
 
-      // 3. Atualizar perfil com dados completos do formulário
-      // O trigger já criou o registro com email e nome_completo
-      // Agora completamos com CPF, endereço, etc.
-      const { data: profileData, error: profileError } = await supabase
+      // 3. Verificar se o perfil existe
+      console.log('🔍 Verificando se perfil existe para user:', authData.user.id);
+      
+      const { data: existingProfile, error: checkError } = await supabase
         .from('users')
-        .update({
-          cpf: data.cpf,
-          rg: data.rg || null,
-          data_nascimento: data.data_nascimento,
-          whatsapp: data.whatsapp,
-          cep: data.cep,
-          logradouro: data.logradouro,
-          numero: data.numero,
-          complemento: data.complemento || null,
-          bairro: data.bairro,
-          cidade: data.cidade,
-          estado: data.estado,
-          updated_at: new Date().toISOString()
-        })
+        .select('id, email, nome_completo')
         .eq('id', authData.user.id)
-        .select()
-        .single();
+        .maybeSingle();
+
+      if (checkError) {
+        console.error('❌ Erro ao verificar perfil:', checkError);
+      }
+
+      console.log('📋 Perfil existente:', existingProfile);
+
+      // 4. Criar ou atualizar perfil com dados completos
+      const profilePayload = {
+        id: authData.user.id,
+        email: data.email,
+        nome_completo: data.nome_completo,
+        cpf: data.cpf,
+        rg: data.rg || null,
+        data_nascimento: data.data_nascimento,
+        whatsapp: data.whatsapp,
+        cep: data.cep,
+        logradouro: data.logradouro,
+        numero: data.numero,
+        complemento: data.complemento || null,
+        bairro: data.bairro,
+        cidade: data.cidade,
+        estado: data.estado,
+        role: 'cliente',
+        updated_at: new Date().toISOString()
+      };
+
+      let profileData;
+      let profileError;
+
+      if (!existingProfile) {
+        // Perfil não existe, criar
+        console.log('➕ Criando perfil...');
+        const result = await supabase
+          .from('users')
+          .insert(profilePayload)
+          .select()
+          .single();
+        
+        profileData = result.data;
+        profileError = result.error;
+      } else {
+        // Perfil existe, atualizar
+        console.log('🔄 Atualizando perfil...');
+        const result = await supabase
+          .from('users')
+          .update({
+            cpf: data.cpf,
+            rg: data.rg || null,
+            data_nascimento: data.data_nascimento,
+            whatsapp: data.whatsapp,
+            cep: data.cep,
+            logradouro: data.logradouro,
+            numero: data.numero,
+            complemento: data.complemento || null,
+            bairro: data.bairro,
+            cidade: data.cidade,
+            estado: data.estado,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', authData.user.id)
+          .select()
+          .single();
+        
+        profileData = result.data;
+        profileError = result.error;
+      }
 
       if (profileError) {
-        console.error('❌ ERRO AO ATUALIZAR PERFIL:', profileError);
-        console.error('Code:', profileError.code);
-        console.error('Details:', profileError.details);
-        console.error('Hint:', profileError.hint);
-        console.error('Message:', profileError.message);
+        console.error('❌ ERRO AO SALVAR PERFIL:', {
+          error: profileError,
+          code: profileError.code,
+          details: profileError.details,
+          hint: profileError.hint,
+          message: profileError.message
+        });
 
         toast({
           title: "Erro ao completar perfil",
-          description: profileError.message || "Erro desconhecido. Verifique o console.",
+          description: profileError.message || "Erro ao salvar dados. Tente fazer login e completar seu perfil.",
           variant: "destructive",
         });
 
-        setSignupLoading(false);
+        // Mesmo com erro, permitir login
+        console.log('⚠️ Permitindo login mesmo com erro no perfil');
+        router.push('/cliente');
         return;
       }
 
-      console.log('✅ Perfil completado com sucesso:', profileData);
+      console.log('✅ Perfil salvo com sucesso:', profileData);
 
       // 4. Se houver código de indicação, aplicar
       if (data.codigoIndicacao) {
