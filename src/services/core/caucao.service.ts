@@ -354,6 +354,182 @@ export class CaucaoService {
       };
     }
   }
+
+  /**
+   * Get pre-authorization status for a reservation
+   * @param reservationId - ID da reserva
+   * @returns Status da pré-autorização
+   */
+  async getPreAuthorizationStatus(reservationId: string) {
+    try {
+      const supabase = await createClient();
+      
+      // Buscar pré-autorização ativa para a reserva
+      const { data: preAuth, error: preAuthError } = await supabase
+        .from('payments')
+        .select('*')
+        .eq('reservation_id', reservationId)
+        .eq('metadata->type', 'pre_authorization')
+        .in('status', ['authorized', 'pending'])
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+        
+      if (preAuthError || !preAuth) {
+        return {
+          sucesso: true,
+          dados: null // Nenhuma pré-autorização encontrada
+        };
+      }
+      
+      // Consultar status atualizado no Asaas se necessário
+      if (preAuth.transaction_id) {
+        const statusAsaas = await pagamentoService.consultarPagamento(preAuth.transaction_id);
+        
+        if (statusAsaas && statusAsaas.status !== preAuth.status) {
+          // Atualizar status no banco
+          await supabase
+            .from('payments')
+            .update({
+              status: statusAsaas.status,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', preAuth.id);
+            
+          preAuth.status = statusAsaas.status;
+        }
+      }
+      
+      return {
+        sucesso: true,
+        dados: {
+          id: preAuth.id,
+          reservationId: preAuth.reservation_id,
+          status: preAuth.status,
+          amount: preAuth.amount,
+          capturedAmount: preAuth.capture_amount,
+          transactionId: preAuth.transaction_id,
+          createdAt: preAuth.created_at,
+          expiresAt: preAuth.metadata?.data_expiracao
+        }
+      };
+    } catch (error) {
+      return {
+        sucesso: false,
+        erro: error instanceof Error ? error.message : 'Erro desconhecido'
+      };
+    }
+  }
+
+  /**
+   * Calculate organizer's final amount
+   * @param reservationId - ID da reserva
+   * @returns Valor final do organizador
+   */
+  async calculateOrganizerAmount(reservationId: string) {
+    try {
+      const resultado = await this.calcularValorCapturar(reservationId);
+      
+      if (!resultado.sucesso) {
+        throw new Error(resultado.erro);
+      }
+      
+      return {
+        sucesso: true,
+        dados: {
+          organizerAmount: resultado.dados?.valor_capturar || 0,
+          totalAmount: resultado.dados?.valor_total || 0,
+          participantsAmount: resultado.dados?.total_pago_participantes || 0
+        }
+      };
+    } catch (error) {
+      return {
+        sucesso: false,
+        erro: error instanceof Error ? error.message : 'Erro desconhecido'
+      };
+    }
+  }
+
+  /**
+   * Create pre-authorization
+   * @param params - Parâmetros para criação da pré-autorização
+   * @returns ID do pagamento criado
+   */
+  async createPreAuthorization(params: any) {
+    try {
+      const resultado = await this.criarPreAutorizacao(
+        params.reservationId,
+        params.userId,
+        params.amount,
+        params.cardData,
+        params.holderData
+      );
+      
+      if (!resultado.sucesso) {
+        throw new Error(resultado.erro);
+      }
+      
+      return resultado.dados?.id;
+    } catch (error) {
+      throw new Error(error instanceof Error ? error.message : 'Erro desconhecido');
+    }
+  }
+
+  /**
+   * Capture pre-authorization
+   * @param params - Parâmetros para captura
+   * @returns Resultado da captura
+   */
+  async capturePreAuthorization(params: any) {
+    try {
+      const resultado = await this.capturarPreAutorizacao(
+        params.preAuthId,
+        params.finalAmount
+      );
+      
+      if (!resultado.sucesso) {
+        throw new Error(resultado.erro);
+      }
+      
+      return resultado.dados;
+    } catch (error) {
+      throw new Error(error instanceof Error ? error.message : 'Erro desconhecido');
+    }
+  }
+
+  /**
+   * Release pre-authorization
+   * @param reservationId - ID da reserva
+   * @returns Resultado da liberação
+   */
+  async releasePreAuthorization(reservationId: string) {
+    try {
+      const supabase = await createClient();
+      
+      // Buscar pré-autorização ativa para a reserva
+      const { data: preAuth, error: preAuthError } = await supabase
+        .from('payments')
+        .select('*')
+        .eq('reservation_id', reservationId)
+        .eq('metadata->type', 'pre_authorization')
+        .eq('status', 'authorized')
+        .single();
+        
+      if (preAuthError || !preAuth) {
+        throw new Error('Pré-autorização não encontrada');
+      }
+      
+      const resultado = await this.cancelarPreAutorizacao(preAuth.id);
+      
+      if (!resultado.sucesso) {
+        throw new Error(resultado.erro);
+      }
+      
+      return resultado;
+    } catch (error) {
+      throw new Error(error instanceof Error ? error.message : 'Erro desconhecido');
+    }
+  }
 }
 
 export const caucaoService = new CaucaoService();

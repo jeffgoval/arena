@@ -180,3 +180,29 @@ export enum EventoWebhook {
   PAGAMENTO_RESTAURADO = 'PAYMENT_RESTORED',
   PAGAMENTO_ESTORNADO = 'PAYMENT_REFUNDED'
 }
+
+// Tipos para o sistema de caução
+export interface CaucaoCreateParams {
+  reservationId: string;
+  userId: string;
+  amount: number;
+  cardData: DadosCartao;
+  holderData: DadosPortadorCartao;
+}
+
+export interface CaucaoCaptureParams {
+  reservationId: string;
+  preAuthId: string;
+  finalAmount: number;
+}
+
+export interface CaucaoStatus {
+  id: string;
+  reservationId: string;
+  status: 'pending' | 'authorized' | 'captured' | 'cancelled' | 'expired';
+  amount: number;
+  capturedAmount?: number;
+  transactionId?: string;
+  createdAt: string;
+  expiresAt?: string;
+}
