@@ -190,15 +190,15 @@ function AuthPageContent() {
         return;
       }
 
-      // 2. Criar perfil na tabela users (com delay para evitar race condition)
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // 2. Aguardar trigger criar perfil básico (evitar race condition)
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
+      // 3. Atualizar perfil com dados completos do formulário
+      // O trigger já criou o registro com email e nome_completo
+      // Agora completamos com CPF, endereço, etc.
       const { data: profileData, error: profileError } = await supabase
         .from('users')
-        .insert({
-          id: authData.user.id,
-          email: data.email,
-          nome_completo: data.nome_completo,
+        .update({
           cpf: data.cpf,
           rg: data.rg || null,
           data_nascimento: data.data_nascimento,
@@ -210,21 +210,21 @@ function AuthPageContent() {
           bairro: data.bairro,
           cidade: data.cidade,
           estado: data.estado,
-          role: 'cliente',
-          saldo_creditos: 0
+          updated_at: new Date().toISOString()
         })
+        .eq('id', authData.user.id)
         .select()
         .single();
 
       if (profileError) {
-        console.error('❌ ERRO AO CRIAR PERFIL:', profileError);
+        console.error('❌ ERRO AO ATUALIZAR PERFIL:', profileError);
         console.error('Code:', profileError.code);
         console.error('Details:', profileError.details);
         console.error('Hint:', profileError.hint);
         console.error('Message:', profileError.message);
 
         toast({
-          title: "Erro ao criar perfil",
+          title: "Erro ao completar perfil",
           description: profileError.message || "Erro desconhecido. Verifique o console.",
           variant: "destructive",
         });
@@ -233,9 +233,9 @@ function AuthPageContent() {
         return;
       }
 
-      console.log('✅ Perfil criado com sucesso:', profileData);
+      console.log('✅ Perfil completado com sucesso:', profileData);
 
-      // 3. Se houver código de indicação, aplicar
+      // 4. Se houver código de indicação, aplicar
       if (data.codigoIndicacao) {
         const sucesso = await IndicacoesService.aplicarCodigoIndicacao(
           data.codigoIndicacao,
