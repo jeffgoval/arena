@@ -26,7 +26,7 @@ import { useAvaliacoes } from '@/hooks/core/useAvaliacoes';
 
 export default function JogosPage() {
   const { data: reservasData, isLoading: isLoadingReservas } = useReservas();
-  const { avaliacoes: avaliacoesData } = useAvaliacoes();
+  const { data: avaliacoesData } = useAvaliacoes();
 
   const [filtroModalidade, setFiltroModalidade] = useState('todas');
   const [busca, setBusca] = useState('');

@@ -1,21 +1,16 @@
 'use client';
 
-import { useEffect } from 'react';
 import { Star } from 'lucide-react';
-import { useAvaliacoes } from '@/hooks/core/useAvaliacoes';
-import { 
-  AvaliacaoStatsComponent, 
-  AvaliacoesList, 
-  QuadraAvaliacoes 
+import { useAvaliacoes, useAvaliacoesStats } from '@/hooks/core/useAvaliacoes';
+import {
+  AvaliacaoStatsComponent,
+  AvaliacoesList,
+  QuadraAvaliacoes
 } from '@/components/modules/core/avaliacoes';
 
 export default function AvaliacoesPage() {
-  const { avaliacoes, stats, loading, fetchAvaliacoes, fetchStats } = useAvaliacoes();
-
-  useEffect(() => {
-    fetchAvaliacoes({ limit: 50 });
-    fetchStats();
-  }, [fetchAvaliacoes, fetchStats]);
+  const { data: avaliacoes, isLoading: loading } = useAvaliacoes({ limit: 50 });
+  const { data: stats } = useAvaliacoesStats();
 
   return (
     <div className="space-y-6">
@@ -39,7 +34,7 @@ export default function AvaliacoesPage() {
       )}
 
       {/* Lista de Avaliações */}
-      <AvaliacoesList avaliacoes={avaliacoes} loading={loading} />
+      <AvaliacoesList avaliacoes={avaliacoes || []} loading={loading} />
     </div>
   );
 }

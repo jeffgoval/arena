@@ -7,7 +7,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { CheckCircle, AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AvaliacaoForm } from '@/components/modules/core/avaliacoes';
-import { useAvaliacoes } from '@/hooks/core/useAvaliacoes';
+import { useCreateAvaliacao } from '@/hooks/core/useAvaliacoes';
 import { useToast } from '@/hooks/use-toast';
 import type { CreateAvaliacaoData } from '@/lib/validations/avaliacao.schema';
 
@@ -22,7 +22,7 @@ export default function AvaliarReservaPage() {
   const params = useParams();
   const router = useRouter();
   const { toast } = useToast();
-  const { createAvaliacao, loading } = useAvaliacoes();
+  const { mutateAsync: createAvaliacao, isPending: loading } = useCreateAvaliacao();
   
   const [reservaInfo, setReservaInfo] = useState<ReservaInfo | null>(null);
   const [loadingInfo, setLoadingInfo] = useState(true);
@@ -55,20 +55,19 @@ export default function AvaliarReservaPage() {
   }, [reservaId, toast]);
 
   const handleSubmit = async (data: CreateAvaliacaoData) => {
-    const success = await createAvaliacao(data);
-    
-    if (success) {
+    try {
+      await createAvaliacao(data);
       setSuccess(true);
       toast({
         title: 'Avaliação enviada!',
         description: 'Obrigado pelo seu feedback.',
       });
-      
+
       // Redirecionar após 2 segundos
       setTimeout(() => {
         router.push('/cliente/reservas');
       }, 2000);
-    } else {
+    } catch (error) {
       toast({
         title: 'Erro',
         description: 'Não foi possível enviar sua avaliação. Tente novamente.',
