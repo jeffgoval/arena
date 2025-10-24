@@ -174,6 +174,83 @@ export async function POST(
       }
     }
 
+    // Verificar saldo de créditos do usuário (se for um convite pago)
+    let creditosUsados = 0;
+    if (convite.valor_por_pessoa && convite.valor_por_pessoa > 0) {
+      if (user) {
+        // Buscar saldo de créditos do usuário
+        const { data: creditos } = await supabase
+          .from('transacoes_credito')
+          .select('id, valor, data_expiracao')
+          .eq('usuario_id', user.id)
+          .eq('status', 'ativo')
+          .gt('valor', 0)
+          .gte('data_expiracao', new Date().toISOString());
+
+        const saldoTotal = creditos?.reduce((sum, c) => sum + c.valor, 0) || 0;
+
+        // Se tiver saldo suficiente, usar créditos automaticamente
+        if (saldoTotal >= convite.valor_por_pessoa) {
+          // Usar créditos (FIFO - primeiro a expirar, primeiro a ser usado)
+          let valorRestante = convite.valor_por_pessoa;
+          const creditosParaUsar = [];
+
+          // Ordenar créditos por data de expiração (os que expiram primeiro primeiro)
+          const creditosOrdenados = [...(creditos || [])].sort((a, b) => {
+            const dataA = new Date(a.data_expiracao || '9999-12-31');
+            const dataB = new Date(b.data_expiracao || '9999-12-31');
+            return dataA.getTime() - dataB.getTime();
+          });
+
+          for (const credito of creditosOrdenados) {
+            if (valorRestante <= 0) break;
+
+            const valorUsar = Math.min(credito.valor, valorRestante);
+            creditosParaUsar.push({
+              id: credito.id,
+              valorUsar
+            });
+
+            valorRestante -= valorUsar;
+          }
+
+          // Marcar créditos como usados
+          for (const credito of creditosParaUsar) {
+            const creditoOriginal = creditos?.find(c => c.id === credito.id);
+            if (creditoOriginal) {
+              if (credito.valorUsar === creditoOriginal.valor) {
+                // Usar todo o crédito
+                await supabase
+                  .from('transacoes_credito')
+                  .update({ status: 'usado' })
+                  .eq('id', credito.id);
+              } else {
+                // Usar parcialmente - reduzir valor do crédito original
+                await supabase
+                  .from('transacoes_credito')
+                  .update({ valor: creditoOriginal.valor - credito.valorUsar })
+                  .eq('id', credito.id);
+              }
+            }
+          }
+
+          // Criar registro de uso de créditos
+          await supabase
+            .from('transacoes_credito')
+            .insert({
+              usuario_id: user.id,
+              tipo: 'uso',
+              valor: -convite.valor_por_pessoa,
+              descricao: `Usado no convite #${convite.id}`,
+              status: 'usado',
+              convite_id: convite.id
+            });
+
+          creditosUsados = convite.valor_por_pessoa;
+        }
+      }
+    }
+
     // Criar aceite do convite
     const { data: aceite, error: aceiteError } = await supabase
       .from('aceites_convite')
@@ -208,7 +285,8 @@ export async function POST(
         whatsapp: whatsapp || '',
         origem: 'convite',
         convite_id: convite.id,
-        status_pagamento: 'pendente',
+        status_pagamento: creditosUsados > 0 ? 'pago' : 'pendente',
+        valor_pago: creditosUsados > 0 ? creditosUsados : 0,
         created_at: new Date().toISOString()
       });
 
@@ -242,7 +320,10 @@ export async function POST(
     return NextResponse.json({
       success: true,
       aceite,
-      message: 'Convite aceito com sucesso'
+      creditosUsados,
+      message: creditosUsados > 0 
+        ? 'Convite aceito com sucesso! Créditos utilizados automaticamente.'
+        : 'Convite aceito com sucesso'
     });
   } catch (error) {
     console.error('Erro ao aceitar convite:', error);

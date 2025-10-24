@@ -3,6 +3,7 @@ import {
   ReservaParticipant, 
   RateioMode
 } from '@/types/reservas.types';
+import { validationsService } from './validations.service';
 
 export class RateioService {
   private supabase: any; // Vamos tipar corretamente depois
@@ -28,7 +29,7 @@ export class RateioService {
       const supabase = await createClient();
       
       // 1. Validate the rateio configuration
-      const validation = this.validateRateio(participants, splitMode);
+      const validation = await this.validateRateio(reservaId, participants, splitMode);
       if (!validation.isValid) {
         return {
           success: false,
@@ -103,37 +104,36 @@ export class RateioService {
 
   /**
    * Validate rateio configuration based on split mode
+   * @param reservaId - Reservation ID
    * @param participants - List of participants with split values
    * @param splitMode - Split mode (percentual or valor_fixo)
    * @returns Validation result
    */
-  validateRateio(
+  async validateRateio(
+    reservaId: string,
     participants: ReservaParticipant[],
     splitMode: RateioMode
-  ): { isValid: boolean; error?: string } {
+  ): Promise<{ isValid: boolean; error?: string }> {
     try {
       if (splitMode === 'percentual') {
         // For percentual mode, sum must be exactly 100%
-        const totalPercentage = participants.reduce(
-          (sum, p) => sum + (p.percentual_rateio || 0),
-          0
-        );
-
-        if (Math.abs(totalPercentage - 100) > 0.01) {
+        const validation = await validationsService.validarRateioPercentual(participants);
+        if (!validation.valido) {
           return {
             isValid: false,
-            error: `Total percentage must be exactly 100%. Current total: ${totalPercentage.toFixed(2)}%`
+            error: validation.error
           };
         }
       } else if (splitMode === 'fixo') {
         // For valor_fixo mode, sum must be <= total reservation value
-        // This validation requires the total value, so we'll do it in the save method
-        const totalFixed = participants.reduce(
-          (sum, p) => sum + (p.valor_rateio || 0),
-          0
-        );
-
-        // We'll validate this against the reservation total in the save method
+        const totalValue = await this.getReservationTotalValue(reservaId);
+        const validation = await validationsService.validarRateioValorFixo(participants, totalValue);
+        if (!validation.valido) {
+          return {
+            isValid: false,
+            error: validation.error
+          };
+        }
       }
 
       // Check that all participants have valid split values
