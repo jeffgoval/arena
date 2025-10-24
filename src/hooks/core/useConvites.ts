@@ -118,3 +118,159 @@ export function useCopiarLinkConvite() {
     },
   });
 }
+
+/**
+ * Hook para buscar convites de uma reserva específica
+ */
+export function useConvitesReserva(reservaId: string) {
+  return useQuery({
+    queryKey: ['convites', 'reserva', reservaId],
+    queryFn: async () => {
+      const response = await fetch(`/api/convites?reserva_id=${reservaId}`);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Erro ao buscar convites');
+      }
+      const data = await response.json();
+      return data.convites || [];
+    },
+    enabled: !!reservaId,
+    staleTime: 30 * 1000,
+    gcTime: 5 * 60 * 1000,
+  });
+}
+
+/**
+ * Hook para criar novo convite
+ */
+export function useCreateConvite() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (data: any) => {
+      const response = await fetch('/api/convites', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Erro ao criar convite');
+      }
+
+      return await response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Sucesso',
+        description: 'Convite criado com sucesso',
+      });
+      queryClient.invalidateQueries({ queryKey: ['convites'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Erro',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+}
+
+/**
+ * Hook para cancelar convite
+ */
+export function useCancelarConvite() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (conviteId: string) => {
+      const response = await fetch(`/api/convites/${conviteId}/desativar`, {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Erro ao cancelar convite');
+      }
+
+      return await response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Sucesso',
+        description: 'Convite cancelado com sucesso',
+      });
+      queryClient.invalidateQueries({ queryKey: ['convites'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Erro',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+}
+
+/**
+ * Hook para buscar convite por token (página pública)
+ */
+export function useConviteByToken(token: string) {
+  return useQuery({
+    queryKey: ['convite', 'token', token],
+    queryFn: async () => {
+      const response = await fetch(`/api/convites/token/${token}`);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Convite não encontrado');
+      }
+      return await response.json();
+    },
+    enabled: !!token,
+    staleTime: 0, // Sempre buscar dados frescos
+    gcTime: 0, // Não cachear
+  });
+}
+
+/**
+ * Hook para aceitar convite
+ */
+export function useAceitarConvite() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (params: { token: string; data?: any }) => {
+      const response = await fetch(`/api/convites/token/${params.token}/aceitar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(params.data || {}),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Erro ao aceitar convite');
+      }
+
+      return await response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Sucesso!',
+        description: 'Convite aceito com sucesso',
+      });
+      queryClient.invalidateQueries({ queryKey: ['convites'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Erro',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+}
