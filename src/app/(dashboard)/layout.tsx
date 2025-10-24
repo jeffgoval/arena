@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Users, Calendar, Trophy, CreditCard, Gift, LogOut, Menu, X } from "lucide-react";
+import { LayoutDashboard, Users, Calendar, Trophy, CreditCard, Gift, LogOut, Menu, X, Mail } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { CreditosHeader } from "@/components/modules/indicacoes/CreditosHeader";
 import { BottomNavigation } from "@/components/shared/layout/BottomNavigation";
 import { ResponsiveLayout } from "@/components/shared/layout/ResponsiveLayout";
+import { useConvitesPendentes } from "@/hooks/useConvitesPendentes";
 
 export default function DashboardLayout({
   children,
@@ -18,6 +19,7 @@ export default function DashboardLayout({
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { count: convitesPendentes } = useConvitesPendentes();
 
   const isActive = (path: string) => pathname === path;
   const isActiveStartsWith = (path: string) => pathname?.startsWith(path);
@@ -37,12 +39,13 @@ export default function DashboardLayout({
   };
 
   const navItems = [
-    { href: "/cliente", icon: LayoutDashboard, label: "Dashboard", active: isActive("/cliente") },
-    { href: "/cliente/reservas", icon: Calendar, label: "Minhas Reservas", active: isActive("/cliente/reservas") },
-    { href: "/cliente/turmas", icon: Users, label: "Minhas Turmas", active: isActive("/cliente/turmas") },
-    { href: "/cliente/jogos", icon: Trophy, label: "Meus Jogos", active: isActive("/cliente/jogos") },
-    { href: "/cliente/indicacoes", icon: Gift, label: "Indicações", active: isActive("/cliente/indicacoes") },
-    { href: "/cliente/creditos", icon: CreditCard, label: "Meus Créditos", active: isActive("/cliente/creditos") },
+    { href: "/cliente", icon: LayoutDashboard, label: "Dashboard", active: isActive("/cliente"), badge: 0 },
+    { href: "/cliente/reservas", icon: Calendar, label: "Minhas Reservas", active: isActive("/cliente/reservas"), badge: 0 },
+    { href: "/cliente/turmas", icon: Users, label: "Minhas Turmas", active: isActive("/cliente/turmas"), badge: 0 },
+    { href: "/cliente/convites", icon: Mail, label: "Meus Convites", active: isActive("/cliente/convites"), badge: convitesPendentes },
+    { href: "/cliente/jogos", icon: Trophy, label: "Meus Jogos", active: isActive("/cliente/jogos"), badge: 0 },
+    { href: "/cliente/indicacoes", icon: Gift, label: "Indicações", active: isActive("/cliente/indicacoes"), badge: 0 },
+    { href: "/cliente/creditos", icon: CreditCard, label: "Meus Créditos", active: isActive("/cliente/creditos"), badge: 0 },
   ];
 
   return (
@@ -87,7 +90,7 @@ export default function DashboardLayout({
                   href={item.href}
                   onClick={() => setSidebarOpen(false)}
                   className={`
-                    flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200
+                    flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 relative
                     ${item.active 
                       ? 'bg-primary text-primary-foreground shadow-soft' 
                       : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
@@ -95,7 +98,12 @@ export default function DashboardLayout({
                   `}
                 >
                   <item.icon className="w-5 h-5" />
-                  <span className="font-medium">{item.label}</span>
+                  <span className="font-medium flex-1">{item.label}</span>
+                  {item.badge > 0 && (
+                    <span className="bg-destructive text-destructive-foreground text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                      {item.badge > 9 ? '9+' : item.badge}
+                    </span>
+                  )}
                 </Link>
               ))}
             </div>

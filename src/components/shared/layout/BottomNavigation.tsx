@@ -10,9 +10,11 @@ import {
     CreditCard,
     Gift,
     Home,
-    User
+    User,
+    Mail
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useConvitesPendentes } from "@/hooks/useConvitesPendentes";
 
 interface NavItem {
     href: string;
@@ -28,13 +30,14 @@ interface BottomNavigationProps {
 
 export function BottomNavigation({ variant = 'dashboard', className }: BottomNavigationProps) {
     const pathname = usePathname();
+    const { count: convitesPendentes } = useConvitesPendentes();
 
     const dashboardItems: NavItem[] = [
-        { href: "/cliente", icon: LayoutDashboard, label: "Dashboard" },
-        { href: "/cliente/reservas", icon: Calendar, label: "Reservas" },
-        { href: "/cliente/jogos", icon: Trophy, label: "Jogos" },
-        { href: "/cliente/indicacoes", icon: Gift, label: "Indicações" },
-        { href: "/cliente/creditos", icon: CreditCard, label: "Créditos" },
+        { href: "/cliente", icon: LayoutDashboard, label: "Dashboard", badge: 0 },
+        { href: "/cliente/reservas", icon: Calendar, label: "Reservas", badge: 0 },
+        { href: "/cliente/turmas", icon: Users, label: "Turmas", badge: 0 },
+        { href: "/cliente/convites", icon: Mail, label: "Convites", badge: convitesPendentes },
+        { href: "/cliente/creditos", icon: CreditCard, label: "Créditos", badge: 0 },
     ];
 
     const publicItems: NavItem[] = [

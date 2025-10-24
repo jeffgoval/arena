@@ -5,20 +5,34 @@ import Link from "next/link";
 import { Users, Plus, Edit, Trash2, UserCheck, UserX, AlertCircle, Loader2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useTurmas, useDeleteTurma } from "@/hooks/core/useTurmas";
+import { useToast } from "@/hooks/use-toast";
 
 export default function TurmasPage() {
-  // Simulação de dados - em produção viria de hooks/API
-  const turmas: any[] = [];
-  const isLoading = false;
+  const { data: turmas, isLoading } = useTurmas();
+  const deleteTurma = useDeleteTurma();
+  const { toast } = useToast();
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const handleDelete = async (id: string, nome: string) => {
     if (!confirm(`Tem certeza que deseja excluir a turma "${nome}"?`)) return;
-    
+
     setDeletingId(id);
-    // Simula API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setDeletingId(null);
+    try {
+      await deleteTurma.mutateAsync(id);
+      toast({
+        title: "Turma excluída",
+        description: `A turma "${nome}" foi excluída com sucesso.`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro ao excluir turma",
+        description: error.message || "Tente novamente mais tarde.",
+        variant: "destructive",
+      });
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   if (isLoading) {
@@ -67,58 +81,67 @@ export default function TurmasPage() {
         </Card>
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {turmas.map((turma, index) => (
-            <Card key={index} className="card-interactive border-0 shadow-soft">
-              <CardHeader>
-                <CardTitle className="heading-4">Time dos Amigos</CardTitle>
-                <CardDescription>Turma para jogos de futebol society</CardDescription>
-              </CardHeader>
-              
-              <CardContent className="space-y-4">
-                {/* Statistics */}
-                <div className="grid grid-cols-3 gap-3 p-4 bg-muted rounded-xl">
-                  <div className="text-center">
-                    <Users className="w-5 h-5 mx-auto text-primary mb-1" />
-                    <p className="text-2xl font-bold text-foreground">12</p>
-                    <p className="text-xs text-muted-foreground">Total</p>
-                  </div>
-                  <div className="text-center">
-                    <UserCheck className="w-5 h-5 mx-auto text-success mb-1" />
-                    <p className="text-2xl font-bold text-foreground">8</p>
-                    <p className="text-xs text-muted-foreground">Fixos</p>
-                  </div>
-                  <div className="text-center">
-                    <UserX className="w-5 h-5 mx-auto text-warning mb-1" />
-                    <p className="text-2xl font-bold text-foreground">4</p>
-                    <p className="text-xs text-muted-foreground">Variáveis</p>
-                  </div>
-                </div>
+          {turmas.map((turma: any) => {
+            // Calculate member statistics
+            const totalMembros = turma.turma_membros?.length || 0;
+            const membrosFixos = turma.turma_membros?.filter((m: any) => m.status === 'fixo').length || 0;
+            const membrosVariaveis = turma.turma_membros?.filter((m: any) => m.status === 'variavel').length || 0;
 
-                {/* Actions */}
-                <div className="flex gap-2">
-                  <Link href={`/cliente/turmas/${index + 1}/editar`} className="flex-1">
-                    <Button variant="outline" className="w-full gap-2">
-                      <Edit className="w-4 h-4" />
-                      Editar
+            return (
+              <Card key={turma.id} className="card-interactive border-0 shadow-soft">
+                <CardHeader>
+                  <CardTitle className="heading-4">{turma.nome}</CardTitle>
+                  <CardDescription>
+                    {turma.descricao || 'Sem descrição'}
+                  </CardDescription>
+                </CardHeader>
+
+                <CardContent className="space-y-4">
+                  {/* Statistics */}
+                  <div className="grid grid-cols-3 gap-3 p-4 bg-muted rounded-xl">
+                    <div className="text-center">
+                      <Users className="w-5 h-5 mx-auto text-primary mb-1" />
+                      <p className="text-2xl font-bold text-foreground">{totalMembros}</p>
+                      <p className="text-xs text-muted-foreground">Total</p>
+                    </div>
+                    <div className="text-center">
+                      <UserCheck className="w-5 h-5 mx-auto text-success mb-1" />
+                      <p className="text-2xl font-bold text-foreground">{membrosFixos}</p>
+                      <p className="text-xs text-muted-foreground">Fixos</p>
+                    </div>
+                    <div className="text-center">
+                      <UserX className="w-5 h-5 mx-auto text-warning mb-1" />
+                      <p className="text-2xl font-bold text-foreground">{membrosVariaveis}</p>
+                      <p className="text-xs text-muted-foreground">Variáveis</p>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-2">
+                    <Link href={`/cliente/turmas/${turma.id}/editar`} className="flex-1">
+                      <Button variant="outline" className="w-full gap-2">
+                        <Edit className="w-4 h-4" />
+                        Editar
+                      </Button>
+                    </Link>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => handleDelete(turma.id, turma.nome)}
+                      disabled={deletingId === turma.id}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      {deletingId === turma.id ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="w-4 h-4" />
+                      )}
                     </Button>
-                  </Link>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => handleDelete(String(index + 1), "Time dos Amigos")}
-                    disabled={deletingId === String(index + 1)}
-                    className="text-destructive hover:text-destructive"
-                  >
-                    {deletingId === String(index + 1) ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Trash2 className="w-4 h-4" />
-                    )}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
 

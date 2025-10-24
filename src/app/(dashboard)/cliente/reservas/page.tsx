@@ -6,21 +6,42 @@ import { Calendar, Plus, Clock, MapPin, Users, Filter, AlertCircle, Loader2 } fr
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useReservas } from "@/hooks/core/useReservas";
+import { format, parseISO } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 type FiltroType = "todas" | "futuras" | "passadas";
 
 export default function ReservasPage() {
   const [filtro, setFiltro] = useState<FiltroType>("futuras");
-  
-  // Simulação de dados - em produção viria de hooks/API
-  const reservas: any[] = [];
-  const isLoading = false;
+  const { data: reservasData, isLoading } = useReservas();
+
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
 
   const filtros = [
     { key: "futuras", label: "Futuras" },
     { key: "passadas", label: "Passadas" },
     { key: "todas", label: "Todas" },
   ];
+
+  // Filter reservations based on selected filter
+  const reservas = reservasData?.filter((reserva: any) => {
+    const dataReserva = parseISO(reserva.data);
+    dataReserva.setHours(0, 0, 0, 0);
+
+    if (filtro === "futuras") {
+      return dataReserva >= hoje;
+    } else if (filtro === "passadas") {
+      return dataReserva < hoje;
+    }
+    return true; // "todas"
+  }).sort((a: any, b: any) => {
+    // Sort futuras ascending, passadas descending
+    const dateA = parseISO(a.data).getTime();
+    const dateB = parseISO(b.data).getTime();
+    return filtro === "passadas" ? dateB - dateA : dateA - dateB;
+  }) || [];
 
   if (isLoading) {
     return (
@@ -91,15 +112,26 @@ export default function ReservasPage() {
         </Card>
       ) : (
         <div className="space-y-4">
-          {reservas.map((reserva, index) => {
-            // Simulação de dados da reserva
-            const dataReserva = new Date();
-            const diaSemana = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"][dataReserva.getDay()];
-            const dia = dataReserva.getDate();
-            const mes = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"][dataReserva.getMonth()];
+          {reservas.map((reserva: any) => {
+            const dataReserva = parseISO(reserva.data);
+            const diaSemana = format(dataReserva, "EEE", { locale: ptBR }).toUpperCase().substring(0, 3);
+            const dia = format(dataReserva, "dd");
+            const mes = format(dataReserva, "MMM", { locale: ptBR }).toUpperCase().substring(0, 3);
+
+            const totalParticipantes = reserva.reserva_participantes?.length || 0;
+
+            // Get status badge variant
+            const getStatusVariant = (status: string) => {
+              switch (status) {
+                case 'confirmada': return 'default';
+                case 'pendente': return 'secondary';
+                case 'cancelada': return 'destructive';
+                default: return 'secondary';
+              }
+            };
 
             return (
-              <Link key={index} href={`/cliente/reservas/${index + 1}`}>
+              <Link key={reserva.id} href={`/cliente/reservas/${reserva.id}`}>
                 <Card className="card-interactive border-0 shadow-soft">
                   <CardContent className="p-6">
                     <div className="flex items-start gap-4">
@@ -114,35 +146,41 @@ export default function ReservasPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-4 mb-3">
                           <div>
-                            <h3 className="heading-4 mb-1">Quadra Society 1</h3>
+                            <h3 className="heading-4 mb-1">{reserva.quadra?.nome || 'Quadra'}</h3>
                             <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
                               <div className="flex items-center gap-1">
                                 <Clock className="w-4 h-4" />
-                                <span>19:00 - 20:00</span>
+                                <span>{reserva.horario?.hora_inicio} - {reserva.horario?.hora_fim}</span>
                               </div>
                               <div className="flex items-center gap-1">
                                 <MapPin className="w-4 h-4" />
-                                <span>Society</span>
+                                <span className="capitalize">{reserva.quadra?.tipo?.replace('_', ' ')}</span>
                               </div>
-                              <div className="flex items-center gap-1">
-                                <Users className="w-4 h-4" />
-                                <span>8 participantes</span>
-                              </div>
+                              {totalParticipantes > 0 && (
+                                <div className="flex items-center gap-1">
+                                  <Users className="w-4 h-4" />
+                                  <span>{totalParticipantes} participante{totalParticipantes !== 1 ? 's' : ''}</span>
+                                </div>
+                              )}
                             </div>
                           </div>
 
                           {/* Status and Value */}
                           <div className="text-right">
-                            <p className="text-2xl font-bold text-primary mb-1">R$ 80,00</p>
-                            <Badge variant="secondary">Confirmada</Badge>
+                            <p className="text-2xl font-bold text-primary mb-1">R$ {reserva.valor_total?.toFixed(2) || '0,00'}</p>
+                            <Badge variant={getStatusVariant(reserva.status)} className="capitalize">
+                              {reserva.status}
+                            </Badge>
                           </div>
                         </div>
 
-                        {/* Team */}
-                        <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-secondary/10 text-secondary rounded-lg text-sm font-semibold">
-                          <Users className="w-4 h-4" />
-                          Time dos Amigos
-                        </div>
+                        {/* Team - if associated */}
+                        {reserva.turma && (
+                          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-secondary/10 text-secondary rounded-lg text-sm font-semibold">
+                            <Users className="w-4 h-4" />
+                            {reserva.turma.nome}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </CardContent>
