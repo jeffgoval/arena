@@ -32,48 +32,15 @@ export function NotificacoesIndicacao({ className, isTabView = false }: Notifica
   const [notificacoes, setNotificacoes] = useState<NotificacaoIndicacao[]>([]);
   const [mostrarTodas, setMostrarTodas] = useState(false);
 
-  // Simular notificações (em produção, viria da API)
-  useEffect(() => {
-    const notificacoesSimuladas: NotificacaoIndicacao[] = [
-      {
-        id: '1',
-        tipo: 'indicacao_aceita',
-        titulo: 'Indicação Aceita! 🎉',
-        descricao: `Maria Silva aceitou sua indicação e você ganhou ${INDICACOES_CONFIG.CREDITO_POR_INDICACAO_ACEITA} créditos!`,
-        data: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 horas atrás
-        lida: false,
-        dados: {
-          nomeIndicado: 'Maria Silva',
-          creditosRecebidos: INDICACOES_CONFIG.CREDITO_POR_INDICACAO_ACEITA,
-        },
-      },
-      {
-        id: '2',
-        tipo: 'bonus_recebido',
-        titulo: 'Bônus Desbloqueado! 🏆',
-        descricao: `Você atingiu 5 indicações aceitas e ganhou ${INDICACOES_CONFIG.BONUS_5_INDICACOES} créditos de bônus!`,
-        data: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 1 dia atrás
-        lida: false,
-        dados: {
-          creditosRecebidos: INDICACOES_CONFIG.BONUS_5_INDICACOES,
-        },
-      },
-      {
-        id: '3',
-        tipo: 'indicacao_aceita',
-        titulo: 'Nova Indicação Aceita',
-        descricao: 'João Santos se cadastrou usando seu código!',
-        data: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 dias atrás
-        lida: true,
-        dados: {
-          nomeIndicado: 'João Santos',
-          creditosRecebidos: INDICACOES_CONFIG.CREDITO_POR_INDICACAO_ACEITA,
-        },
-      },
-    ];
-
-    setNotificacoes(notificacoesSimuladas);
-  }, []);
+  // TODO: Buscar notificações reais da API quando estiver implementada
+  // useEffect(() => {
+  //   async function fetchNotificacoes() {
+  //     const response = await fetch('/api/notificacoes/indicacoes');
+  //     const data = await response.json();
+  //     setNotificacoes(data.notificacoes);
+  //   }
+  //   fetchNotificacoes();
+  // }, []);
 
   const notificacoesNaoLidas = notificacoes.filter(n => !n.lida);
   const notificacoesExibidas = (isTabView || mostrarTodas) ? notificacoes : notificacoes.slice(0, 3);
@@ -100,7 +67,19 @@ export function NotificacoesIndicacao({ className, isTabView = false }: Notifica
   };
 
   if (notificacoes.length === 0) {
-    return null;
+    return (
+      <Card className={className}>
+        <CardContent className={isTabView ? "p-6" : "p-4"}>
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <Bell className="h-12 w-12 text-muted-foreground/50 mb-4" />
+            <h3 className="font-semibold text-lg mb-2">Nenhuma notificação</h3>
+            <p className="text-sm text-muted-foreground max-w-sm">
+              Você será notificado aqui quando alguém aceitar sua indicação ou quando ganhar bônus.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
