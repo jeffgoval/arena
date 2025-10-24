@@ -45,7 +45,7 @@ export function useReservas(filtro?: 'futuras' | 'passadas' | 'todas') {
       const { data, error } = await query;
       if (error) throw error;
 
-      return data as Reserva[];
+      return data as unknown as Reserva[];
     },
   });
 }
