@@ -19,6 +19,7 @@ export interface DadosResumo {
   taxas?: number;
   total: number;
   detalhesReserva?: {
+    id: string;
     quadra: string;
     data: string;
     horario: string;

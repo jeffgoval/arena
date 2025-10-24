@@ -35,30 +35,37 @@ export function ModalPagamento({
   const handlePagamentoConfirmado = async (dadosPagamento: DadosPagamento) => {
     setEtapa("processando");
 
-    // Simula processamento do pagamento
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    try {
+      // SEGURANÇA: Processar pagamento no servidor (NUNCA simular no cliente)
+      const response = await fetch('/api/pagamentos/processar', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          reservaId: dadosResumo.detalhesReserva?.id,
+          valor: dadosResumo.total,
+          metodo: dadosPagamento.metodo,
+          dadosCartao: dadosPagamento.metodo === 'cartao' ? dadosPagamento.dadosCartao : undefined
+        })
+      });
 
-    // Gera comprovante
-    const novoComprovante: DadosComprovante = {
-      id: `TXN${Date.now()}`,
-      tipo: "reserva",
-      status: "aprovado",
-      valor: dadosResumo.total,
-      metodoPagamento: dadosPagamento.metodo === "pix" ? "PIX" :
-                       dadosPagamento.metodo === "cartao" ? "Cartão de Crédito" :
-                       "Saldo em Conta",
-      data: new Date().toLocaleDateString('pt-BR'),
-      hora: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-      detalhes: dadosResumo.detalhesReserva ? {
-        quadra: dadosResumo.detalhesReserva.quadra,
-        dataReserva: dadosResumo.detalhesReserva.data,
-        horario: dadosResumo.detalhesReserva.horario
-      } : undefined
-    };
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Erro ao processar pagamento');
+      }
 
-    setComprovante(novoComprovante);
-    setEtapa("comprovante");
-    onPagamentoConcluido?.(novoComprovante);
+      const { comprovante: novoComprovante } = await response.json();
+
+      setComprovante(novoComprovante);
+      setEtapa("comprovante");
+      onPagamentoConcluido?.(novoComprovante);
+
+    } catch (error) {
+      console.error('Erro ao processar pagamento:', error);
+      setEtapa("resumo");
+      alert(error instanceof Error ? error.message : 'Erro ao processar pagamento');
+    }
   };
 
   const handleVoltar = () => {

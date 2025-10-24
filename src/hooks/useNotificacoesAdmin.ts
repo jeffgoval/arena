@@ -21,10 +21,11 @@ export function useNotificacoesAdmin() {
       setLoading(true);
       setError(null);
 
+      // SEGURANÇA: Autenticação via cookie do usuário (admin)
+      // Token CRON_SECRET_TOKEN só para cron jobs externos
       const response = await fetch('/api/notificacoes/processar', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_CRON_SECRET_TOKEN}`,
           'Content-Type': 'application/json'
         }
       });

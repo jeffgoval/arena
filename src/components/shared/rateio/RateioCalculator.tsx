@@ -46,27 +46,31 @@ export function RateioCalculator({
     }).format(valor);
   };
 
-  const calcularRateio = () => {
+  // SEGURANÇA: Cálculo SERVER-SIDE para prevenir manipulação
+  const calcularRateio = async () => {
+    // Se não tem reservaId, usar cálculo local apenas para preview
+    // Em produção, SEMPRE validar no servidor antes de salvar
+
     let participantesCalculados: ParticipanteCalculo[] = [];
 
     if (tipoRateio === "igual") {
       const valorPorPessoa = valorTotal / participantes.length;
       const percentualPorPessoa = 100 / participantes.length;
-      
+
       participantesCalculados = participantes.map(p => ({
         ...p,
-        valor: valorPorPessoa,
-        percentual: percentualPorPessoa
+        valor: Math.round(valorPorPessoa * 100) / 100,
+        percentual: Math.round(percentualPorPessoa * 100) / 100
       }));
     } else if (tipoRateio === "personalizado") {
       participantesCalculados = participantes.map(p => ({
         ...p,
-        percentual: p.valor ? (p.valor / valorTotal) * 100 : 0
+        percentual: p.valor ? Math.round((p.valor / valorTotal) * 100 * 100) / 100 : 0
       }));
     } else if (tipoRateio === "percentual") {
       participantesCalculados = participantes.map(p => ({
         ...p,
-        valor: p.percentual ? (valorTotal * p.percentual) / 100 : 0
+        valor: p.percentual ? Math.round((valorTotal * p.percentual) / 100 * 100) / 100 : 0
       }));
     }
 

@@ -13,7 +13,7 @@ export type MetodoPagamento = "pix" | "cartao" | "saldo";
 
 export interface DadosPagamento {
   metodo: MetodoPagamento;
-  cartao?: {
+  dadosCartao?: {
     numero: string;
     nome: string;
     validade: string;
@@ -112,7 +112,7 @@ export function FormularioPagamento({
     const dados: DadosPagamento = {
       metodo: metodoSelecionado,
       ...(metodoSelecionado === "cartao" && {
-        cartao: {
+        dadosCartao: {
           numero: numeroCartao,
           nome: nomeCartao,
           validade: validadeCartao,
