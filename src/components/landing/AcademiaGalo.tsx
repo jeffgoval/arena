@@ -9,7 +9,7 @@ export function AcademiaGalo() {
         <div className="absolute inset-0" style={{backgroundImage: "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,.05) 10px, rgba(255,255,255,.05) 20px)"}} />
       </div>
 
-      <div className="container-custom relative z-10">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl relative z-10">
         {/* Badge Oficial */}
         <div className="text-center mb-12">
           <div className="inline-flex items-center gap-2 bg-gradient-to-r from-yellow-500 to-yellow-600 text-dark px-8 py-3 rounded-full font-bold text-sm uppercase tracking-wider shadow-2xl">

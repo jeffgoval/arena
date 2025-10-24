@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "vercel:check": "node scripts/check-vercel-env.mjs",
+    "vercel:fix": "node scripts/check-vercel-env.mjs --fix"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

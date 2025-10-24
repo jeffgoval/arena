@@ -3,7 +3,7 @@ import { MessageSquare, MapPin, Clock } from "lucide-react";
 export function Contact() {
   return (
     <section id="contato" className="section-padding bg-gradient-to-br from-primary to-secondary">
-      <div className="container-custom">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
         <div className="max-w-4xl mx-auto text-center text-white">
           <h2 className="text-4xl md:text-5xl font-bold mb-6 fade-in">
             Entre em Contato

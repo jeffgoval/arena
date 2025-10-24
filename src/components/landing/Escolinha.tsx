@@ -4,7 +4,7 @@ import { GraduationCap, Check } from "lucide-react";
 export function Escolinha() {
   return (
     <section className="section-padding bg-gradient-to-br from-accent/10 to-accent/5">
-      <div className="container-custom">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
         <div className="grid md:grid-cols-2 gap-12 items-center">
           {/* Texto */}
           <div className="slide-in-left">

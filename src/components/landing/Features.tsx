@@ -3,7 +3,7 @@ import { Calendar, Users, DollarSign, MessageSquare, CreditCard, BarChart3 } fro
 export function Features() {
   return (
     <section id="features" className="section-padding bg-gray">
-      <div className="container-custom">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
         <h2 className="text-4xl md:text-5xl font-bold text-center mb-4 fade-in text-dark">
           Organize Seus Jogos com Tecnologia
         </h2>

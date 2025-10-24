@@ -8,7 +8,7 @@ export function Patrocinadores() {
         <div className="absolute inset-0" style={{backgroundImage: "radial-gradient(circle at 20% 50%, rgba(0,102,204,0.3) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(255,87,34,0.3) 0%, transparent 50%)"}} />
       </div>
 
-      <div className="container-custom relative z-10">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl relative z-10">
         <div className="text-center mb-20">
           <div className="inline-flex items-center gap-2 bg-primary/10 px-6 py-2 rounded-full mb-6">
             <Building2 className="w-4 h-4 text-primary" />

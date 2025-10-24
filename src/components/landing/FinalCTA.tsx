@@ -3,7 +3,7 @@ import { Footprints, Trophy, Waves, MessageSquare } from "lucide-react";
 export function FinalCTA() {
   return (
     <section className="section-padding bg-gradient-to-br from-dark via-primary/20 to-dark text-white">
-      <div className="container-custom">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold mb-6 fade-in">

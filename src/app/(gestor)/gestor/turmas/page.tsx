@@ -1,8 +1,7 @@
 'use client';
 
-import { Users, GraduationCap, Plus, Search, Edit, Eye, Loader2, AlertCircle } from 'lucide-react';
+import { Users, GraduationCap, Search, Loader2, AlertCircle } from 'lucide-react';
 import { useState, useMemo } from 'react';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -64,13 +63,9 @@ export default function TurmasPage() {
                         Turmas
                     </h1>
                     <p className="text-muted-foreground mt-2">
-                        Gerencie as turmas e aulas da arena
+                        Monitore todas as turmas criadas na arena
                     </p>
                 </div>
-                <Button onClick={() => window.location.href = '/cliente/turmas/criar'}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Nova Turma
-                </Button>
             </div>
 
             {/* Error State */}
@@ -151,7 +146,6 @@ export default function TurmasPage() {
                                     <TableHead>Fixos</TableHead>
                                     <TableHead>Variáveis</TableHead>
                                     <TableHead>Criada em</TableHead>
-                                    <TableHead className="w-[50px]"></TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -195,18 +189,6 @@ export default function TurmasPage() {
                                         </TableCell>
                                         <TableCell className="text-sm text-muted-foreground">
                                             {format(new Date(turma.created_at), 'dd/MM/yyyy', { locale: ptBR })}
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="flex gap-1">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    onClick={() => window.location.href = `/cliente/turmas`}
-                                                    title="Ver Detalhes"
-                                                >
-                                                    <Eye className="w-4 h-4" />
-                                                </Button>
-                                            </div>
                                         </TableCell>
                                     </TableRow>
                                 ))}

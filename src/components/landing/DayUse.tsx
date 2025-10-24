@@ -4,7 +4,7 @@ import { Users, Waves, Star, Check } from "lucide-react";
 export function DayUse() {
   return (
     <section id="day-use" className="section-padding bg-gradient-to-br from-secondary/10 to-primary/10">
-      <div className="container-custom">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
         <div className="text-center mb-20">
           <div className="inline-flex items-center gap-2 bg-secondary/20 px-4 py-2 rounded-full mb-6">
             <Waves className="w-4 h-4 text-secondary" />
