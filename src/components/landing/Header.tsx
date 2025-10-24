@@ -3,14 +3,30 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Menu, X, LogIn } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      // Mostra header quando rolar mais de 50px
+      setIsScrolled(window.scrollY > 50);
+    };
+
+    // Adicionar listener
+    window.addEventListener("scroll", handleScroll);
+
+    // Cleanup
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md shadow-sm border-b border-gray/20 w-full">
+    <header className={`fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md shadow-sm border-b border-gray/20 w-full transition-transform duration-300 ${
+      isScrolled ? "translate-y-0" : "-translate-y-full md:translate-y-0"
+    }`}>
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl w-full">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
