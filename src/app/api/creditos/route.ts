@@ -20,17 +20,7 @@ export async function GET(request: NextRequest) {
     // Buscar histórico de créditos
     const { data: historico, error: historicoError } = await supabase
       .from('creditos')
-      .select(`
-        id,
-        tipo,
-        valor,
-        descricao,
-        status,
-        data_expiracao,
-        created_at,
-        reservas (id),
-        indicacoes (id, usuario_indicado:usuarios(nome))
-      `)
+      .select('*')
       .eq('usuario_id', userId)
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
@@ -38,7 +28,7 @@ export async function GET(request: NextRequest) {
     if (historicoError) {
       console.error('Erro ao buscar histórico de créditos:', historicoError);
       return NextResponse.json(
-        { error: 'Erro interno do servidor' },
+        { error: `Erro ao buscar créditos: ${historicoError.message}` },
         { status: 500 }
       );
     }
