@@ -1,18 +1,18 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Coins, TrendingUp, Gift } from 'lucide-react';
-import { useIndicacoes } from '@/hooks/useIndicacoes';
+import { useEstatisticasIndicacao } from '@/hooks/core/useIndicacoes';
 import Link from 'next/link';
 
 export function CreditosHeader() {
-  const { estatisticas, loading } = useIndicacoes();
+  const { data: estatisticas, isLoading } = useEstatisticasIndicacao();
   const [mostrarPopover, setMostrarPopover] = useState(false);
 
-  if (loading || !estatisticas) {
+  if (isLoading || !estatisticas) {
     return null;
   }
 

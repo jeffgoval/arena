@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Bell, Gift, X, CheckCircle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { INDICACOES_CONFIG } from '@/constants/indicacoes';
 
 interface NotificacaoIndicacao {
   id: string;
@@ -38,23 +39,23 @@ export function NotificacoesIndicacao({ className, isTabView = false }: Notifica
         id: '1',
         tipo: 'indicacao_aceita',
         titulo: 'Indicação Aceita! 🎉',
-        descricao: 'Maria Silva aceitou sua indicação e você ganhou 50 créditos!',
+        descricao: `Maria Silva aceitou sua indicação e você ganhou ${INDICACOES_CONFIG.CREDITO_POR_INDICACAO_ACEITA} créditos!`,
         data: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 horas atrás
         lida: false,
         dados: {
           nomeIndicado: 'Maria Silva',
-          creditosRecebidos: 50,
+          creditosRecebidos: INDICACOES_CONFIG.CREDITO_POR_INDICACAO_ACEITA,
         },
       },
       {
         id: '2',
         tipo: 'bonus_recebido',
         titulo: 'Bônus Desbloqueado! 🏆',
-        descricao: 'Você atingiu 5 indicações aceitas e ganhou 25 créditos de bônus!',
+        descricao: `Você atingiu 5 indicações aceitas e ganhou ${INDICACOES_CONFIG.BONUS_5_INDICACOES} créditos de bônus!`,
         data: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 1 dia atrás
         lida: false,
         dados: {
-          creditosRecebidos: 25,
+          creditosRecebidos: INDICACOES_CONFIG.BONUS_5_INDICACOES,
         },
       },
       {
@@ -66,7 +67,7 @@ export function NotificacoesIndicacao({ className, isTabView = false }: Notifica
         lida: true,
         dados: {
           nomeIndicado: 'João Santos',
-          creditosRecebidos: 50,
+          creditosRecebidos: INDICACOES_CONFIG.CREDITO_POR_INDICACAO_ACEITA,
         },
       },
     ];

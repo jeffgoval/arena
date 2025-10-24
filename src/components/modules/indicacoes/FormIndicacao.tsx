@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { UserPlus, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useCreateIndicacao } from '@/hooks/core/useIndicacoes';
+import { INDICACOES_CONFIG, INDICACOES_MENSAGENS, INDICACOES_TEXTOS } from '@/constants/indicacoes';
 
 export function FormIndicacao() {
   const [emailIndicado, setEmailIndicado] = useState('');
@@ -21,7 +22,7 @@ export function FormIndicacao() {
     if (!emailIndicado.trim()) {
       toast({
         title: "Erro",
-        description: "Email é obrigatório",
+        description: INDICACOES_MENSAGENS.ERRO_EMAIL_OBRIGATORIO,
         variant: "destructive",
       });
       return;
@@ -32,7 +33,7 @@ export function FormIndicacao() {
     if (!emailRegex.test(emailIndicado)) {
       toast({
         title: "Erro",
-        description: "Email inválido",
+        description: INDICACOES_MENSAGENS.ERRO_EMAIL_INVALIDO,
         variant: "destructive",
       });
       return;
@@ -110,18 +111,18 @@ export function FormIndicacao() {
               📧 Prévia do convite que será enviado:
             </p>
             <div className="text-xs text-blue-700 dark:text-blue-300 bg-white dark:bg-blue-900 p-2 rounded border">
-              <p className="font-medium">Assunto: Convite para Arena Dona Santa 🏓</p>
+              <p className="font-medium">Assunto: {INDICACOES_TEXTOS.PREVIEW_EMAIL.assunto}</p>
               <br />
-              <p>Olá{nomeIndicado ? ` ${nomeIndicado}` : ''}!</p>
+              <p>{INDICACOES_TEXTOS.PREVIEW_EMAIL.saudacao(nomeIndicado || undefined)}</p>
               <br />
-              <p>Você foi indicado(a) para se cadastrar na Arena Dona Santa, a melhor plataforma para reservar quadras esportivas!</p>
+              <p>{INDICACOES_TEXTOS.PREVIEW_EMAIL.corpo}</p>
               <br />
-              <p>🎁 <strong>Benefício especial:</strong> Ao se cadastrar, você ganha créditos para usar em suas reservas!</p>
+              <p><strong>{INDICACOES_TEXTOS.PREVIEW_EMAIL.beneficio}</strong></p>
               <br />
-              <p>👉 <strong>Clique aqui para se cadastrar:</strong><br />
-              {window.location?.origin}/auth/cadastro</p>
+              <p>👉 <strong>{INDICACOES_TEXTOS.PREVIEW_EMAIL.cta}</strong><br />
+              {INDICACOES_CONFIG.APP_URL}{INDICACOES_CONFIG.CADASTRO_PATH}</p>
               <br />
-              <p>Vamos jogar juntos! 🏓</p>
+              <p>{INDICACOES_TEXTOS.PREVIEW_EMAIL.despedida}</p>
             </div>
           </div>
         )}
@@ -129,10 +130,9 @@ export function FormIndicacao() {
         <div className="mt-4 p-3 bg-muted rounded-lg text-sm text-muted-foreground">
           <p className="font-medium mb-1">💡 Como funciona:</p>
           <ul className="space-y-1 text-xs">
-            <li>• Seu amigo receberá um convite por email com link especial</li>
-            <li>• Quando ele se cadastrar, você ganha 50 créditos</li>
-            <li>• Ele também ganha créditos de boas-vindas</li>
-            <li>• Os créditos valem R$ 1,00 cada para usar em reservas</li>
+            {INDICACOES_TEXTOS.COMO_FUNCIONA.map((texto, index) => (
+              <li key={index}>• {texto}</li>
+            ))}
           </ul>
         </div>
       </CardContent>

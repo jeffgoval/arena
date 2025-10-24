@@ -5,6 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Trophy, Target } from 'lucide-react';
 import type { EstatisticasIndicacao } from '@/types/indicacoes.types';
+import { INDICACOES_BONUS_MARCOS } from '@/constants/indicacoes';
 
 interface ProgressoBonusIndicacoesProps {
   estatisticas: EstatisticasIndicacao | null;
@@ -15,12 +16,13 @@ export function ProgressoBonusIndicacoes({ estatisticas }: ProgressoBonusIndicac
     return null;
   }
 
-  // Configuração dos bônus (idealmente viria da API)
-  const bonusConfig = [
-    { quantidade: 5, creditos_bonus: 25 },
-    { quantidade: 10, creditos_bonus: 50 },
-    { quantidade: 20, creditos_bonus: 100 },
-  ];
+  // Configuração dos bônus
+  const bonusConfig = INDICACOES_BONUS_MARCOS.map(marco => ({
+    quantidade: marco.quantidade,
+    creditos_bonus: marco.bonus,
+    titulo: marco.titulo,
+    descricao: marco.descricao,
+  }));
 
   const indicacoesAceitas = estatisticas.indicacoes_aceitas;
 

@@ -8,7 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Coins, Calculator, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useIndicacoes } from '@/hooks/useIndicacoes';
+import { useEstatisticasIndicacao, useUsarCreditos } from '@/hooks/core/useIndicacoes';
+import { INDICACOES_CONFIG } from '@/constants/indicacoes';
 
 interface UsarCreditosReservaProps {
   valorTotal: number;
@@ -17,15 +18,16 @@ interface UsarCreditosReservaProps {
   disabled?: boolean;
 }
 
-export function UsarCreditosReserva({ 
-  valorTotal, 
-  onCreditosAplicados, 
+export function UsarCreditosReserva({
+  valorTotal,
+  onCreditosAplicados,
   reservaId,
-  disabled = false 
+  disabled = false
 }: UsarCreditosReservaProps) {
   const [valorCreditos, setValorCreditos] = useState(0);
   const [creditosAplicados, setCreditosAplicados] = useState(false);
-  const { estatisticas, usarCreditos } = useIndicacoes();
+  const { data: estatisticas } = useEstatisticasIndicacao();
+  const usarCreditos = useUsarCreditos();
   const { toast } = useToast();
 
   const creditosDisponiveis = estatisticas?.creditos_disponiveis || 0;
@@ -55,20 +57,14 @@ export function UsarCreditosReserva({
       return;
     }
 
-    const resultado = await usarCreditos(valorCreditos, reservaId);
-    
-    if (resultado.success) {
+    try {
+      await usarCreditos.mutateAsync({
+        valorCreditos,
+        reservaId
+      });
       setCreditosAplicados(true);
-      toast({
-        title: "Sucesso!",
-        description: `${valorCreditos} créditos aplicados à reserva`,
-      });
-    } else {
-      toast({
-        title: "Erro",
-        description: resultado.error || "Erro ao aplicar créditos",
-        variant: "destructive",
-      });
+    } catch (error) {
+      // Error handling é feito pelo hook
     }
   };
 
@@ -231,7 +227,7 @@ export function UsarCreditosReserva({
 
         {/* Informação sobre Créditos */}
         <div className="text-xs text-muted-foreground">
-          💡 Os créditos são aplicados automaticamente no valor de 1:1 (1 crédito = R$ 1,00)
+          💡 Os créditos são aplicados automaticamente no valor de 1:1 (1 crédito = R$ {INDICACOES_CONFIG.VALOR_CREDITO_REAL.toFixed(2)})
         </div>
       </CardContent>
     </Card>

@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Gift, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useIndicacoes } from '@/hooks/useIndicacoes';
+import { useAplicarCodigo } from '@/hooks/core/useIndicacoes';
 
 interface FormAplicarCodigoProps {
   onSucesso?: () => void;
@@ -15,13 +15,12 @@ interface FormAplicarCodigoProps {
 
 export function FormAplicarCodigo({ onSucesso }: FormAplicarCodigoProps) {
   const [codigo, setCodigo] = useState('');
-  const [loading, setLoading] = useState(false);
-  const { aplicarCodigo } = useIndicacoes();
+  const aplicarCodigo = useAplicarCodigo();
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!codigo.trim()) {
       toast({
         title: "Erro",
@@ -31,33 +30,12 @@ export function FormAplicarCodigo({ onSucesso }: FormAplicarCodigoProps) {
       return;
     }
 
-    setLoading(true);
-
     try {
-      const resultado = await aplicarCodigo(codigo.trim().toUpperCase());
-      
-      if (resultado.success) {
-        toast({
-          title: "Sucesso!",
-          description: resultado.message || 'Código aplicado com sucesso!',
-        });
-        setCodigo('');
-        onSucesso?.();
-      } else {
-        toast({
-          title: "Erro",
-          description: resultado.error || 'Erro ao aplicar código',
-          variant: "destructive",
-        });
-      }
+      await aplicarCodigo.mutateAsync(codigo.trim().toUpperCase());
+      setCodigo('');
+      onSucesso?.();
     } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Erro inesperado ao aplicar código",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
+      // Error handling é feito pelo hook
     }
   };
 
@@ -88,8 +66,8 @@ export function FormAplicarCodigo({ onSucesso }: FormAplicarCodigoProps) {
             />
           </div>
 
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? (
+          <Button type="submit" className="w-full" disabled={aplicarCodigo.isPending}>
+            {aplicarCodigo.isPending ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 Aplicando código...
