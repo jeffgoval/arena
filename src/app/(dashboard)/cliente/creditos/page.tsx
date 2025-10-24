@@ -248,108 +248,12 @@ export default function CreditosPage() {
         </Alert>
       )}
 
-      <Tabs defaultValue="historico" className="w-full">
+      <Tabs defaultValue="comprar" className="w-full">
         <TabsList>
+          <TabsTrigger value="comprar">Comprar Créditos</TabsTrigger>
           <TabsTrigger value="historico">Histórico</TabsTrigger>
           <TabsTrigger value="ativos">Créditos Ativos</TabsTrigger>
-          <TabsTrigger value="comprar">Comprar Créditos</TabsTrigger>
         </TabsList>
-
-        <TabsContent value="historico" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <History className="h-5 w-5" />
-                Histórico de Transações
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {historico.map((credito) => (
-                  <div key={credito.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center gap-3">
-                      {getTipoIcon(credito.tipo)}
-                      <div>
-                        <p className="font-medium">{credito.descricao}</p>
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <span>{formatarData(credito.data)}</span>
-                          {credito.dataExpiracao && credito.status === 'ativo' && (
-                            <>
-                              <span>•</span>
-                              <span>Expira em {formatarData(credito.dataExpiracao)}</span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className={`font-bold ${credito.valor >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {formatarValor(credito.valor)}
-                      </span>
-                      {getStatusBadge(credito.status)}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="ativos" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CheckCircle className="h-5 w-5" />
-                Créditos Ativos
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {creditosAtivos.map((credito) => (
-                  <div key={credito.id} className="flex items-center justify-between p-4 border rounded-lg bg-green-50">
-                    <div className="flex items-center gap-3">
-                      {getTipoIcon(credito.tipo)}
-                      <div>
-                        <p className="font-medium">{credito.descricao}</p>
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <span>Adquirido em {formatarData(credito.data)}</span>
-                          {credito.dataExpiracao && (
-                            <>
-                              <span>•</span>
-                              <span className={
-                                new Date(credito.dataExpiracao).getTime() - Date.now() <= 30 * 24 * 60 * 60 * 1000
-                                  ? 'text-orange-600 font-medium'
-                                  : 'text-gray-600'
-                              }>
-                                Expira em {formatarData(credito.dataExpiracao)}
-                              </span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="font-bold text-green-600">
-                        R$ {credito.valor.toFixed(2)}
-                      </span>
-                      <Badge variant="default" className="bg-green-100 text-green-800">
-                        {getTipoLabel(credito.tipo)}
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
-                
-                {creditosAtivos.length === 0 && (
-                  <div className="text-center py-8 text-gray-500">
-                    <Coins className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>Você não possui créditos ativos no momento.</p>
-                    <p className="text-sm">Compre créditos para começar a usar!</p>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
 
         <TabsContent value="comprar" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -480,7 +384,7 @@ export default function CreditosPage() {
                     </p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-start gap-3 p-4 border rounded-lg">
                   <Calendar className="h-6 w-6 text-blue-600 mt-1" />
                   <div>
@@ -490,7 +394,7 @@ export default function CreditosPage() {
                     </p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-start gap-3 p-4 border rounded-lg">
                   <Gift className="h-6 w-6 text-green-600 mt-1" />
                   <div>
@@ -500,7 +404,7 @@ export default function CreditosPage() {
                     </p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-start gap-3 p-4 border rounded-lg">
                   <CheckCircle className="h-6 w-6 text-orange-600 mt-1" />
                   <div>
@@ -510,6 +414,102 @@ export default function CreditosPage() {
                     </p>
                   </div>
                 </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="historico" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <History className="h-5 w-5" />
+                Histórico de Transações
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {historico.map((credito) => (
+                  <div key={credito.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex items-center gap-3">
+                      {getTipoIcon(credito.tipo)}
+                      <div>
+                        <p className="font-medium">{credito.descricao}</p>
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <span>{formatarData(credito.data)}</span>
+                          {credito.dataExpiracao && credito.status === 'ativo' && (
+                            <>
+                              <span>•</span>
+                              <span>Expira em {formatarData(credito.dataExpiracao)}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className={`font-bold ${credito.valor >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {formatarValor(credito.valor)}
+                      </span>
+                      {getStatusBadge(credito.status)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="ativos" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CheckCircle className="h-5 w-5" />
+                Créditos Ativos
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {creditosAtivos.map((credito) => (
+                  <div key={credito.id} className="flex items-center justify-between p-4 border rounded-lg bg-green-50">
+                    <div className="flex items-center gap-3">
+                      {getTipoIcon(credito.tipo)}
+                      <div>
+                        <p className="font-medium">{credito.descricao}</p>
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <span>Adquirido em {formatarData(credito.data)}</span>
+                          {credito.dataExpiracao && (
+                            <>
+                              <span>•</span>
+                              <span className={
+                                new Date(credito.dataExpiracao).getTime() - Date.now() <= 30 * 24 * 60 * 60 * 1000
+                                  ? 'text-orange-600 font-medium'
+                                  : 'text-gray-600'
+                              }>
+                                Expira em {formatarData(credito.dataExpiracao)}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="font-bold text-green-600">
+                        R$ {credito.valor.toFixed(2)}
+                      </span>
+                      <Badge variant="default" className="bg-green-100 text-green-800">
+                        {getTipoLabel(credito.tipo)}
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+                
+                {creditosAtivos.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    <Coins className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>Você não possui créditos ativos no momento.</p>
+                    <p className="text-sm">Compre créditos para começar a usar!</p>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
