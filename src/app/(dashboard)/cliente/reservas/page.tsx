@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useReservas } from "@/hooks/core/useReservas";
+import { ReservaSkeletonList } from "@/components/shared/loading/ReservaSkeleton";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -45,11 +46,44 @@ export default function ReservasPage() {
 
   if (isLoading) {
     return (
-      <div className="container-custom page-padding flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-16 h-16 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground font-semibold">Carregando reservas...</p>
+      <div className="container-custom page-padding space-y-8">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="heading-2">Minhas Reservas</h1>
+            <p className="body-medium text-muted-foreground">Gerencie suas reservas de quadras</p>
+          </div>
+          <Link href="/cliente/reservas/nova">
+            <Button className="gap-2">
+              <Plus className="w-5 h-5" />
+              Nova Reserva
+            </Button>
+          </Link>
         </div>
+
+        {/* Filters */}
+        <Card className="border-0 shadow-soft">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <Filter className="w-5 h-5 text-muted-foreground" />
+              <div className="flex gap-2">
+                {filtros.map((f) => (
+                  <Button
+                    key={f.key}
+                    variant={filtro === f.key ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setFiltro(f.key as FiltroType)}
+                  >
+                    {f.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Skeleton Loading */}
+        <ReservaSkeletonList count={5} />
       </div>
     );
   }

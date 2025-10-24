@@ -27,7 +27,7 @@ export async function POST(
 
     // Verificar se o convite existe e pertence ao usuário
     const { data: convite, error: conviteError } = await supabase
-      .from('invites')
+      .from('convites')
       .select('id, criado_por, status')
       .eq('id', conviteId)
       .single();
@@ -55,7 +55,7 @@ export async function POST(
 
     // Atualizar status para expirado
     const { error: updateError } = await supabase
-      .from('invites')
+      .from('convites')
       .update({ 
         status: 'expirado',
         updated_at: new Date().toISOString(),

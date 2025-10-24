@@ -23,21 +23,11 @@ export function useIndicacoes() {
       if (response.ok) {
         setCodigo(data.codigo);
       } else {
-        // Para demonstração, criar um código mock se não encontrar
         if (response.status === 404) {
-          const codigoMock = {
-            id: 'mock-id',
-            usuario_id: 'mock-user',
-            codigo: 'DEMO2024',
-            ativo: true,
-            total_indicacoes: 3,
-            total_creditos_recebidos: 150,
-            data_criacao: new Date().toISOString(),
-            data_atualizacao: new Date().toISOString(),
-          };
-          setCodigo(codigoMock);
+          // Código não encontrado - isso é normal para usuários novos
+          setCodigo(null);
         } else {
-          setError(data.error);
+          setError(data.error || 'Erro ao buscar código de indicação');
         }
       }
     } catch (err) {

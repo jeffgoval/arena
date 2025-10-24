@@ -115,6 +115,29 @@ npx shadcn@latest add <component-name>
 npx shadcn@latest add dialog
 ```
 
+### Debugging with Node Scripts
+
+The `scripts/` directory contains utilities for debugging and testing:
+
+```bash
+# Test authentication flow
+node scripts/test-signup.mjs
+
+# Check database schema and tables
+node scripts/check-db-schema.mjs
+
+# Check user role assignments
+node scripts/check-user-role.mjs
+
+# Verify RLS policies
+node scripts/check-rls-policies.mjs
+
+# Apply manual migrations
+node scripts/apply-migration.mjs
+```
+
+**Note:** These scripts use ESM modules (.mjs) and connect directly to Supabase for diagnostics.
+
 ## Architecture Overview
 
 ### Directory Structure
@@ -130,39 +153,75 @@ arena-dona-santa/
 │   │   │   ├── cliente/               # Customer dashboard
 │   │   │   │   ├── page.tsx
 │   │   │   │   ├── reservas/          # Reservations module
-│   │   │   │   └── turmas/            # Teams module
+│   │   │   │   ├── turmas/            # Teams module
+│   │   │   │   ├── convites/          # Invitations
+│   │   │   │   ├── creditos/          # Credits management
+│   │   │   │   ├── indicacoes/        # Referrals
+│   │   │   │   └── jogos/             # Games history
 │   │   │   ├── gestor/                # Manager dashboard
 │   │   │   │   ├── page.tsx
 │   │   │   │   ├── quadras/           # Courts management
 │   │   │   │   └── metricas/          # Metrics dashboard
 │   │   │   └── layout.tsx             # Dashboard layout
+│   │   ├── (cliente)/                 # Cliente-specific public routes
+│   │   │   ├── avaliar/[reservaId]/   # Review reservation
+│   │   │   └── convites/              # View invitation details
+│   │   ├── (gestor)/                  # Gestor-specific routes
+│   │   │   └── gestor/                # Manager features (agenda, avaliacoes)
 │   │   ├── (public)/                  # Public route group
 │   │   │   ├── convite/[token]/       # Invitation acceptance
 │   │   │   └── layout.tsx             # Public layout
+│   │   ├── api/                       # API routes
+│   │   │   ├── auth/                  # Auth endpoints
+│   │   │   ├── reservas/              # Reservation endpoints
+│   │   │   ├── convites/              # Invitation endpoints
+│   │   │   ├── avaliacoes/            # Review endpoints
+│   │   │   ├── indicacoes/            # Referral endpoints
+│   │   │   ├── creditos/              # Credits endpoints
+│   │   │   ├── jogos/                 # Games endpoints
+│   │   │   ├── pagamentos/            # Payment webhooks
+│   │   │   ├── whatsapp/              # WhatsApp webhooks
+│   │   │   ├── webhooks/              # External webhooks
+│   │   │   └── notificacoes/          # Notification endpoints
+│   │   ├── design-system/             # Component showcase page
 │   │   ├── page.tsx                   # Landing page
 │   │   ├── layout.tsx                 # Root layout
 │   │   └── globals.css                # Global styles
 │   ├── components/
 │   │   ├── ui/                        # shadcn/ui components
 │   │   ├── landing/                   # Landing page components
-│   │   ├── modules/core/              # Business logic components
-│   │   │   ├── quadras/               # Courts forms
-│   │   │   └── turmas/                # Teams forms
-│   │   ├── shared/forms/              # Reusable form inputs
+│   │   ├── modules/                   # Feature-specific components
+│   │   │   ├── core/                  # Core business logic components
+│   │   │   ├── indicacoes/            # Referral components
+│   │   │   └── [other modules]/       # Other feature modules
+│   │   ├── shared/                    # Shared/reusable components
+│   │   │   ├── forms/                 # Form inputs (CPF, CEP, WhatsApp)
+│   │   │   └── loading/               # Loading skeletons
+│   │   ├── reservas/                  # Reservation components
+│   │   ├── convites/                  # Invitation components
+│   │   ├── auth/                      # Auth-specific components
+│   │   ├── admin/                     # Admin components
 │   │   └── providers/                 # React context providers
 │   ├── hooks/
 │   │   ├── auth/                      # Auth hooks (useUser)
 │   │   ├── core/                      # Business hooks with React Query
-│   │   │   ├── useTurmas.ts
-│   │   │   ├── useQuadras.ts
-│   │   │   ├── useHorarios.ts
-│   │   │   ├── useReservas.ts
-│   │   │   ├── useConvites.ts
-│   │   │   ├── useReservasGestor.ts
-│   │   │   ├── useQuadrasHorarios.ts
-│   │   │   ├── useMetricasGestor.ts
-│   │   │   ├── useAvaliacoes.ts
-│   │   │   └── useCourts.ts
+│   │   │   ├── useTurmas.ts           # Teams management
+│   │   │   ├── useQuadras.ts          # Courts management
+│   │   │   ├── useHorarios.ts         # Court schedules
+│   │   │   ├── useReservas.ts         # Reservations (customer)
+│   │   │   ├── useConvites.ts         # Invitations
+│   │   │   ├── useReservasGestor.ts   # Reservations (manager)
+│   │   │   ├── useQuadrasHorarios.ts  # Combined courts/schedules
+│   │   │   ├── useMetricasGestor.ts   # Manager metrics
+│   │   │   ├── useAvaliacoes.ts       # Reviews/ratings
+│   │   │   ├── useCreditos.ts         # Credits system
+│   │   │   ├── useIndicacoes.ts       # Referrals
+│   │   │   ├── useJogos.ts            # Games history
+│   │   │   └── useCourts.ts           # Courts (alternative)
+│   │   ├── useConvitesPendentes.ts    # Pending invitations polling
+│   │   ├── useIndicacoes.ts           # Referrals tracking
+│   │   ├── useDebounce.ts             # Debounce utility hook
+│   │   ├── useErrorHandler.ts         # Centralized error handling
 │   │   └── use-toast.ts               # Toast notifications
 │   ├── lib/
 │   │   ├── supabase/                  # Supabase clients
@@ -179,23 +238,42 @@ arena-dona-santa/
 │   │   │   └── courts.service.ts      # Courts CRUD operations
 │   │   ├── auth/
 │   │   │   └── auth.service.ts        # Authentication service
+│   │   ├── integrations/              # External integrations
+│   │   │   └── viacep.ts              # CEP lookup service
 │   │   ├── indicacoes.service.ts      # Referral service
+│   │   ├── indicacoes-mock.service.ts # Mock data for referrals
 │   │   ├── mensalistas.service.ts     # Monthly members service
 │   │   ├── pagamentoService.ts        # Payment service (Asaas)
 │   │   ├── whatsappService.ts         # WhatsApp notifications
 │   │   └── notificacaoService.ts      # General notifications
-│   └── types/
-│       ├── *.types.ts                 # TypeScript type definitions
-│       └── database.types.ts          # Generated Supabase types (if exists)
+│   ├── types/
+│   │   ├── *.types.ts                 # TypeScript type definitions
+│   │   ├── creditos.types.ts          # Credits types
+│   │   └── database.types.ts          # Generated Supabase types (if exists)
+│   └── constants/                     # Application constants
 ├── middleware.ts                      # Auth middleware (route protection)
+├── scripts/                           # Debugging and utility scripts
+│   ├── test-signup.mjs                # Test auth signup flow
+│   ├── check-db-schema.mjs            # Verify database schema
+│   ├── check-user-role.mjs            # Check role assignments
+│   ├── check-rls-policies.mjs         # Verify RLS policies
+│   └── apply-migration.mjs            # Manual migration helper
 ├── public/                            # Static assets
 ├── supabase/                          # Supabase config
+│   ├── config.toml                    # Supabase configuration
+│   └── migrations/                    # Database migrations (partial)
 ├── docs/                              # Project documentation
+│   ├── *_AUDIT.md                     # Module audits
+│   ├── *_IMPROVEMENTS.md              # Improvement tracking
+│   ├── AUTH_SUPABASE.md               # Auth setup guide
+│   ├── PLANEJAMENTO.md                # Development planning
+│   └── PROGRESSO.md                   # Progress tracking
 ├── SETUP/                             # Setup guides and specifications
 │   ├── PRD.md                         # Product Requirements (Portuguese)
 │   └── PROMPT.md                      # Technical specs (Portuguese)
 ├── vercel.json                        # Vercel deployment config
 ├── next.config.js                     # Next.js configuration
+├── .env.example                       # Environment variables template
 └── CLAUDE.md                          # This file
 ```
 
@@ -219,8 +297,10 @@ Component → Hook (useCreateCourt) → Service (courtsService.create) → Supab
 
 **Route Groups:**
 - `(auth)` - Authentication pages (login/register)
-- `(dashboard)` - Protected pages requiring authentication
-- `(public)` - Public pages (invitations, landing)
+- `(dashboard)` - Protected pages requiring authentication (both cliente and gestor)
+- `(cliente)` - Cliente-specific routes (reviews, invitation details)
+- `(gestor)` - Gestor-specific routes (agenda, manager features)
+- `(public)` - Public pages (invitation acceptance, landing)
 
 **Authentication:**
 - Middleware protects `/cliente/*` and `/gestor/*` routes
@@ -314,6 +394,33 @@ export type CourtFormData = z.infer<typeof courtSchema>;
 - Auto-formats (##) #####-####
 - Validates Brazilian phone format
 
+### Loading States and Error Handling
+
+**Skeleton Components** (`components/shared/loading/`):
+- `ReservaSkeleton.tsx` - Reservation card skeleton
+- Provides smooth loading experience
+- Built with `components/ui/skeleton.tsx` (shadcn/ui)
+
+**Error Handler Hook** (`hooks/useErrorHandler.ts`):
+- Centralized error handling replacing `alert()`
+- Provides toast notifications for errors and success
+- Includes contextual logging for debugging
+- **Usage:**
+  ```typescript
+  const { handleError, handleSuccess } = useErrorHandler();
+  try {
+    await mutation.mutateAsync(data);
+    handleSuccess('Operation successful');
+  } catch (error) {
+    handleError(error, 'ComponentName', 'User-friendly message');
+  }
+  ```
+
+**Debounce Hook** (`hooks/useDebounce.ts`):
+- 300ms debounce for search filters
+- Reduces unnecessary API calls
+- Improves search performance
+
 ### Database Tables (Current Schema)
 
 **Core Tables:**
@@ -335,6 +442,29 @@ export type CourtFormData = z.infer<typeof courtSchema>;
 - `notificacoes` - User notifications
 
 **Important:** Database migrations are not fully tracked in `supabase/migrations`. Reference the remote database schema or docs for complete structure.
+
+### API Routes
+
+The application includes API routes for webhooks and server-side operations:
+
+**Structure:**
+- `api/auth/*` - Authentication endpoints (signup, login, session)
+- `api/reservas/*` - Reservation CRUD and status updates
+- `api/convites/*` - Invitation management and acceptance
+- `api/avaliacoes/*` - Review submission and retrieval
+- `api/indicacoes/*` - Referral system endpoints
+- `api/creditos/*` - Credits management
+- `api/jogos/*` - Games history tracking
+- `api/pagamentos/*` - Asaas payment webhooks
+- `api/whatsapp/*` - WhatsApp webhook handlers
+- `api/webhooks/*` - General webhook endpoints
+- `api/notificacoes/*` - Notification triggers and cron jobs
+
+**Important Notes:**
+- All API routes use server-side Supabase client for security
+- Webhooks validate signatures/tokens before processing
+- Rate limiting should be considered for production
+- Use `CRON_SECRET_TOKEN` to protect scheduled notification endpoints
 
 ## Important Configuration
 
@@ -418,6 +548,9 @@ Defined in `tailwind.config.ts`:
 - Always wrap services with React Query hooks
 - Use proper query keys for caching
 - Invalidate queries after mutations
+- Use `useErrorHandler` for consistent error handling (not `alert()`)
+- Implement loading skeletons for better UX
+- Apply `useDebounce` to search/filter inputs
 
 ### Authentication Best Practices
 
@@ -466,13 +599,30 @@ const { data: { user } } = await supabase.auth.getUser();
 
 ## Important Reference Files
 
+### Core Documentation
 - `README.md` - Project overview and setup
 - `SETUP/PRD.md` - Complete Product Requirements (Portuguese)
 - `SETUP/PROMPT.md` - Full technical specifications (Portuguese)
+- `.env.example` - Environment variables template
+
+### Technical Guides
 - `docs/AUTH_SUPABASE.md` - Authentication setup guide
 - `docs/PLANEJAMENTO.md` - Development planning
 - `docs/PROGRESSO.md` - Development progress tracking
-- `.env.example` - Environment variables template
+- `docs/DESIGN_SYSTEM.md` - Design system specifications
+- `docs/VIACEP_INTEGRATION.md` - CEP integration guide
+- `docs/SISTEMA_NOTIFICACOES_AUTOMATICAS.md` - Automated notifications
+
+### Module Documentation
+- `docs/DASHBOARD_AUDIT.md` & `docs/DASHBOARD_IMPROVEMENTS.md` - Dashboard status
+- `docs/RESERVAS_AUDIT.md` & `docs/RESERVAS_IMPROVEMENTS.md` - Reservations status
+- `docs/TURMAS_AUDIT.md` & `docs/TURMAS_IMPROVEMENTS.md` - Teams status
+- `docs/CONVITES_AUDIT.md` & `docs/CONVITES_IMPROVEMENTS.md` - Invitations status
+- `docs/JOGOS_AUDIT.md` & `docs/JOGOS_IMPROVEMENTS.md` - Games history status
+- `docs/INDICACOES_AUDIT.md` & `docs/INDICACOES_IMPROVEMENTS.md` - Referrals status
+- `docs/CREDITOS_AUDIT.md` & `docs/CREDITOS_IMPROVEMENTS.md` - Credits status
+
+**Note:** Audit files document current state and issues, while Improvements files track applied fixes and enhancements.
 
 ## Future Modules (Not Yet Implemented)
 
@@ -482,6 +632,53 @@ Sports school management for Academia do Galo (classes, students, attendance, te
 ### Day Use Module
 Day-use package management with pool and bar access (packages, addons, check-ins)
 
+## Recent Improvements (2025)
+
+The following improvements have been recently implemented:
+
+**Performance & UX:**
+- Migrated all major hooks to React Query for better caching
+- Implemented `useDebounce` hook (300ms) for search filters
+- Added skeleton loading states (`components/shared/loading/`)
+- Replaced all `alert()` calls with toast notifications
+
+**Error Handling:**
+- Created centralized `useErrorHandler` hook
+- Standardized error messages across the application
+- Added contextual logging for debugging
+
+**Data Management:**
+- Optimized `useConvitesPendentes` with React Query (1min polling)
+- Improved cache strategies (30s stale time, 5min garbage collection)
+- Added automatic query invalidation after mutations
+
+**New Modules:**
+- Credits system (`creditos`) - fully implemented
+- Games history (`jogos`) - tracking and reviews
+- Enhanced referral system (`indicacoes`) - with bonuses
+
+**Documentation:**
+- Added audit documents for all major modules
+- Created improvement tracking files
+- Documented known issues and fixes
+
+## Development Status & Focus
+
+**Current Focus Areas:**
+1. **CORE Module** - Reservations, teams, invitations (primary focus)
+2. **Credits System** - Fully functional, ongoing refinements
+3. **Referral System** - Complete with bonus tracking
+4. **Notifications** - WhatsApp integration active
+
+**Stabilization Phase:**
+- Recent audits identified areas for improvement
+- Most critical issues have been addressed
+- Focus on polish, testing, and documentation
+
+**Not Yet Started:**
+- Escolinha module (sports school management)
+- Day Use module (pool and bar packages)
+
 ## Notes
 
 - Project is in **active development** - Phase 2 implementation
@@ -490,3 +687,4 @@ Day-use package management with pool and bar access (packages, addons, check-ins
 - All user-facing text is in Portuguese (Brazilian)
 - Focus is on CORE module (reservations, teams, invitations)
 - Deployed on **Vercel** in São Paulo region for optimal Brazilian performance
+- **Design System** - View component showcase at `/design-system` route

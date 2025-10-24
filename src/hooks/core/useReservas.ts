@@ -18,11 +18,17 @@ export function useReservas(filtro?: 'futuras' | 'passadas' | 'todas') {
       let query = supabase
         .from('reservas')
         .select(`
-          *,
-          organizador:users!reservas_organizador_id_fkey(id, nome_completo, email),
+          id,
+          data,
+          status,
+          valor_total,
+          observacoes,
+          created_at,
+          organizador:users!reservas_organizador_id_fkey(id, nome_completo),
           quadra:quadras(id, nome, tipo),
-          horario:horarios(id, dia_semana, hora_inicio, hora_fim, valor_avulsa),
-          turma:turmas(id, nome)
+          horario:horarios(id, hora_inicio, hora_fim),
+          turma:turmas(id, nome),
+          reserva_participantes(id)
         `)
         .eq('organizador_id', user.id)
         .neq('status', 'cancelada')

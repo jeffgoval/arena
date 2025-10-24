@@ -7,13 +7,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { UserPlus, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useIndicacoes } from '@/hooks/useIndicacoes';
+import { useCreateIndicacao } from '@/hooks/core/useIndicacoes';
 
 export function FormIndicacao() {
   const [emailIndicado, setEmailIndicado] = useState('');
   const [nomeIndicado, setNomeIndicado] = useState('');
-  const [loading, setLoading] = useState(false);
-  const { criarIndicacao } = useIndicacoes();
+  const createIndicacao = useCreateIndicacao();
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -39,33 +38,17 @@ export function FormIndicacao() {
       return;
     }
 
-    setLoading(true);
-
     try {
-      const resultado = await criarIndicacao(emailIndicado.trim(), nomeIndicado.trim() || undefined);
-      
-      if (resultado.success) {
-        toast({
-          title: "Sucesso!",
-          description: "Indicação criada com sucesso!",
-        });
-        setEmailIndicado('');
-        setNomeIndicado('');
-      } else {
-        toast({
-          title: "Erro",
-          description: resultado.error || 'Erro ao criar indicação',
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Erro inesperado ao criar indicação",
-        variant: "destructive",
+      await createIndicacao.mutateAsync({
+        emailIndicado: emailIndicado.trim(),
+        nomeIndicado: nomeIndicado.trim() || undefined,
       });
-    } finally {
-      setLoading(false);
+      
+      // Limpar formulário após sucesso
+      setEmailIndicado('');
+      setNomeIndicado('');
+    } catch (error) {
+      // Error handling é feito pelo hook
     }
   };
 
@@ -105,8 +88,8 @@ export function FormIndicacao() {
             />
           </div>
 
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? (
+          <Button type="submit" className="w-full" disabled={createIndicacao.isPending}>
+            {createIndicacao.isPending ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 Criando indicação...

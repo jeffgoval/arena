@@ -1,6 +1,5 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -19,104 +18,60 @@ import {
   CheckCircle,
   XCircle
 } from 'lucide-react';
-
-interface Credito {
-  id: string;
-  tipo: 'compra' | 'bonus' | 'indicacao' | 'promocao' | 'uso' | 'expiracao';
-  valor: number;
-  descricao: string;
-  data: Date;
-  status: 'ativo' | 'usado' | 'expirado';
-  dataExpiracao?: Date;
-  reservaId?: string;
-}
-
-interface SaldoCreditos {
-  total: number;
-  ativo: number;
-  expirandoEm30Dias: number;
-  usado: number;
-}
+import { useCreditos, useComprarCreditos, PACOTES_CREDITOS } from '@/hooks/core/useCreditos';
+import { CreditosPageSkeleton } from '@/components/shared/loading/CreditosSkeleton';
+import type { CreditoTipo } from '@/types/creditos.types';
 
 export default function CreditosPage() {
-  const [saldo, setSaldo] = useState<SaldoCreditos>({
-    total: 150.00,
-    ativo: 120.00,
-    expirandoEm30Dias: 30.00,
-    usado: 280.00
-  });
+  const { data, isLoading, error } = useCreditos();
+  const comprarCreditos = useComprarCreditos();
 
-  const [historico, setHistorico] = useState<Credito[]>([
-    {
-      id: '1',
-      tipo: 'compra',
-      valor: 100.00,
-      descricao: 'Compra de créditos - Pacote Premium',
-      data: new Date('2024-10-20'),
-      status: 'ativo',
-      dataExpiracao: new Date('2025-01-20')
-    },
-    {
-      id: '2',
-      tipo: 'bonus',
-      valor: 50.00,
-      descricao: 'Bônus de boas-vindas',
-      data: new Date('2024-10-15'),
-      status: 'ativo',
-      dataExpiracao: new Date('2024-12-15')
-    },
-    {
-      id: '3',
-      tipo: 'indicacao',
-      valor: 25.00,
-      descricao: 'Indicação de amigo - João Silva',
-      data: new Date('2024-10-10'),
-      status: 'ativo',
-      dataExpiracao: new Date('2024-12-10')
-    },
-    {
-      id: '4',
-      tipo: 'uso',
-      valor: -80.00,
-      descricao: 'Usado na reserva #123 - Quadra A',
-      data: new Date('2024-10-18'),
-      status: 'usado',
-      reservaId: '123'
-    },
-    {
-      id: '5',
-      tipo: 'promocao',
-      valor: 30.00,
-      descricao: 'Promoção Black Friday',
-      data: new Date('2024-10-05'),
-      status: 'expirado',
-      dataExpiracao: new Date('2024-10-20')
-    }
-  ]);
+  if (isLoading) {
+    return <CreditosPageSkeleton />;
+  }
 
-  const [loading, setLoading] = useState(false);
+  if (error) {
+    return (
+      <div className="container-custom page-padding">
+        <Card className="border-0 shadow-soft">
+          <CardContent className="p-12 text-center">
+            <XCircle className="w-16 h-16 text-destructive mx-auto mb-4" />
+            <h2 className="heading-3 mb-2">Erro ao carregar créditos</h2>
+            <p className="text-muted-foreground mb-6">
+              {error instanceof Error ? error.message : 'Erro desconhecido'}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
-  const getTipoIcon = (tipo: string) => {
+  const saldo = data?.saldo || { total: 0, ativo: 0, expirandoEm30Dias: 0, usado: 0, expirado: 0 };
+  const historico = data?.historico || [];
+  const creditosAtivos = data?.creditosAtivos || [];
+  const creditosExpirandoSoon = data?.creditosExpirandoSoon || [];
+
+  const getTipoIcon = (tipo: CreditoTipo) => {
     switch (tipo) {
       case 'compra':
-        return <CreditCard className="h-4 w-4 text-blue-600" />;
+        return <CreditCard className="h-4 w-4 text-primary" />;
       case 'bonus':
-        return <Gift className="h-4 w-4 text-green-600" />;
+        return <Gift className="h-4 w-4 text-success" />;
       case 'indicacao':
-        return <ArrowUpRight className="h-4 w-4 text-purple-600" />;
+        return <ArrowUpRight className="h-4 w-4 text-secondary" />;
       case 'promocao':
-        return <Gift className="h-4 w-4 text-orange-600" />;
+        return <Gift className="h-4 w-4 text-warning" />;
       case 'uso':
-        return <ArrowDownLeft className="h-4 w-4 text-red-600" />;
+        return <ArrowDownLeft className="h-4 w-4 text-destructive" />;
       case 'expiracao':
-        return <Clock className="h-4 w-4 text-gray-600" />;
+        return <Clock className="h-4 w-4 text-muted-foreground" />;
       default:
         return <Coins className="h-4 w-4" />;
     }
   };
 
-  const getTipoLabel = (tipo: string) => {
-    const labels: Record<string, string> = {
+  const getTipoLabel = (tipo: CreditoTipo) => {
+    const labels: Record<CreditoTipo, string> = {
       compra: 'Compra',
       bonus: 'Bônus',
       indicacao: 'Indicação',
@@ -130,7 +85,7 @@ export default function CreditosPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'ativo':
-        return <Badge variant="default" className="bg-green-100 text-green-800">Ativo</Badge>;
+        return <Badge variant="default" className="bg-success/10 text-success">Ativo</Badge>;
       case 'usado':
         return <Badge variant="secondary">Usado</Badge>;
       case 'expirado':
@@ -140,14 +95,14 @@ export default function CreditosPage() {
     }
   };
 
-  const formatarData = (data: Date) => {
+  const formatarData = (data: string) => {
     return new Intl.DateTimeFormat('pt-BR', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
-    }).format(data);
+    }).format(new Date(data));
   };
 
   const formatarValor = (valor: number) => {
@@ -155,11 +110,17 @@ export default function CreditosPage() {
     return `${sinal}R$ ${Math.abs(valor).toFixed(2)}`;
   };
 
-  const creditosAtivos = historico.filter(c => c.status === 'ativo' && c.valor > 0);
-  const creditosExpirandoSoon = creditosAtivos.filter(c => 
-    c.dataExpiracao && 
-    new Date(c.dataExpiracao).getTime() - Date.now() <= 30 * 24 * 60 * 60 * 1000
-  );
+  const handleComprarCreditos = async (pacoteId: string) => {
+    try {
+      await comprarCreditos.mutateAsync({
+        pacoteId,
+        metodoPagamento: 'pix', // Por enquanto fixo, depois implementar seleção
+        valor: PACOTES_CREDITOS.find(p => p.id === pacoteId)?.valor || 0,
+      });
+    } catch (error) {
+      // Error handling é feito pelo hook
+    }
+  };
 
   return (
     <div className="container-custom page-padding space-y-6">
@@ -184,12 +145,12 @@ export default function CreditosPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Saldo Total</p>
-                <p className="text-2xl font-bold text-green-600">
+                <p className="text-sm font-medium text-muted-foreground">Saldo Total</p>
+                <p className="text-2xl font-bold text-success">
                   R$ {saldo.total.toFixed(2)}
                 </p>
               </div>
-              <Coins className="h-8 w-8 text-green-600" />
+              <Coins className="h-8 w-8 text-success" />
             </div>
           </CardContent>
         </Card>
@@ -198,12 +159,12 @@ export default function CreditosPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Créditos Ativos</p>
-                <p className="text-2xl font-bold text-blue-600">
+                <p className="text-sm font-medium text-muted-foreground">Créditos Ativos</p>
+                <p className="text-2xl font-bold text-primary">
                   R$ {saldo.ativo.toFixed(2)}
                 </p>
               </div>
-              <CheckCircle className="h-8 w-8 text-blue-600" />
+              <CheckCircle className="h-8 w-8 text-primary" />
             </div>
           </CardContent>
         </Card>
@@ -212,12 +173,12 @@ export default function CreditosPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Expirando em 30 dias</p>
-                <p className="text-2xl font-bold text-orange-600">
+                <p className="text-sm font-medium text-muted-foreground">Expirando em 30 dias</p>
+                <p className="text-2xl font-bold text-warning">
                   R$ {saldo.expirandoEm30Dias.toFixed(2)}
                 </p>
               </div>
-              <Clock className="h-8 w-8 text-orange-600" />
+              <Clock className="h-8 w-8 text-warning" />
             </div>
           </CardContent>
         </Card>
@@ -226,12 +187,12 @@ export default function CreditosPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Usado</p>
-                <p className="text-2xl font-bold text-gray-600">
+                <p className="text-sm font-medium text-muted-foreground">Total Usado</p>
+                <p className="text-2xl font-bold text-muted-foreground">
                   R$ {saldo.usado.toFixed(2)}
                 </p>
               </div>
-              <History className="h-8 w-8 text-gray-600" />
+              <History className="h-8 w-8 text-muted-foreground" />
             </div>
           </CardContent>
         </Card>
@@ -257,113 +218,47 @@ export default function CreditosPage() {
 
         <TabsContent value="comprar" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {/* Pacote Básico */}
-            <Card className="relative">
-              <CardHeader>
-                <CardTitle className="text-center">Pacote Básico</CardTitle>
-                <div className="text-center">
-                  <span className="text-3xl font-bold">R$ 50</span>
-                  <p className="text-sm text-gray-600">R$ 50 em créditos</p>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <ul className="space-y-2 text-sm">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                    R$ 50 em créditos
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                    Válido por 6 meses
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                    Sem taxa adicional
-                  </li>
-                </ul>
-                <Button className="w-full" disabled={loading}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Comprar Agora
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Pacote Premium */}
-            <Card className="relative border-blue-500 border-2">
-              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                <Badge className="bg-blue-500">Mais Popular</Badge>
-              </div>
-              <CardHeader>
-                <CardTitle className="text-center">Pacote Premium</CardTitle>
-                <div className="text-center">
-                  <span className="text-3xl font-bold">R$ 100</span>
-                  <p className="text-sm text-gray-600">R$ 110 em créditos</p>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <ul className="space-y-2 text-sm">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                    R$ 110 em créditos
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                    <span className="text-green-600 font-medium">+R$ 10 de bônus</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                    Válido por 12 meses
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                    Prioridade nas reservas
-                  </li>
-                </ul>
-                <Button className="w-full" disabled={loading}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Comprar Agora
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Pacote VIP */}
-            <Card className="relative">
-              <CardHeader>
-                <CardTitle className="text-center">Pacote VIP</CardTitle>
-                <div className="text-center">
-                  <span className="text-3xl font-bold">R$ 200</span>
-                  <p className="text-sm text-gray-600">R$ 250 em créditos</p>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <ul className="space-y-2 text-sm">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                    R$ 250 em créditos
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                    <span className="text-green-600 font-medium">+R$ 50 de bônus</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                    Válido por 18 meses
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                    Acesso a quadras premium
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                    Desconto em equipamentos
-                  </li>
-                </ul>
-                <Button className="w-full" disabled={loading}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Comprar Agora
-                </Button>
-              </CardContent>
-            </Card>
+            {PACOTES_CREDITOS.map((pacote) => (
+              <Card 
+                key={pacote.id} 
+                className={`relative ${pacote.popular ? 'border-primary border-2' : ''}`}
+              >
+                {pacote.popular && (
+                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                    <Badge className="bg-primary">Mais Popular</Badge>
+                  </div>
+                )}
+                <CardHeader>
+                  <CardTitle className="text-center">{pacote.nome}</CardTitle>
+                  <div className="text-center">
+                    <span className="text-3xl font-bold">R$ {pacote.valor}</span>
+                    <p className="text-sm text-muted-foreground">
+                      R$ {pacote.creditos} em créditos
+                    </p>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <ul className="space-y-2 text-sm">
+                    {pacote.beneficios.map((beneficio, index) => (
+                      <li key={index} className="flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-success" />
+                        <span className={beneficio.includes('+') ? 'text-success font-medium' : ''}>
+                          {beneficio}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Button 
+                    className="w-full" 
+                    disabled={comprarCreditos.isPending}
+                    onClick={() => handleComprarCreditos(pacote.id)}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    {comprarCreditos.isPending ? 'Processando...' : 'Comprar Agora'}
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
           </div>
 
           <Card>
@@ -429,18 +324,25 @@ export default function CreditosPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {historico.map((credito) => (
+                {historico.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <History className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>Nenhuma transação encontrada.</p>
+                    <p className="text-sm">Suas transações aparecerão aqui.</p>
+                  </div>
+                ) : (
+                  historico.map((credito) => (
                   <div key={credito.id} className="flex items-center justify-between p-4 border rounded-lg">
                     <div className="flex items-center gap-3">
                       {getTipoIcon(credito.tipo)}
                       <div>
                         <p className="font-medium">{credito.descricao}</p>
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <span>{formatarData(credito.data)}</span>
-                          {credito.dataExpiracao && credito.status === 'ativo' && (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <span>{formatarData(credito.created_at)}</span>
+                          {credito.data_expiracao && credito.status === 'ativo' && (
                             <>
                               <span>•</span>
-                              <span>Expira em {formatarData(credito.dataExpiracao)}</span>
+                              <span>Expira em {formatarData(credito.data_expiracao)}</span>
                             </>
                           )}
                         </div>
@@ -453,7 +355,8 @@ export default function CreditosPage() {
                       {getStatusBadge(credito.status)}
                     </div>
                   </div>
-                ))}
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>
@@ -475,17 +378,17 @@ export default function CreditosPage() {
                       {getTipoIcon(credito.tipo)}
                       <div>
                         <p className="font-medium">{credito.descricao}</p>
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <span>Adquirido em {formatarData(credito.data)}</span>
-                          {credito.dataExpiracao && (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <span>Adquirido em {formatarData(credito.created_at)}</span>
+                          {credito.data_expiracao && (
                             <>
                               <span>•</span>
                               <span className={
-                                new Date(credito.dataExpiracao).getTime() - Date.now() <= 30 * 24 * 60 * 60 * 1000
-                                  ? 'text-orange-600 font-medium'
-                                  : 'text-gray-600'
+                                new Date(credito.data_expiracao).getTime() - Date.now() <= 30 * 24 * 60 * 60 * 1000
+                                  ? 'text-warning font-medium'
+                                  : 'text-muted-foreground'
                               }>
-                                Expira em {formatarData(credito.dataExpiracao)}
+                                Expira em {formatarData(credito.data_expiracao)}
                               </span>
                             </>
                           )}
@@ -504,7 +407,7 @@ export default function CreditosPage() {
                 ))}
                 
                 {creditosAtivos.length === 0 && (
-                  <div className="text-center py-8 text-gray-500">
+                  <div className="text-center py-8 text-muted-foreground">
                     <Coins className="h-12 w-12 mx-auto mb-4 opacity-50" />
                     <p>Você não possui créditos ativos no momento.</p>
                     <p className="text-sm">Compre créditos para começar a usar!</p>

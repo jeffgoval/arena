@@ -18,9 +18,12 @@ export function useTurmas() {
       const { data, error } = await supabase
         .from('turmas')
         .select(`
-          *,
-          organizador:users!turmas_organizador_id_fkey(id, nome_completo, email),
-          membros:turma_membros(*)
+          id,
+          nome,
+          descricao,
+          created_at,
+          organizador:users!turmas_organizador_id_fkey(id, nome_completo),
+          membros:turma_membros(id, nome, email, whatsapp, status)
         `)
         .eq('organizador_id', user.id)
         .order('created_at', { ascending: false });

@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { ArrowLeft, Plus, Link2, Users, Calendar, DollarSign, Copy, Check, Ban, ExternalLink } from 'lucide-react';
 import { useReserva } from '@/hooks/core/useReservas';
 import { useConvitesReserva, useCancelarConvite } from '@/hooks/core/useConvites';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { CONVITE_STATUS_LABELS, CONVITE_STATUS_COLORS } from '@/types/convites.types';
 
 export const dynamic = 'force-dynamic';
@@ -29,14 +30,16 @@ export default function ConvitesReservaPage() {
     setTimeout(() => setCopiedToken(null), 2000);
   };
 
+  const { handleError, handleSuccess } = useErrorHandler();
+
   const handleCancelar = async (convite_id: string) => {
     if (!confirm('Deseja realmente cancelar este convite? Esta ação não pode ser desfeita.')) return;
 
     try {
       await cancelarConvite.mutateAsync(convite_id);
+      handleSuccess('Convite cancelado com sucesso');
     } catch (error) {
-      console.error('Erro ao cancelar convite:', error);
-      alert('Erro ao cancelar convite');
+      handleError(error, 'CancelarConvite', 'Erro ao cancelar convite');
     }
   };
 

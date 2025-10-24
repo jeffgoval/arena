@@ -1,283 +1,120 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@/lib/supabase/client';
-import type { Convite, ConviteAceite } from '@/types/convites.types';
-import type { CreateConviteData, AceitarConviteData } from '@/lib/validations/convite.schema';
+import { useToast } from '@/hooks/use-toast';
+import type { Convite, ConviteStatus } from '@/types/convites.types';
 
-/**
- * Hook para buscar convites de uma reserva
- */
-export function useConvitesReserva(reserva_id?: string) {
-  const supabase = createClient();
+interface ConvitesStats {
+  total: number;
+  ativos: number;
+  completos: number;
+  expirados: number;
+  taxaAceite: number;
+  totalAceites: number;
+}
 
-  return useQuery({
-    queryKey: ['convites', 'reserva', reserva_id],
-    queryFn: async () => {
-      if (!reserva_id) return [];
-
-      const { data, error } = await supabase
-        .from('convites')
-        .select(`
-          *,
-          organizador:users!convites_criado_por_fkey(id, nome_completo, email)
-        `)
-        .eq('reserva_id', reserva_id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      return data as Convite[];
-    },
-    enabled: !!reserva_id,
-  });
+interface ConvitesResponse {
+  convites: Convite[];
+  stats: ConvitesStats;
 }
 
 /**
- * Hook para buscar todos os convites criados pelo usuário
+ * Hook para buscar convites do usuário logado
  */
-export function useConvites() {
-  const supabase = createClient();
-
+export function useConvites(filtroStatus?: ConviteStatus | 'todos') {
   return useQuery({
-    queryKey: ['convites'],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Usuário não autenticado');
-
-      const { data, error } = await supabase
-        .from('convites')
-        .select(`
-          *,
-          reserva:reservas(
-            id,
-            data,
-            valor_total,
-            quadra:quadras(id, nome, tipo),
-            horario:horarios(id, hora_inicio, hora_fim)
-          )
-        `)
-        .eq('criado_por', user.id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      return data as Convite[];
-    },
-  });
-}
-
-/**
- * Hook para buscar um convite específico pelo token (público)
- */
-export function useConviteByToken(token?: string) {
-  const supabase = createClient();
-
-  return useQuery({
-    queryKey: ['convite', 'token', token],
-    queryFn: async () => {
-      if (!token) return null;
-
-      const { data, error } = await supabase
-        .from('convites')
-        .select(`
-          *,
-          organizador:users!convites_criado_por_fkey(id, nome_completo, email),
-          reserva:reservas(
-            id,
-            data,
-            valor_total,
-            quadra:quadras(id, nome, tipo),
-            horario:horarios(id, hora_inicio, hora_fim)
-          )
-        `)
-        .eq('token', token)
-        .single();
-
-      if (error) throw error;
-
-      // Buscar total de aceites
-      const { data: aceites, error: aceitesError } = await supabase
-        .from('convite_aceites')
-        .select('id')
-        .eq('convite_id', data.id);
-
-      if (aceitesError) throw aceitesError;
-
-      return {
-        ...data,
-        total_aceites: aceites?.length || 0,
-      } as Convite;
-    },
-    enabled: !!token,
-  });
-}
-
-/**
- * Hook para buscar aceites de um convite
- */
-export function useConviteAceites(convite_id?: string) {
-  const supabase = createClient();
-
-  return useQuery({
-    queryKey: ['convite-aceites', convite_id],
-    queryFn: async () => {
-      if (!convite_id) return [];
-
-      const { data, error } = await supabase
-        .from('convite_aceites')
-        .select('*')
-        .eq('convite_id', convite_id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      return data as ConviteAceite[];
-    },
-    enabled: !!convite_id,
-  });
-}
-
-/**
- * Hook para criar um novo convite
- */
-export function useCreateConvite() {
-  const supabase = createClient();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (data: CreateConviteData) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Usuário não autenticado');
-
-      // Gerar token único (8 caracteres alfanuméricos)
-      const token = Math.random().toString(36).substring(2, 10).toUpperCase();
-
-      // Calcular data de expiração se fornecido dias_validade
-      let data_expiracao = null;
-      if (data.dias_validade) {
-        const dataExp = new Date();
-        dataExp.setDate(dataExp.getDate() + data.dias_validade);
-        data_expiracao = dataExp.toISOString();
+    queryKey: ['convites', filtroStatus],
+    queryFn: async (): Promise<ConvitesResponse> => {
+      const params = new URLSearchParams();
+      if (filtroStatus && filtroStatus !== 'todos') {
+        params.append('status', filtroStatus);
       }
 
-      const { data: convite, error } = await supabase
-        .from('convites')
-        .insert({
-          reserva_id: data.reserva_id,
-          criado_por: user.id,
-          token,
-          vagas_disponiveis: data.vagas_disponiveis,
-          vagas_totais: data.vagas_disponiveis,
-          mensagem: data.mensagem || null,
-          valor_por_pessoa: data.valor_por_pessoa || null,
-          data_expiracao,
-          status: 'ativo',
-          total_aceites: 0,
-        })
-        .select()
-        .single();
+      const response = await fetch(`/api/convites?${params.toString()}`);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Erro ao buscar convites');
+      }
 
-      if (error) throw error;
-      return convite;
+      const data = await response.json();
+      return {
+        convites: data.convites || [],
+        stats: data.stats || {
+          total: 0,
+          ativos: 0,
+          completos: 0,
+          expirados: 0,
+          taxaAceite: 0,
+          totalAceites: 0,
+        },
+      };
+    },
+    staleTime: 30 * 1000, // 30 segundos
+    gcTime: 5 * 60 * 1000, // 5 minutos
+  });
+}
+
+/**
+ * Hook para desativar um convite
+ */
+export function useDesativarConvite() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (conviteId: string) => {
+      const response = await fetch(`/api/convites/${conviteId}/desativar`, {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Erro ao desativar convite');
+      }
+
+      return await response.json();
     },
     onSuccess: () => {
+      toast({
+        title: 'Sucesso',
+        description: 'Convite desativado com sucesso',
+      });
       queryClient.invalidateQueries({ queryKey: ['convites'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Erro',
+        description: error.message || 'Erro ao desativar convite',
+        variant: 'destructive',
+      });
     },
   });
 }
 
 /**
- * Hook para aceitar um convite
+ * Hook para copiar link do convite
  */
-export function useAceitarConvite() {
-  const supabase = createClient();
-  const queryClient = useQueryClient();
+export function useCopiarLinkConvite() {
+  const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async ({ token, data }: { token: string; data: AceitarConviteData }) => {
-      // Buscar convite
-      const { data: convite, error: conviteError } = await supabase
-        .from('convites')
-        .select('*')
-        .eq('token', token)
-        .single();
-
-      if (conviteError) throw conviteError;
-      if (!convite) throw new Error('Convite não encontrado');
-      if (convite.status !== 'ativo') throw new Error('Convite não está mais ativo');
-      if (convite.total_aceites >= convite.vagas_disponiveis) throw new Error('Não há vagas disponíveis');
-
-      // Verificar se usuário está logado
-      const { data: { user } } = await supabase.auth.getUser();
-
-      // Criar aceite
-      const { data: aceite, error: aceiteError } = await supabase
-        .from('convite_aceites')
-        .insert({
-          convite_id: convite.id,
-          nome: data.nome,
-          email: data.email || null,
-          whatsapp: data.whatsapp || null,
-          user_id: user?.id || null,
-          confirmado: true,
-        })
-        .select()
-        .single();
-
-      if (aceiteError) throw aceiteError;
-
-      // Atualizar contador de aceites no convite
-      const novoTotal = convite.total_aceites + 1;
-      const novoStatus = novoTotal >= convite.vagas_disponiveis ? 'completo' : 'ativo';
-
-      await supabase
-        .from('convites')
-        .update({
-          total_aceites: novoTotal,
-          status: novoStatus,
-        })
-        .eq('id', convite.id);
-
-      // Adicionar como participante da reserva
-      await supabase
-        .from('reserva_participantes')
-        .insert({
-          reserva_id: convite.reserva_id,
-          nome: data.nome,
-          email: data.email || null,
-          whatsapp: data.whatsapp || null,
-          origem: 'convite',
-          convite_id: convite.id,
-          status_pagamento: 'pendente',
-        });
-
-      return aceite;
-    },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['convite', 'token', variables.token] });
-      queryClient.invalidateQueries({ queryKey: ['convite-aceites'] });
-    },
-  });
-}
-
-/**
- * Hook para cancelar/desativar um convite
- */
-export function useCancelarConvite() {
-  const supabase = createClient();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (convite_id: string) => {
-      const { error } = await supabase
-        .from('convites')
-        .update({
-          status: 'expirado',
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', convite_id);
-
-      if (error) throw error;
-      return { convite_id };
+    mutationFn: async (token: string) => {
+      const link = `${window.location.origin}/convite/${token}`;
+      await navigator.clipboard.writeText(link);
+      return { link };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['convites'] });
+      toast({
+        title: 'Link copiado!',
+        description: 'O link do convite foi copiado para a área de transferência',
+      });
+    },
+    onError: () => {
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível copiar o link',
+        variant: 'destructive',
+      });
     },
   });
 }

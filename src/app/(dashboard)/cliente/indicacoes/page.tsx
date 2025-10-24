@@ -1,10 +1,9 @@
 'use client';
 
-import { useEffect } from 'react';
-import { Loader2, RefreshCw } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
-import { useIndicacoes } from '@/hooks/useIndicacoes';
+import { useQueryClient } from '@tanstack/react-query';
+import { useIndicacoesData } from '@/hooks/core/useIndicacoes';
 import { CodigoIndicacao } from '@/components/modules/indicacoes/CodigoIndicacao';
 import { FormIndicacao } from '@/components/modules/indicacoes/FormIndicacao';
 import { ListaIndicacoes } from '@/components/modules/indicacoes/ListaIndicacoes';
@@ -15,41 +14,22 @@ import { ProgressoBonusIndicacoes } from '@/components/modules/indicacoes/Progre
 import { HistoricoIndicacoes } from '@/components/modules/indicacoes/HistoricoIndicacoes';
 import { NotificacoesIndicacao } from '@/components/modules/indicacoes/NotificacoesIndicacao';
 import { ExemplosCompartilhamento } from '@/components/modules/indicacoes/ExemplosCompartilhamento';
+import { IndicacoesPageSkeleton } from '@/components/shared/loading/IndicacoesSkeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function IndicacoesPage() {
-  const {
-    indicacoes,
-    codigo,
-    creditos,
-    estatisticas,
-    loading,
-    error,
-    recarregar,
-  } = useIndicacoes();
-  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const { codigo, indicacoes, creditos, estatisticas, isLoading, error } = useIndicacoesData();
 
+  const recarregar = () => {
+    queryClient.invalidateQueries({ queryKey: ['indicacoes'] });
+    queryClient.invalidateQueries({ queryKey: ['indicacoes-codigo'] });
+    queryClient.invalidateQueries({ queryKey: ['indicacoes-creditos'] });
+    queryClient.invalidateQueries({ queryKey: ['indicacoes-estatisticas'] });
+  };
 
-
-  useEffect(() => {
-    if (error) {
-      toast({
-        title: "Erro",
-        description: error,
-        variant: "destructive",
-      });
-    }
-  }, [error, toast]);
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Carregando sistema de indicações...</p>
-        </div>
-      </div>
-    );
+  if (isLoading) {
+    return <IndicacoesPageSkeleton />;
   }
 
   return (
@@ -70,7 +50,7 @@ export default function IndicacoesPage() {
       </div>
 
       {/* Dashboard Resumo */}
-      <DashboardIndicacoes estatisticas={estatisticas} />
+      <DashboardIndicacoes estatisticas={estatisticas || null} />
 
       {/* Conteúdo Principal com Abas */}
       <Tabs defaultValue="notificacoes" className="space-y-6">
@@ -105,7 +85,7 @@ export default function IndicacoesPage() {
             {/* Coluna Direita */}
             <div className="space-y-6">
               {/* Progresso dos Bônus */}
-              <ProgressoBonusIndicacoes estatisticas={estatisticas} />
+              <ProgressoBonusIndicacoes estatisticas={estatisticas || null} />
               
               {/* Lista de Indicações Recentes */}
               <ListaIndicacoes indicacoes={indicacoes.slice(0, 5)} />
@@ -115,14 +95,7 @@ export default function IndicacoesPage() {
 
         {/* Aba: Compartilhar */}
         <TabsContent value="compartilhar">
-          {loading ? (
-            <div className="flex items-center justify-center min-h-[400px]">
-              <div className="text-center">
-                <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-                <p className="text-muted-foreground">Carregando seu código de indicação...</p>
-              </div>
-            </div>
-          ) : codigo ? (
+          {codigo ? (
             <ExemplosCompartilhamento codigo={codigo.codigo} />
           ) : (
             <div className="flex items-center justify-center min-h-[400px]">
@@ -133,7 +106,9 @@ export default function IndicacoesPage() {
                   Tentar Novamente
                 </Button>
                 {error && (
-                  <p className="text-sm text-destructive mt-2">Erro: {error}</p>
+                  <p className="text-sm text-destructive mt-2">
+                    Erro: {error instanceof Error ? error.message : 'Erro desconhecido'}
+                  </p>
                 )}
               </div>
             </div>
@@ -147,7 +122,7 @@ export default function IndicacoesPage() {
 
         {/* Aba: Créditos */}
         <TabsContent value="creditos">
-          <CreditosIndicacao creditos={creditos} estatisticas={estatisticas} />
+          <CreditosIndicacao creditos={creditos} estatisticas={estatisticas || null} />
         </TabsContent>
       </Tabs>
     </div>

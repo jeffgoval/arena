@@ -5,13 +5,16 @@ import Link from "next/link";
 import { Users, Plus, Edit, Trash2, UserCheck, UserX, AlertCircle, Loader2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { TurmaSkeletonList } from "@/components/shared/loading/TurmaSkeleton";
 import { useTurmas, useDeleteTurma } from "@/hooks/core/useTurmas";
 import { useToast } from "@/hooks/use-toast";
+import { useErrorHandler } from "@/hooks/useErrorHandler";
 
 export default function TurmasPage() {
   const { data: turmas, isLoading } = useTurmas();
   const deleteTurma = useDeleteTurma();
-  const { toast } = useToast();
+  const { handleError, handleSuccess } = useErrorHandler();
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const handleDelete = async (id: string, nome: string) => {
@@ -20,16 +23,9 @@ export default function TurmasPage() {
     setDeletingId(id);
     try {
       await deleteTurma.mutateAsync(id);
-      toast({
-        title: "Turma excluída",
-        description: `A turma "${nome}" foi excluída com sucesso.`,
-      });
-    } catch (error: any) {
-      toast({
-        title: "Erro ao excluir turma",
-        description: error.message || "Tente novamente mais tarde.",
-        variant: "destructive",
-      });
+      handleSuccess(`A turma "${nome}" foi excluída com sucesso.`, "Turma excluída");
+    } catch (error) {
+      handleError(error, 'DeleteTurma', 'Erro ao excluir turma');
     } finally {
       setDeletingId(null);
     }
@@ -37,11 +33,23 @@ export default function TurmasPage() {
 
   if (isLoading) {
     return (
-      <div className="container-custom page-padding flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-16 h-16 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground font-semibold">Carregando turmas...</p>
+      <div className="container-custom page-padding space-y-8">
+        {/* Header */}
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="heading-2">Minhas Turmas</h1>
+            <p className="body-medium text-muted-foreground">Gerencie seus times fixos</p>
+          </div>
+          <Link href="/cliente/turmas/criar">
+            <Button className="gap-2">
+              <Plus className="w-5 h-5" />
+              Nova Turma
+            </Button>
+          </Link>
         </div>
+
+        {/* Skeleton Loading */}
+        <TurmaSkeletonList count={6} />
       </div>
     );
   }

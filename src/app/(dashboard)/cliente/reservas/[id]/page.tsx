@@ -4,6 +4,7 @@ export const runtime = 'edge';
 
 import { useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
 import Link from 'next/link';
 import {
   Calendar,
@@ -71,19 +72,21 @@ export default function GerenciarReservaPage() {
     );
   }
 
+  const { handleError, handleSuccess } = useErrorHandler();
+
   const handleCancelReserva = async () => {
     try {
       await cancelReserva.mutateAsync(id);
+      handleSuccess('Reserva cancelada com sucesso');
       router.push('/cliente/reservas');
     } catch (error) {
-      console.error('Erro ao cancelar reserva:', error);
-      alert('Erro ao cancelar reserva');
+      handleError(error, 'CancelReserva', 'Erro ao cancelar reserva');
     }
   };
 
   const handleVincularTurma = async () => {
     if (!turmaSelecionada) {
-      alert('Selecione uma turma');
+      handleError(new Error('Selecione uma turma'), 'VincularTurma');
       return;
     }
 
@@ -92,10 +95,14 @@ export default function GerenciarReservaPage() {
         reserva_id: id,
         turma_id: turmaSelecionada === 'remover' ? null : turmaSelecionada,
       });
+      handleSuccess(
+        turmaSelecionada === 'remover' 
+          ? 'Turma desvinculada com sucesso' 
+          : 'Turma vinculada com sucesso'
+      );
       setTurmaSelecionada('');
     } catch (error) {
-      console.error('Erro ao vincular turma:', error);
-      alert('Erro ao vincular turma');
+      handleError(error, 'VincularTurma', 'Erro ao vincular turma');
     }
   };
 
@@ -103,7 +110,7 @@ export default function GerenciarReservaPage() {
     e.preventDefault();
 
     if (!novoParticipante.nome) {
-      alert('Nome é obrigatório');
+      handleError(new Error('Nome é obrigatório'), 'AddParticipant');
       return;
     }
 
@@ -112,11 +119,11 @@ export default function GerenciarReservaPage() {
         reserva_id: id,
         data: novoParticipante,
       });
+      handleSuccess('Participante adicionado com sucesso');
       setNovoParticipante({ nome: '', email: '', whatsapp: '' });
       setShowAddParticipant(false);
     } catch (error) {
-      console.error('Erro ao adicionar participante:', error);
-      alert('Erro ao adicionar participante');
+      handleError(error, 'AddParticipant', 'Erro ao adicionar participante');
     }
   };
 
@@ -128,9 +135,9 @@ export default function GerenciarReservaPage() {
         reserva_id: id,
         participante_id,
       });
+      handleSuccess('Participante removido com sucesso');
     } catch (error) {
-      console.error('Erro ao remover participante:', error);
-      alert('Erro ao remover participante');
+      handleError(error, 'RemoveParticipant', 'Erro ao remover participante');
     }
   };
 

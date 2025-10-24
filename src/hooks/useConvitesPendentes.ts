@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 
 interface ConvitesPendentesData {
   count: number;
@@ -6,32 +6,27 @@ interface ConvitesPendentesData {
 }
 
 export function useConvitesPendentes(): ConvitesPendentesData {
-  const [count, setCount] = useState(0);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchConvitesPendentes = async () => {
-      try {
-        const response = await fetch('/api/convites?status=ativo');
-        
-        if (response.ok) {
-          const data = await response.json();
-          setCount(data.stats?.ativos || 0);
-        }
-      } catch (error) {
-        console.error('Erro ao buscar convites pendentes:', error);
-      } finally {
-        setLoading(false);
+  const { data, isLoading } = useQuery({
+    queryKey: ['convites-pendentes'],
+    queryFn: async () => {
+      const response = await fetch('/api/convites?status=ativo');
+      
+      if (!response.ok) {
+        throw new Error('Erro ao buscar convites pendentes');
       }
-    };
+      
+      const data = await response.json();
+      return data.stats?.ativos || 0;
+    },
+    staleTime: 30 * 1000, // 30 segundos
+    gcTime: 5 * 60 * 1000, // 5 minutos
+    refetchInterval: 60 * 1000, // Refetch a cada 1 minuto
+    refetchOnWindowFocus: true,
+    retry: 1,
+  });
 
-    fetchConvitesPendentes();
-
-    // Atualizar a cada 30 segundos
-    const interval = setInterval(fetchConvitesPendentes, 30000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  return { count, loading };
+  return { 
+    count: data || 0, 
+    loading: isLoading 
+  };
 }

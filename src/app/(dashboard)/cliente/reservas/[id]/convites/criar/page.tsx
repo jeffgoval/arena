@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { ArrowLeft, Link2, Users, MessageSquare, DollarSign, Calendar, AlertCircle } from 'lucide-react';
 import { useReserva } from '@/hooks/core/useReservas';
 import { useCreateConvite } from '@/hooks/core/useConvites';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,6 +25,8 @@ export default function CriarConvitePage() {
   const [valorSugerido, setValorSugerido] = useState<number | undefined>(undefined);
   const [diasValidade, setDiasValidade] = useState<number>(7);
 
+  const { handleError, handleSuccess } = useErrorHandler();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -36,10 +39,10 @@ export default function CriarConvitePage() {
         dias_validade: diasValidade,
       });
 
+      handleSuccess('Convite criado com sucesso!');
       router.push(`/cliente/reservas/${reserva_id}/convites`);
     } catch (error) {
-      console.error('Erro ao criar convite:', error);
-      alert('Erro ao criar convite. Tente novamente.');
+      handleError(error, 'CreateConvite', 'Erro ao criar convite. Tente novamente.');
     }
   };
 

@@ -15,67 +15,21 @@ import {
   Users,
   Star,
   Filter,
-  TrendingUp,
-  Award,
   Loader2
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { useReservas } from '@/hooks/core/useReservas';
-import { useAvaliacoes } from '@/hooks/core/useAvaliacoes';
+import { useJogos } from '@/hooks/core/useJogos';
+import { useDebounce } from '@/hooks/useDebounce';
+import { MODALIDADES, getModalidadeEmoji, getModalidadeLabel } from '@/constants/modalidades';
+import { JogoSkeletonList, JogoStatsSkeletonList } from '@/components/shared/loading/JogoSkeleton';
 
 export default function JogosPage() {
-  const { data: reservasData, isLoading: isLoadingReservas } = useReservas();
-  const { data: avaliacoesData } = useAvaliacoes();
-
   const [filtroModalidade, setFiltroModalidade] = useState('todas');
   const [busca, setBusca] = useState('');
+  const debouncedBusca = useDebounce(busca, 300);
 
-  // Filter only past reservations (completed games)
-  const hoje = new Date();
-  const jogosPassados = reservasData?.filter((reserva: any) => {
-    const dataReserva = parseISO(reserva.data);
-    return dataReserva < hoje && reserva.status === 'confirmada';
-  }).sort((a: any, b: any) => {
-    return parseISO(b.data).getTime() - parseISO(a.data).getTime(); // Most recent first
-  }) || [];
-
-  const modalidades = [
-    { value: 'society', label: 'Society', emoji: '⚽' },
-    { value: 'beach_tennis', label: 'Beach Tennis', emoji: '🎾' },
-    { value: 'volei', label: 'Vôlei', emoji: '🏐' },
-    { value: 'futvolei', label: 'Futevôlei', emoji: '⚽🏐' }
-  ];
-
-  const jogosFiltrados = jogosPassados.filter((jogo: any) => {
-    const modalidadeOk = filtroModalidade === 'todas' || jogo.quadra?.tipo === filtroModalidade;
-    const buscaOk = busca === '' ||
-      jogo.quadra?.nome?.toLowerCase().includes(busca.toLowerCase());
-
-    return modalidadeOk && buscaOk;
-  });
-
-  // Estatísticas
-  const totalJogos = jogosPassados.length;
-
-  // Get ratings for these games
-  const avaliacoesMap = new Map();
-  avaliacoesData?.forEach((aval: any) => {
-    avaliacoesMap.set(aval.reserva_id, aval.nota);
-  });
-
-  const jogosComAvaliacao = jogosPassados.filter((j: any) => avaliacoesMap.has(j.id));
-  const avaliacaoMedia = jogosComAvaliacao.length > 0
-    ? jogosComAvaliacao.reduce((acc: number, j: any) => acc + avaliacoesMap.get(j.id), 0) / jogosComAvaliacao.length
-    : 0;
-
-  const getModalidadeEmoji = (tipo: string) => {
-    return modalidades.find(m => m.value === tipo)?.emoji || '🏃';
-  };
-
-  const getModalidadeLabel = (tipo: string) => {
-    return modalidades.find(m => m.value === tipo)?.label || tipo;
-  };
+  const { jogos, stats, isLoading } = useJogos(filtroModalidade, debouncedBusca);
 
   const renderEstrelas = (avaliacao?: number) => {
     if (!avaliacao) return <span className="text-muted-foreground text-sm">Não avaliado</span>;
@@ -92,13 +46,40 @@ export default function JogosPage() {
     );
   };
 
-  if (isLoadingReservas) {
+  if (isLoading) {
     return (
-      <div className="container-custom page-padding">
-        <div className="text-center py-12">
-          <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Carregando jogos...</p>
+      <div className="container-custom page-padding space-y-8">
+        <div>
+          <h1 className="heading-2 flex items-center gap-3">
+            <Trophy className="w-8 h-8 text-primary" />
+            Meus Jogos
+          </h1>
+          <p className="body-medium text-muted-foreground">
+            Histórico completo dos seus jogos e estatísticas
+          </p>
         </div>
+
+        {/* Skeleton Estatísticas */}
+        <JogoStatsSkeletonList />
+
+        {/* Skeleton Filtros */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Filter className="w-5 h-5" />
+              Filtros
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="h-10 bg-muted rounded animate-pulse" />
+              <div className="h-10 bg-muted rounded animate-pulse" />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Skeleton Lista */}
+        <JogoSkeletonList />
       </div>
     );
   }
@@ -119,40 +100,40 @@ export default function JogosPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4 text-center">
-            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
-              <Trophy className="w-6 h-6 text-blue-600" />
+            <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-2">
+              <Trophy className="w-6 h-6 text-primary" />
             </div>
-            <div className="text-2xl font-bold">{totalJogos}</div>
+            <div className="text-2xl font-bold">{stats?.totalJogos || 0}</div>
             <div className="text-sm text-muted-foreground">Jogos Realizados</div>
           </CardContent>
         </Card>
 
         <Card>
           <CardContent className="p-4 text-center">
-            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
-              <Calendar className="w-6 h-6 text-green-600" />
+            <div className="w-12 h-12 bg-success/10 rounded-full flex items-center justify-center mx-auto mb-2">
+              <Calendar className="w-6 h-6 text-success" />
             </div>
-            <div className="text-2xl font-bold text-green-600">{jogosComAvaliacao.length}</div>
+            <div className="text-2xl font-bold text-success">{stats?.jogosAvaliados || 0}</div>
             <div className="text-sm text-muted-foreground">Avaliados</div>
           </CardContent>
         </Card>
 
         <Card>
           <CardContent className="p-4 text-center">
-            <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-2">
-              <MapPin className="w-6 h-6 text-orange-600" />
+            <div className="w-12 h-12 bg-warning/10 rounded-full flex items-center justify-center mx-auto mb-2">
+              <MapPin className="w-6 h-6 text-warning" />
             </div>
-            <div className="text-2xl font-bold">{new Set(jogosPassados.map((j: any) => j.quadra?.nome)).size}</div>
+            <div className="text-2xl font-bold">{stats?.quadrasUsadas || 0}</div>
             <div className="text-sm text-muted-foreground">Quadras Usadas</div>
           </CardContent>
         </Card>
 
         <Card>
           <CardContent className="p-4 text-center">
-            <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-2">
-              <Star className="w-6 h-6 text-purple-600" />
+            <div className="w-12 h-12 bg-secondary/10 rounded-full flex items-center justify-center mx-auto mb-2">
+              <Star className="w-6 h-6 text-secondary" />
             </div>
-            <div className="text-2xl font-bold">{avaliacaoMedia > 0 ? avaliacaoMedia.toFixed(1) : '-'}</div>
+            <div className="text-2xl font-bold">{stats?.avaliacaoMedia && stats.avaliacaoMedia > 0 ? stats.avaliacaoMedia.toFixed(1) : '-'}</div>
             <div className="text-sm text-muted-foreground">Avaliação Média</div>
           </CardContent>
         </Card>
@@ -183,7 +164,7 @@ export default function JogosPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="todas">Todas as modalidades</SelectItem>
-                  {modalidades.map(modalidade => (
+                  {MODALIDADES.map(modalidade => (
                     <SelectItem key={modalidade.value} value={modalidade.value}>
                       {modalidade.emoji} {modalidade.label}
                     </SelectItem>
@@ -197,9 +178,8 @@ export default function JogosPage() {
 
       {/* Lista de Jogos */}
       <div className="space-y-4">
-        {jogosFiltrados.map((jogo: any) => {
+        {jogos.map((jogo: any) => {
           const dataReserva = parseISO(jogo.data);
-          const avaliacao = avaliacoesMap.get(jogo.id);
           const totalParticipantes = jogo.reserva_participantes?.length || 0;
 
           return (
@@ -245,7 +225,7 @@ export default function JogosPage() {
 
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium">Avaliação: </span>
-                      {renderEstrelas(avaliacao)}
+                      {renderEstrelas(jogo.avaliacao)}
                     </div>
                   </div>
 
@@ -267,13 +247,13 @@ export default function JogosPage() {
           );
         })}
 
-        {jogosFiltrados.length === 0 && (
+        {jogos.length === 0 && (
           <Card>
             <CardContent className="p-12 text-center">
               <Trophy className="w-12 h-12 text-muted-foreground/20 mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">Nenhum jogo encontrado</h3>
               <p className="text-muted-foreground mb-4">
-                {totalJogos === 0
+                {stats?.totalJogos === 0
                   ? 'Você ainda não jogou nenhuma partida. Faça sua primeira reserva!'
                   : 'Não há jogos que correspondam aos filtros selecionados.'}
               </p>
