@@ -162,11 +162,21 @@ export default function CreditosPage() {
   );
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Meus Créditos</h1>
-        <p className="text-gray-600">Gerencie seus créditos e histórico de transações</p>
-      </div>
+    <div className="container-custom page-padding space-y-6">
+      {/* Cabeçalho */}
+      <Card className="border-0 shadow-soft">
+        <CardContent className="p-6">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+              <Coins className="w-6 h-6 text-primary" />
+            </div>
+            <div>
+              <h1 className="heading-2">Meus Créditos</h1>
+              <p className="text-muted-foreground">Gerencie seus créditos e histórico de transações</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Cards de Saldo */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
