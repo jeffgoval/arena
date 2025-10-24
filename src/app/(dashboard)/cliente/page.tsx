@@ -4,11 +4,30 @@ import Link from "next/link";
 import { Calendar, Users, Trophy, CreditCard, Plus, Target, MessageSquare, Loader2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useUser } from "@/hooks/auth/useUser";
+import { useReservas } from "@/hooks/core/useReservas";
+import { useTurmas } from "@/hooks/core/useTurmas";
+import { format, parseISO } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 export default function ClienteDashboard() {
-  // Simulação de dados - em produção viria de hooks/API
-  const reservasFuturas: any[] = [];
-  const isLoadingReservas = false;
+  const { data: user, isLoading: isLoadingUser } = useUser();
+  const { data: reservasData, isLoading: isLoadingReservas } = useReservas();
+  const { data: turmasData, isLoading: isLoadingTurmas } = useTurmas();
+
+  // Filtrar apenas reservas futuras
+  const hoje = new Date();
+  const reservasFuturas = reservasData?.filter((reserva: any) => {
+    const dataReserva = parseISO(reserva.data);
+    return dataReserva >= hoje;
+  }).sort((a: any, b: any) => {
+    return parseISO(a.data).getTime() - parseISO(b.data).getTime();
+  }) || [];
+
+  const proximaReserva = reservasFuturas[0];
+
+  const saldoCreditos = user?.profile?.saldo_creditos || 0;
+  const totalTurmas = turmasData?.length || 0;
 
   const stats = [
     {
@@ -19,23 +38,27 @@ export default function ClienteDashboard() {
       bgColor: "bg-primary/10",
     },
     {
-      title: "Minhas Turmas", 
-      value: "-",
+      title: "Minhas Turmas",
+      value: totalTurmas,
       icon: Users,
       color: "text-secondary",
       bgColor: "bg-secondary/10",
     },
     {
       title: "Créditos Disponíveis",
-      value: "R$ 0,00",
+      value: `R$ ${saldoCreditos.toFixed(2)}`,
       icon: CreditCard,
       color: "text-accent",
       bgColor: "bg-accent/10",
     },
     {
       title: "Próximo Jogo",
-      value: "Sem jogos",
-      subtitle: "Crie sua primeira reserva",
+      value: proximaReserva
+        ? format(parseISO(proximaReserva.data), "dd/MM", { locale: ptBR })
+        : "Sem jogos",
+      subtitle: proximaReserva
+        ? `${proximaReserva.horario?.hora_inicio || ''} - ${proximaReserva.quadra?.nome || ''}`
+        : "Crie sua primeira reserva",
       icon: Target,
       color: "text-primary-foreground",
       bgColor: "bg-gradient-to-br from-primary to-secondary",
@@ -54,14 +77,6 @@ export default function ClienteDashboard() {
       isGradient: true,
     },
     {
-      title: "Criar Turma",
-      description: "Monte seu time fixo",
-      href: "/cliente/turmas/criar",
-      icon: Users,
-      color: "text-secondary",
-      bgColor: "bg-secondary/10",
-    },
-    {
       title: "Minhas Reservas",
       description: "Gerencie suas reservas",
       href: "/cliente/reservas",
@@ -78,7 +93,7 @@ export default function ClienteDashboard() {
       bgColor: "bg-secondary/10",
     },
     {
-      title: "Convites Criados",
+      title: "Meus Convites",
       description: "Gerencie seus convites",
       href: "/cliente/convites",
       icon: MessageSquare,
@@ -86,21 +101,42 @@ export default function ClienteDashboard() {
       bgColor: "bg-accent/10",
     },
     {
-      title: "Meu Saldo",
-      description: "Compre créditos",
+      title: "Indicações",
+      description: "Indique amigos e ganhe",
+      href: "/cliente/indicacoes",
+      icon: Target,
+      color: "text-success",
+      bgColor: "bg-success/10",
+    },
+    {
+      title: "Meus Créditos",
+      description: "Gerencie seu saldo",
       href: "/cliente/creditos",
       icon: CreditCard,
-      color: "text-accent",
-      bgColor: "bg-accent/10",
+      color: "text-warning",
+      bgColor: "bg-warning/10",
     },
   ];
+
+  const isLoading = isLoadingUser || isLoadingReservas || isLoadingTurmas;
+
+  if (isLoading) {
+    return (
+      <div className="container-custom page-padding">
+        <div className="text-center py-12">
+          <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">Carregando dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container-custom page-padding space-y-8">
       {/* Welcome Banner */}
       <Card className="border-0 shadow-soft">
         <CardHeader>
-          <CardTitle className="heading-2">Dashboard do Cliente 👋</CardTitle>
+          <CardTitle className="heading-2">Bem-vindo, {user?.profile?.nome_completo?.split(' ')[0] || 'Cliente'}! 👋</CardTitle>
           <CardDescription className="body-large">
             Pronto para organizar seu próximo jogo?
           </CardDescription>
@@ -170,35 +206,42 @@ export default function ClienteDashboard() {
           <CardTitle className="heading-3">Próximas Reservas</CardTitle>
         </CardHeader>
         <CardContent>
-          {isLoadingReservas ? (
-            <div className="text-center py-8">
-              <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
-              <p className="text-muted-foreground">Carregando reservas...</p>
-            </div>
-          ) : reservasFuturas && reservasFuturas.length > 0 ? (
+          {reservasFuturas && reservasFuturas.length > 0 ? (
             <div className="space-y-4">
-              {reservasFuturas.slice(0, 3).map((reserva, index) => (
-                <Link key={index} href={`/cliente/reservas/${reserva.id}`}>
-                  <Card className="card-interactive border-0 shadow-soft">
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-4">
-                        <div className="w-16 h-16 rounded-xl bg-primary/10 flex flex-col items-center justify-center flex-shrink-0">
-                          <p className="text-xs font-semibold text-primary">SEG</p>
-                          <p className="text-2xl font-bold text-primary">15</p>
+              {reservasFuturas.slice(0, 3).map((reserva: any) => {
+                const dataReserva = parseISO(reserva.data);
+                const diaSemana = format(dataReserva, "EEE", { locale: ptBR }).toUpperCase().substring(0, 3);
+                const dia = format(dataReserva, "dd");
+
+                return (
+                  <Link key={reserva.id} href={`/cliente/reservas/${reserva.id}`}>
+                    <Card className="card-interactive border-0 shadow-soft">
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-4">
+                          <div className="w-16 h-16 rounded-xl bg-primary/10 flex flex-col items-center justify-center flex-shrink-0">
+                            <p className="text-xs font-semibold text-primary">{diaSemana}</p>
+                            <p className="text-2xl font-bold text-primary">{dia}</p>
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="font-bold text-foreground">{reserva.quadra?.nome || 'Quadra'}</h4>
+                            <p className="text-sm text-muted-foreground">
+                              {reserva.horario?.hora_inicio} - {reserva.horario?.hora_fim}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-lg font-bold text-primary">
+                              R$ {reserva.valor_total?.toFixed(2) || '0,00'}
+                            </p>
+                            <p className="text-xs text-muted-foreground capitalize">
+                              {reserva.status || 'Pendente'}
+                            </p>
+                          </div>
                         </div>
-                        <div className="flex-1">
-                          <h4 className="font-bold text-foreground">Quadra Society 1</h4>
-                          <p className="text-sm text-muted-foreground">19:00 - 20:00</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-lg font-bold text-primary">R$ 80,00</p>
-                          <p className="text-xs text-muted-foreground">Confirmada</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
+                      </CardContent>
+                    </Card>
+                  </Link>
+                );
+              })}
             </div>
           ) : (
             <div className="text-center py-12">
