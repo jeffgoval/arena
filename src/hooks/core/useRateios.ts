@@ -4,6 +4,22 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { rateioService } from '@/services/core/rateios.service';
+import axios from 'axios';
+import { useToast } from '@/hooks/use-toast';
+
+// Types
+interface RateioConfig {
+  reservationId: string;
+  totalValue: number;
+  participantsCount: number;
+  mode: 'percentual' | 'valor_fixo';
+}
+
+interface RateioValidation {
+  isValid: boolean;
+  errors?: string[];
+  warnings?: string[];
+}
 
 export const useRateioConfiguration = (reservaId: string) => {
   return useQuery({
@@ -36,7 +52,7 @@ export const useSaveRateioConfiguration = () => {
   });
 };
 
-export const useValidateRateio = () => {
+export const useValidateRateioMutation = () => {
   return useMutation({
     mutationFn: ({
       participants,
@@ -71,7 +87,7 @@ export function useRateioSummary(reservationId: string | null) {
  */
 export function useValidateRateio() {
   return (config: RateioConfig): RateioValidation => {
-    return rateiosService.validateRateio(config);
+    return rateioService.validateRateio(config);
   };
 }
 
@@ -142,7 +158,7 @@ export function useAutoDistributeRateio() {
     participantsCount: number;
     mode: 'percentual' | 'valor_fixo';
   }) => {
-    return rateiosService.autoDistribute(config);
+    return rateioService.autoDistribute(config);
   };
 }
 
@@ -151,6 +167,6 @@ export function useAutoDistributeRateio() {
  */
 export function useCalculateParticipantAmounts() {
   return (config: RateioConfig) => {
-    return rateiosService.calculateParticipantAmounts(config);
+    return rateioService.calculateParticipantAmounts(config);
   };
 }
