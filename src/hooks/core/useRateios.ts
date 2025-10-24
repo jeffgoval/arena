@@ -55,12 +55,14 @@ export const useSaveRateioConfiguration = () => {
 export const useValidateRateioMutation = () => {
   return useMutation({
     mutationFn: ({
+      reservaId,
       participants,
       splitMode,
     }: {
+      reservaId: string;
       participants: any[];
       splitMode: any;
-    }) => Promise.resolve(rateioService.validateRateio(participants, splitMode)),
+    }) => rateioService.validateRateio(reservaId, participants, splitMode),
   });
 };
 
@@ -84,10 +86,36 @@ export function useRateioSummary(reservationId: string | null) {
 
 /**
  * Validate rateio configuration (client-side only, no save)
+ * Note: This is a simplified client-side validation.
+ * For full validation with database checks, use useValidateRateioMutation.
  */
 export function useValidateRateio() {
   return (config: RateioConfig): RateioValidation => {
-    return rateioService.validateRateio(config);
+    // Client-side validation logic
+    const errors: string[] = [];
+    const warnings: string[] = [];
+
+    if (!config.reservationId) {
+      errors.push('Reservation ID is required');
+    }
+
+    if (config.totalValue <= 0) {
+      errors.push('Total value must be greater than 0');
+    }
+
+    if (config.participantsCount <= 0) {
+      errors.push('At least one participant is required');
+    }
+
+    if (!['percentual', 'valor_fixo'].includes(config.mode)) {
+      errors.push('Invalid split mode');
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors: errors.length > 0 ? errors : undefined,
+      warnings: warnings.length > 0 ? warnings : undefined,
+    };
   };
 }
 
@@ -158,7 +186,20 @@ export function useAutoDistributeRateio() {
     participantsCount: number;
     mode: 'percentual' | 'valor_fixo';
   }) => {
-    return rateioService.autoDistribute(config);
+    // Client-side auto-distribution logic
+    if (config.mode === 'percentual') {
+      const percentPerParticipant = 100 / config.participantsCount;
+      return {
+        splitValue: parseFloat(percentPerParticipant.toFixed(2)),
+        mode: 'percentual' as const,
+      };
+    } else {
+      const valuePerParticipant = config.totalValue / config.participantsCount;
+      return {
+        splitValue: parseFloat(valuePerParticipant.toFixed(2)),
+        mode: 'valor_fixo' as const,
+      };
+    }
   };
 }
 
@@ -167,6 +208,22 @@ export function useAutoDistributeRateio() {
  */
 export function useCalculateParticipantAmounts() {
   return (config: RateioConfig) => {
-    return rateioService.calculateParticipantAmounts(config);
+    // Client-side calculation logic
+    const amountPerParticipant = config.totalValue / config.participantsCount;
+
+    if (config.mode === 'percentual') {
+      const percentPerParticipant = 100 / config.participantsCount;
+      return {
+        perParticipant: parseFloat(amountPerParticipant.toFixed(2)),
+        splitValue: parseFloat(percentPerParticipant.toFixed(2)),
+        mode: 'percentual' as const,
+      };
+    } else {
+      return {
+        perParticipant: parseFloat(amountPerParticipant.toFixed(2)),
+        splitValue: parseFloat(amountPerParticipant.toFixed(2)),
+        mode: 'valor_fixo' as const,
+      };
+    }
   };
 }

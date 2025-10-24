@@ -4,16 +4,16 @@ import { createClient } from '@/lib/supabase/server';
 export const runtime = 'edge';
 
 /**
- * GET /api/reservas/[reservaId]/info
+ * GET /api/reservas/[id]/info
  * Obter informações básicas da reserva para avaliação
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ reservaId: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient();
-    
+
     // Verificar autenticação
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
@@ -23,7 +23,7 @@ export async function GET(
       );
     }
 
-    const { reservaId } = await params;
+    const { id: reservaId } = await params;
 
     // Buscar reserva
     const { data: reserva, error: reservaError } = await supabase
@@ -68,7 +68,7 @@ export async function GET(
       .single();
 
     const quadra = Array.isArray(reserva.quadra) ? reserva.quadra[0] : reserva.quadra;
-    
+
     const info = {
       id: reserva.id,
       quadra_nome: quadra?.nome || 'Quadra',
