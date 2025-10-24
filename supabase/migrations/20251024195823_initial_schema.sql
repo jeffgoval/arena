@@ -42,10 +42,26 @@ ALTER TABLE users
   ADD COLUMN IF NOT EXISTS user_type TEXT CHECK (user_type IN ('organizer', 'guest', 'both')),
   ADD COLUMN IF NOT EXISTS balance DECIMAL(10,2) DEFAULT 0;
 
--- 5. Add constraints for unique CPF and RG
-ALTER TABLE users
-  ADD CONSTRAINT IF NOT EXISTS users_cpf_unique UNIQUE (cpf),
-  ADD CONSTRAINT IF NOT EXISTS users_rg_unique UNIQUE (rg);
+-- 5. Add constraints for unique CPF and RG (without IF NOT EXISTS)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'users_cpf_unique'
+  ) THEN
+    ALTER TABLE users ADD CONSTRAINT users_cpf_unique UNIQUE (cpf);
+  END IF;
+END
+$$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'users_rg_unique'
+  ) THEN
+    ALTER TABLE users ADD CONSTRAINT users_rg_unique UNIQUE (rg);
+  END IF;
+END
+$$;
 
 -- 6. Update invitations table structure
 ALTER TABLE convites

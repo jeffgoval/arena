@@ -65,23 +65,49 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- 4. Trigger to decrement filled_slots when invitation is accepted
-CREATE TRIGGER trigger_decrement_convite_filled_slots
-  AFTER INSERT ON aceites_convite
-  FOR EACH ROW
-  EXECUTE FUNCTION decrement_convite_filled_slots();
+-- Only create if it doesn't exist
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_trigger WHERE tgname = 'trigger_decrement_convite_filled_slots'
+  ) THEN
+    CREATE TRIGGER trigger_decrement_convite_filled_slots
+      AFTER INSERT ON aceites_convite
+      FOR EACH ROW
+      EXECUTE FUNCTION decrement_convite_filled_slots();
+  END IF;
+END
+$$;
 
 -- 5. Trigger to update user balance after credit transaction
-CREATE TRIGGER trigger_update_user_balance
-  AFTER INSERT OR UPDATE ON transacoes_credito
-  FOR EACH ROW
-  EXECUTE FUNCTION update_user_balance();
+-- Only create if it doesn't exist
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_trigger WHERE tgname = 'trigger_update_user_balance'
+  ) THEN
+    CREATE TRIGGER trigger_update_user_balance
+      AFTER INSERT OR UPDATE ON transacoes_credito
+      FOR EACH ROW
+      EXECUTE FUNCTION update_user_balance();
+  END IF;
+END
+$$;
 
 -- 6. Trigger to calculate rateio amount automatically
 -- This trigger would need to be adjusted based on your specific table structure
--- CREATE TRIGGER trigger_calculate_rateio_amount
---   BEFORE INSERT OR UPDATE ON reserva_participantes
---   FOR EACH ROW
---   EXECUTE FUNCTION calculate_rateio_amount();
+-- DO $$
+-- BEGIN
+--   IF NOT EXISTS (
+--     SELECT 1 FROM pg_trigger WHERE tgname = 'trigger_calculate_rateio_amount'
+--   ) THEN
+--     CREATE TRIGGER trigger_calculate_rateio_amount
+--       BEFORE INSERT OR UPDATE ON reserva_participantes
+--       FOR EACH ROW
+--       EXECUTE FUNCTION calculate_rateio_amount();
+--   END IF;
+-- END
+-- $$;
 
 -- 7. Additional indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_aceites_convite_convite_id ON aceites_convite(convite_id);
