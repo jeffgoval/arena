@@ -84,10 +84,10 @@ export function SignupForm({ onSubmit, loading = false, codigoIndicacaoInicial }
   };
 
   return (
-    <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4">
+    <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-3">
       {/* Dados Pessoais */}
-      <div className="space-y-3">
-        <h3 className="font-semibold text-foreground text-sm flex items-center gap-2">
+      <div className="space-y-2">
+        <h3 className="font-semibold text-foreground text-sm flex items-center gap-2 mb-2">
           <User className="w-4 h-4" />
           Dados Pessoais
         </h3>
@@ -106,7 +106,7 @@ export function SignupForm({ onSubmit, loading = false, codigoIndicacaoInicial }
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-2">
           <div>
             <Label htmlFor="cpf">CPF *</Label>
             <Input
@@ -160,8 +160,8 @@ export function SignupForm({ onSubmit, loading = false, codigoIndicacaoInicial }
       </div>
 
       {/* Contato */}
-      <div className="space-y-3">
-        <h3 className="font-semibold text-foreground text-sm flex items-center gap-2">
+      <div className="space-y-2">
+        <h3 className="font-semibold text-foreground text-sm flex items-center gap-2 mb-2">
           <Phone className="w-4 h-4" />
           Contato
         </h3>
@@ -202,8 +202,8 @@ export function SignupForm({ onSubmit, loading = false, codigoIndicacaoInicial }
       </div>
 
       {/* Endereço */}
-      <div className="space-y-3">
-        <h3 className="font-semibold text-foreground text-sm flex items-center gap-2">
+      <div className="space-y-2">
+        <h3 className="font-semibold text-foreground text-sm flex items-center gap-2 mb-2">
           <MapPin className="w-4 h-4" />
           Endereço
         </h3>
@@ -256,7 +256,7 @@ export function SignupForm({ onSubmit, loading = false, codigoIndicacaoInicial }
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-2">
           <div>
             <Label htmlFor="numero">Número *</Label>
             <Input
@@ -281,7 +281,7 @@ export function SignupForm({ onSubmit, loading = false, codigoIndicacaoInicial }
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-2">
           <div>
             <Label htmlFor="bairro">Bairro *</Label>
             <Input
@@ -328,8 +328,8 @@ export function SignupForm({ onSubmit, loading = false, codigoIndicacaoInicial }
       </div>
 
       {/* Código de Indicação */}
-      <div className="space-y-3">
-        <h3 className="font-semibold text-foreground text-sm flex items-center gap-2">
+      <div className="space-y-2">
+        <h3 className="font-semibold text-foreground text-sm flex items-center gap-2 mb-2">
           <Gift className="w-4 h-4" />
           Código de Indicação (Opcional)
         </h3>
@@ -351,8 +351,8 @@ export function SignupForm({ onSubmit, loading = false, codigoIndicacaoInicial }
       </div>
 
       {/* Senha */}
-      <div className="space-y-3">
-        <h3 className="font-semibold text-foreground text-sm flex items-center gap-2">
+      <div className="space-y-2">
+        <h3 className="font-semibold text-foreground text-sm flex items-center gap-2 mb-2">
           <Lock className="w-4 h-4" />
           Segurança
         </h3>
