@@ -1,22 +1,29 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Star, Quote } from "lucide-react";
 
 const testimonials = [
   {
     avatar: "CS",
+    name: "Carlos Silva",
+    role: "Jogador regular",
     text: "Melhor arena de GV! Gramado impecável, iluminação ótima e o sistema de reserva online facilita demais.",
-    author: "Carlos Silva, jogador regular",
+    rating: 5,
   },
   {
-    avatar: "RF",
+    avatar: "RF", 
+    name: "Ricardo Fernandes",
+    role: "Organizador de peladas",
     text: "Jogo todo sábado com minha turma na Arena Dona Santa. A estrutura é top e o atendimento é show!",
-    author: "Ricardo Fernandes, organizador de peladas",
+    rating: 5,
   },
   {
     avatar: "MP",
+    name: "Marcelo Pereira", 
+    role: "Cliente desde 2024",
     text: "Adorei poder reservar pelo celular e dividir o valor automaticamente. Muito mais prático que antes!",
-    author: "Marcelo Pereira, cliente desde 2024",
+    rating: 5,
   },
 ];
 
@@ -26,57 +33,102 @@ export function Testimonials() {
   useEffect(() => {
     const interval = setInterval(() => {
       setActiveIndex((current) => (current + 1) % testimonials.length);
-    }, 5000);
+    }, 6000);
 
     return () => clearInterval(interval);
   }, []);
 
   return (
-    <section className="section-padding bg-white">
+    <section className="section-padding bg-muted/30">
       <div className="container-custom">
-        <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 fade-in">
-          O Que Nossos Jogadores Dizem
-        </h2>
+        <div className="text-center mb-16">
+          <h2 className="text-4xl md:text-5xl font-bold mb-4 fade-in">
+            O Que Nossos Jogadores Dizem
+          </h2>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            Depoimentos reais de quem já joga na Arena Dona Santa
+          </p>
+        </div>
 
-        <div className="max-w-4xl mx-auto">
-          <div className="relative min-h-[300px] flex items-center justify-center">
-            {testimonials.map((testimonial, index) => (
-              <div
-                key={index}
-                className={`testimonial-item ${
-                  index === activeIndex ? "active" : ""
-                }`}
-              >
-                <div className="bg-gray rounded-2xl p-8 md:p-12 text-center">
-                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white text-xl font-bold mx-auto mb-6">
-                    {testimonial.avatar}
+        {/* Desktop: Carousel */}
+        <div className="hidden md:block max-w-4xl mx-auto">
+          <div className="relative overflow-hidden rounded-2xl">
+            <div 
+              className="flex transition-transform duration-500 ease-in-out"
+              style={{ transform: `translateX(-${activeIndex * 100}%)` }}
+            >
+              {testimonials.map((testimonial, index) => (
+                <div key={index} className="w-full flex-shrink-0">
+                  <div className="bg-card border border-border rounded-2xl p-8 md:p-12 mx-4 shadow-soft">
+                    <div className="text-center">
+                      <Quote className="w-12 h-12 text-primary/20 mx-auto mb-6" />
+                      
+                      <p className="text-xl md:text-2xl text-foreground/90 mb-8 leading-relaxed font-medium">
+                        "{testimonial.text}"
+                      </p>
+                      
+                      <div className="flex items-center justify-center gap-4">
+                        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white text-xl font-bold">
+                          {testimonial.avatar}
+                        </div>
+                        <div className="text-left">
+                          <div className="font-semibold text-foreground">{testimonial.name}</div>
+                          <div className="text-sm text-muted-foreground">{testimonial.role}</div>
+                          <div className="flex gap-1 mt-1">
+                            {Array.from({ length: testimonial.rating }).map((_, i) => (
+                              <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <p className="text-xl md:text-2xl text-dark/90 italic mb-6 leading-relaxed">
-                    "{testimonial.text}"
-                  </p>
-                  <span className="text-dark/60 font-medium">
-                    {testimonial.author}
-                  </span>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
 
-          {/* Dots indicator */}
-          <div className="flex justify-center gap-2 mt-8">
+          {/* Navigation dots */}
+          <div className="flex justify-center gap-3 mt-8">
             {testimonials.map((_, index) => (
               <button
                 key={index}
                 onClick={() => setActiveIndex(index)}
-                className={`w-2 h-2 rounded-full transition-all ${
+                className={`transition-all duration-300 ${
                   index === activeIndex
-                    ? "bg-primary w-8"
-                    : "bg-dark/20 hover:bg-dark/40"
+                    ? "w-8 h-3 bg-primary rounded-full"
+                    : "w-3 h-3 bg-muted-foreground/30 rounded-full hover:bg-muted-foreground/50"
                 }`}
                 aria-label={`Ver depoimento ${index + 1}`}
               />
             ))}
           </div>
+        </div>
+
+        {/* Mobile: Grid */}
+        <div className="md:hidden grid gap-6">
+          {testimonials.map((testimonial, index) => (
+            <div key={index} className="bg-card border border-border rounded-xl p-6 shadow-soft">
+              <div className="flex items-start gap-4 mb-4">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                  {testimonial.avatar}
+                </div>
+                <div className="flex-1">
+                  <div className="font-semibold text-foreground">{testimonial.name}</div>
+                  <div className="text-sm text-muted-foreground">{testimonial.role}</div>
+                  <div className="flex gap-1 mt-1">
+                    {Array.from({ length: testimonial.rating }).map((_, i) => (
+                      <Star key={i} className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                    ))}
+                  </div>
+                </div>
+              </div>
+              
+              <p className="text-foreground/90 leading-relaxed">
+                "{testimonial.text}"
+              </p>
+            </div>
+          ))}
         </div>
       </div>
     </section>
