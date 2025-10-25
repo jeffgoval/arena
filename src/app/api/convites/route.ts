@@ -85,7 +85,7 @@ export async function GET(request: NextRequest) {
     const convitesComAceites = await Promise.all(
       (convites || []).map(async (convite) => {
         const { count } = await supabase
-          .from('aceites_convite')
+          .from('convite_aceites')
           .select('*', { count: 'exact', head: true })
           .eq('convite_id', convite.id)
           .eq('confirmado', true);

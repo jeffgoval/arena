@@ -57,8 +57,7 @@ export function useReservasGestor(filtros?: {
           horario:horarios(id, dia_semana, hora_inicio, hora_fim),
           organizador:users!reservas_organizador_id_fkey(id, nome_completo, email, telefone)
         `)
-        .order('data', { ascending: true })
-        .order('horario(hora_inicio)', { ascending: true });
+        .order('data', { ascending: true });
 
       // Aplicar filtros
       if (filtros?.data_inicio) {
