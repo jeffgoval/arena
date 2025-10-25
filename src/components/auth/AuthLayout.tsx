@@ -6,8 +6,8 @@ interface AuthLayoutProps {
 
 export function AuthLayout({ children, mode, onModeChange }: AuthLayoutProps) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/10 via-secondary/5 to-accent/10 flex items-center justify-center p-4 py-8">
-      <div className="w-full max-w-md my-auto">
+    <div className="min-h-screen bg-gradient-to-br from-primary/10 via-secondary/5 to-accent/10 py-8 px-4">
+      <div className="w-full max-w-md mx-auto">
         {/* Card */}
         <div className="bg-white rounded-2xl shadow-2xl overflow-hidden border-2 border-dark/5">
           {/* Header */}
