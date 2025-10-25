@@ -67,7 +67,7 @@ export const relatoriosService = {
         data,
         valor_total,
         quadra_id,
-        quadras!inner(id, nome)
+        quadras!reservas_quadra_id_fkey(id, nome)
       `)
       .eq('status', 'confirmada')
       .gte('data', inicio.toISOString())
@@ -148,7 +148,7 @@ export const relatoriosService = {
         id,
         nome_completo,
         created_at,
-        reservas!organizador_id(
+        reservas!reservas_organizador_id_fkey(
           id,
           data,
           status
@@ -236,9 +236,9 @@ export const relatoriosService = {
         id,
         reserva_id,
         status,
-        reservas!inner(
+        reservas!convites_reserva_id_fkey(
           quadra_id,
-          quadras(nome)
+          quadras!reservas_quadra_id_fkey(nome)
         )
       `);
 

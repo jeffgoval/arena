@@ -23,13 +23,13 @@ export async function GET() {
 
     // Buscar todas as avaliações
     const { data: avaliacoes, error } = await supabase
-      .from('reviews')
+      .from('avaliacoes')
       .select(`
         id,
         rating,
-        reserva:reservations!reviews_reserva_id_fkey(
+        reserva:reservas!avaliacoes_reserva_id_fkey(
           quadra_id,
-          quadra:courts!reservations_quadra_id_fkey(id, nome)
+          quadra:quadras!reservas_quadra_id_fkey(id, nome)
         )
       `);
 
