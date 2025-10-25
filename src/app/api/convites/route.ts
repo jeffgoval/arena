@@ -38,22 +38,22 @@ export async function GET(request: NextRequest) {
       .from('convites')
       .select(`
         *,
-        reserva:reservas!convites_reserva_id_fkey(
+        reservas!convites_reserva_id_fkey(
           id,
           data,
           valor_total,
-          quadra:quadras!reservas_quadra_id_fkey(
+          quadras(
             id,
             nome,
             tipo
           ),
-          horario:horarios!reservas_horario_id_fkey(
+          horarios(
             id,
             hora_inicio,
             hora_fim
           )
         ),
-        organizador:users!convites_criado_por_fkey(
+        criado_por_user:users!convites_criado_por_fkey(
           id,
           nome_completo,
           email
