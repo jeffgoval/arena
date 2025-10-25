@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from 'next/font/google';
 import "./globals.css";
 import { QueryProvider } from '@/components/providers/QueryProvider';
@@ -15,16 +15,6 @@ export const metadata: Metadata = {
   icons: {
     icon: '/favicon.ico',
   },
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
-  },
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#22c55e' },
-    { media: '(prefers-color-scheme: dark)', color: '#22c55e' }
-  ],
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
@@ -33,6 +23,17 @@ export const metadata: Metadata = {
   formatDetection: {
     telephone: false,
   },
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#22c55e' },
+    { media: '(prefers-color-scheme: dark)', color: '#22c55e' }
+  ],
 };
 
 export default function RootLayout({
