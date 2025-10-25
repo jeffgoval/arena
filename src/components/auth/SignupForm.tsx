@@ -242,21 +242,21 @@ export function SignupForm({ onSubmit, loading = false, codigoIndicacaoInicial }
           )}
         </div>
 
-        <div>
-          <Label htmlFor="logradouro">Logradouro *</Label>
-          <Input
-            id="logradouro"
-            {...form.register('logradouro')}
-            placeholder="Rua, Avenida, etc"
-          />
-          {form.formState.errors.logradouro && (
-            <p className="text-sm text-destructive mt-1">
-              {form.formState.errors.logradouro.message}
-            </p>
-          )}
-        </div>
+        <div className="grid grid-cols-3 gap-2">
+          <div className="col-span-2">
+            <Label htmlFor="logradouro">Logradouro *</Label>
+            <Input
+              id="logradouro"
+              {...form.register('logradouro')}
+              placeholder="Rua, Avenida, etc"
+            />
+            {form.formState.errors.logradouro && (
+              <p className="text-sm text-destructive mt-1">
+                {form.formState.errors.logradouro.message}
+              </p>
+            )}
+          </div>
 
-        <div className="grid grid-cols-2 gap-2">
           <div>
             <Label htmlFor="numero">Número *</Label>
             <Input
@@ -270,33 +270,33 @@ export function SignupForm({ onSubmit, loading = false, codigoIndicacaoInicial }
               </p>
             )}
           </div>
-
-          <div>
-            <Label htmlFor="complemento">Complemento</Label>
-            <Input
-              id="complemento"
-              {...form.register('complemento')}
-              placeholder="Apto, Bloco, etc"
-            />
-          </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <Label htmlFor="bairro">Bairro *</Label>
-            <Input
-              id="bairro"
-              {...form.register('bairro')}
-              placeholder="Centro"
-            />
-            {form.formState.errors.bairro && (
-              <p className="text-sm text-destructive mt-1">
-                {form.formState.errors.bairro.message}
-              </p>
-            )}
-          </div>
+        <div>
+          <Label htmlFor="complemento">Complemento</Label>
+          <Input
+            id="complemento"
+            {...form.register('complemento')}
+            placeholder="Apto, Bloco, etc"
+          />
+        </div>
 
-          <div>
+        <div>
+          <Label htmlFor="bairro">Bairro *</Label>
+          <Input
+            id="bairro"
+            {...form.register('bairro')}
+            placeholder="Centro"
+          />
+          {form.formState.errors.bairro && (
+            <p className="text-sm text-destructive mt-1">
+              {form.formState.errors.bairro.message}
+            </p>
+          )}
+        </div>
+
+        <div className="grid grid-cols-3 gap-2">
+          <div className="col-span-2">
             <Label htmlFor="cidade">Cidade *</Label>
             <Input
               id="cidade"
@@ -309,21 +309,21 @@ export function SignupForm({ onSubmit, loading = false, codigoIndicacaoInicial }
               </p>
             )}
           </div>
-        </div>
 
-        <div>
-          <Label htmlFor="estado">Estado *</Label>
-          <Input
-            id="estado"
-            {...form.register('estado')}
-            placeholder="MG"
-            maxLength={2}
-          />
-          {form.formState.errors.estado && (
-            <p className="text-sm text-destructive mt-1">
-              {form.formState.errors.estado.message}
-            </p>
-          )}
+          <div>
+            <Label htmlFor="estado">Estado *</Label>
+            <Input
+              id="estado"
+              {...form.register('estado')}
+              placeholder="MG"
+              maxLength={2}
+            />
+            {form.formState.errors.estado && (
+              <p className="text-sm text-destructive mt-1">
+                {form.formState.errors.estado.message}
+              </p>
+            )}
+          </div>
         </div>
       </div>
 
