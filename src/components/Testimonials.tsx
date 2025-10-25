@@ -12,7 +12,7 @@ const testimonials = [
     rating: 5,
   },
   {
-    avatar: "RF", 
+    avatar: "RF",
     name: "Ricardo Fernandes",
     role: "Organizador de peladas",
     text: "Jogo todo sábado com minha turma na Arena Dona Santa. A estrutura é top e o atendimento é show!",
@@ -20,7 +20,7 @@ const testimonials = [
   },
   {
     avatar: "MP",
-    name: "Marcelo Pereira", 
+    name: "Marcelo Pereira",
     role: "Cliente desde 2024",
     text: "Adorei poder reservar pelo celular e dividir o valor automaticamente. Muito mais prático que antes!",
     rating: 5,
@@ -39,13 +39,13 @@ export function Testimonials() {
   }, []);
 
   return (
-    <section className="section-padding bg-muted/30">
+    <section className="py-16 md:py-24 lg:py-32 bg-gray-50">
       <div className="container-custom">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold mb-4 fade-in">
             O Que Nossos Jogadores Dizem
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
             Depoimentos reais de quem já joga na Arena Dona Santa
           </p>
         </div>
@@ -53,20 +53,20 @@ export function Testimonials() {
         {/* Desktop: Carousel */}
         <div className="hidden md:block max-w-4xl mx-auto">
           <div className="relative overflow-hidden rounded-2xl">
-            <div 
+            <div
               className="flex transition-transform duration-500 ease-in-out"
               style={{ transform: `translateX(-${activeIndex * 100}%)` }}
             >
               {testimonials.map((testimonial, index) => (
                 <div key={index} className="w-full flex-shrink-0">
-                  <div className="bg-card border border-border rounded-2xl p-8 md:p-12 mx-4 shadow-soft">
+                  <div className="bg-white border border-gray-200 rounded-2xl p-8 md:p-12 mx-4 shadow-lg">
                     <div className="text-center">
                       <Quote className="w-12 h-12 text-primary/20 mx-auto mb-6" />
-                      
-                      <p className="text-xl md:text-2xl text-foreground/90 mb-8 leading-relaxed font-medium">
+
+                      <p className="text-xl md:text-2xl text-gray-800 mb-8 leading-relaxed font-medium">
                         "{testimonial.text}"
                       </p>
-                      
+
                       <div className="flex items-center justify-center gap-4">
                         <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white text-xl font-bold">
                           {testimonial.avatar}
@@ -94,11 +94,10 @@ export function Testimonials() {
               <button
                 key={index}
                 onClick={() => setActiveIndex(index)}
-                className={`transition-all duration-300 ${
-                  index === activeIndex
-                    ? "w-8 h-3 bg-primary rounded-full"
-                    : "w-3 h-3 bg-muted-foreground/30 rounded-full hover:bg-muted-foreground/50"
-                }`}
+                className={`transition-all duration-300 ${index === activeIndex
+                  ? "w-8 h-3 bg-primary rounded-full"
+                  : "w-3 h-3 bg-muted-foreground/30 rounded-full hover:bg-muted-foreground/50"
+                  }`}
                 aria-label={`Ver depoimento ${index + 1}`}
               />
             ))}
@@ -108,7 +107,7 @@ export function Testimonials() {
         {/* Mobile: Grid */}
         <div className="md:hidden grid gap-6">
           {testimonials.map((testimonial, index) => (
-            <div key={index} className="bg-card border border-border rounded-xl p-6 shadow-soft">
+            <div key={index} className="bg-white border border-gray-200 rounded-xl p-6 shadow-lg">
               <div className="flex items-start gap-4 mb-4">
                 <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
                   {testimonial.avatar}
@@ -123,7 +122,7 @@ export function Testimonials() {
                   </div>
                 </div>
               </div>
-              
+
               <p className="text-foreground/90 leading-relaxed">
                 "{testimonial.text}"
               </p>
