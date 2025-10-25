@@ -272,27 +272,29 @@ export function SignupForm({ onSubmit, loading = false, codigoIndicacaoInicial }
           </div>
         </div>
 
-        <div>
-          <Label htmlFor="complemento">Complemento</Label>
-          <Input
-            id="complemento"
-            {...form.register('complemento')}
-            placeholder="Apto, Bloco, etc"
-          />
-        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <Label htmlFor="complemento">Complemento</Label>
+            <Input
+              id="complemento"
+              {...form.register('complemento')}
+              placeholder="Apto, Bloco, etc"
+            />
+          </div>
 
-        <div>
-          <Label htmlFor="bairro">Bairro *</Label>
-          <Input
-            id="bairro"
-            {...form.register('bairro')}
-            placeholder="Centro"
-          />
-          {form.formState.errors.bairro && (
-            <p className="text-sm text-destructive mt-1">
-              {form.formState.errors.bairro.message}
-            </p>
-          )}
+          <div>
+            <Label htmlFor="bairro">Bairro *</Label>
+            <Input
+              id="bairro"
+              {...form.register('bairro')}
+              placeholder="Centro"
+            />
+            {form.formState.errors.bairro && (
+              <p className="text-sm text-destructive mt-1">
+                {form.formState.errors.bairro.message}
+              </p>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-3 gap-2">
