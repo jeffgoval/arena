@@ -18,7 +18,6 @@ import {
   useRelatorioConvites,
 } from "@/hooks/core/useRelatorios";
 import { useAvaliacoesStats } from "@/hooks/core/useAvaliacoes";
-import { useTurmas } from "@/hooks/core/useTurmas";
 import {
   RelatorioResumoSkeleton,
   RelatorioListaSkeleton,
@@ -32,7 +31,6 @@ export default function RelatoriosPage() {
   const { data: participacao, isLoading: loadingParticipacao } = useRelatorioParticipacao();
   const { data: convites, isLoading: loadingConvites } = useRelatorioConvites();
   const { data: avaliacoes, isLoading: loadingAvaliacoes } = useAvaliacoesStats();
-  const { data: turmas, isLoading: loadingTurmas } = useTurmas();
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -61,12 +59,11 @@ export default function RelatoriosPage() {
 
       {/* Tabs de Relatórios */}
       <Tabs defaultValue="faturamento" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="faturamento">Faturamento</TabsTrigger>
           <TabsTrigger value="participacao">Participação</TabsTrigger>
           <TabsTrigger value="convites">Convites</TabsTrigger>
           <TabsTrigger value="avaliacoes">Avaliações</TabsTrigger>
-          <TabsTrigger value="turmas">Turmas</TabsTrigger>
         </TabsList>
 
         {/* FATURAMENTO */}
@@ -503,32 +500,6 @@ export default function RelatoriosPage() {
           )}
         </TabsContent>
 
-        {/* TURMAS */}
-        <TabsContent value="turmas" className="space-y-6 mt-6">
-          {loadingTurmas ? (
-            <RelatorioResumoSkeleton />
-          ) : turmas ? (
-            <Card className="border-0 shadow-soft">
-              <CardContent className="p-12 text-center">
-                <p className="text-lg text-muted-foreground mb-4">
-                  Relatório completo de turmas disponível em:
-                </p>
-                <a
-                  href="/gestor/turmas"
-                  className="text-primary hover:underline font-semibold"
-                >
-                  Ver Página de Turmas →
-                </a>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card className="border-0 shadow-soft">
-              <CardContent className="p-12 text-center">
-                <p className="text-muted-foreground">Carregando dados de turmas...</p>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
       </Tabs>
     </div>
   );
