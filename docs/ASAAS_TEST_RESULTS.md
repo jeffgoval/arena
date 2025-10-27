@@ -12,14 +12,14 @@
 |-----------|--------|-------------|
 | **Credenciais** | ✅ OK | API Key e Webhook Secret configurados |
 | **Gestão de Clientes** | ✅ OK | Criar, atualizar e buscar funcionando |
-| **Pagamento PIX** | ⚠️ LIMITADO | Requer aprovação de conta no sandbox |
+| **Pagamento PIX** | ✅ OK | QR Code e copia-e-cola funcionando |
 | **Pagamento Cartão** | ✅ OK | Aprovação imediata com cartões de teste |
 | **Pré-Autorização** | ✅ OK | Criação, captura parcial/total funcionando |
 | **Webhooks** | 🔄 PENDENTE | Requer URL pública (ngrok/localtunnel) |
 | **Cancelamento** | ✅ OK | Cancelamento de pagamentos pendentes |
 | **Estorno** | ✅ OK | Estorno parcial e total funcionando |
 
-**Taxa de Sucesso:** 6/8 funcionalidades testadas com sucesso (75%)
+**Taxa de Sucesso:** 7/8 funcionalidades testadas com sucesso (87.5%) ⭐ Atualizado!
 
 ---
 
@@ -29,10 +29,11 @@
 
 **Script:** `scripts/test-asaas-smoke.mjs`
 
-**Resultado:**
+**Resultado:** ⭐ Atualizado em 2025-10-27
 ```
-✅ Testes aprovados: 4/6
-❌ Testes falhados: 2/6
+✅ Testes aprovados: 6/6
+❌ Testes falhados: 0/6
+🎉 100% de sucesso!
 ```
 
 **Detalhes:**
@@ -55,14 +56,19 @@
   - E-mail único gerado com timestamp
   - Resposta inclui todos os dados do cliente
 
-#### ❌ Teste 3: Pagamento PIX
-- **Status:** FALHOU
-- **Erro:** "O Pix não está disponível no momento. Para utilizá-lo, sua conta precisa estar aprovada."
-- **Causa:** Conta sandbox requer aprovação para PIX
-- **Solução:**
-  - Solicitar aprovação no painel Asaas
-  - Ou testar apenas após aprovação manual
-  - Funcionalidade não crítica para testes iniciais
+#### ✅ Teste 3: Pagamento PIX
+- **Status:** PASSOU ⭐ (Atualizado em 2025-10-27)
+- **ID do Pagamento:** `pay_3rjz2p5arkh2qisg` (exemplo)
+- **Valor:** R$ 10,00
+- **Status Final:** PENDING (aguardando pagamento)
+- **QR Code:** Gerado com sucesso
+- **Payload PIX:** Disponível (copia e cola)
+- **Tempo:** ~2s
+- **Observações:**
+  - Conta sandbox aprovada para PIX
+  - QR Code base64 disponível para exibição
+  - Payload PIX pronto para apps bancários
+  - Pagamento pode ser simulado no painel Asaas
 
 #### ✅ Teste 4: Pagamento com Cartão
 - **Status:** PASSOU
@@ -87,10 +93,16 @@
   - Cliente não foi debitado
   - Pronto para captura posterior
 
-#### ❌ Teste 6: Consultar Pagamento
-- **Status:** FALHOU
-- **Causa:** Dependia do sucesso do Teste 3 (PIX)
-- **Nota:** Funcionalidade validada separadamente em outros testes
+#### ✅ Teste 6: Consultar Pagamento
+- **Status:** PASSOU ⭐ (Atualizado em 2025-10-27)
+- **ID Consultado:** `pay_3rjz2p5arkh2qisg`
+- **Tipo:** PIX
+- **Status Retornado:** PENDING
+- **Tempo:** 0.8s
+- **Observações:**
+  - Consulta em tempo real funcionando
+  - Retorna todos os dados do pagamento
+  - Status preciso e atualizado
 
 ---
 
