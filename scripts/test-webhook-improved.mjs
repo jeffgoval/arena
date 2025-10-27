@@ -2,6 +2,7 @@
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import crypto from 'crypto';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -100,14 +101,24 @@ async function testWebhook(eventType) {
   console.log(`   Valor: R$ ${payload.payment.value}`);
 
   try {
+    const body = JSON.stringify(payload);
+
+    const headers = {
+      'Content-Type': 'application/json'
+    };
+
+    const secret = process.env.ASAAS_WEBHOOK_SECRET;
+    if (secret) {
+      headers['asaas-signature'] = crypto
+        .createHmac('sha256', secret)
+        .update(body)
+        .digest('hex');
+    }
+
     const response = await fetch(WEBHOOK_URL, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        // Nota: Em produção, o Asaas envia o header 'asaas-signature'
-        // Para teste local, você pode desabilitar a validação temporariamente
-      },
-      body: JSON.stringify(payload)
+      headers,
+      body
     });
 
     const result = await response.json();

@@ -3,7 +3,7 @@
  * Registra todas as requisições de webhook no banco para auditoria e debug
  */
 
-import { createClient } from '@/lib/supabase/server';
+import { createServiceRoleClient } from '@/lib/supabase/service-role';
 import { logger } from '@/lib/utils/logger';
 
 export interface WebhookLogData {
@@ -29,7 +29,7 @@ export class WebhookLogger {
     signature: string
   ): Promise<void> {
     try {
-      const supabase = await createClient();
+      const supabase = createServiceRoleClient();
 
       let parsedPayload: any = {};
       let eventType = 'UNKNOWN';
@@ -75,7 +75,7 @@ export class WebhookLogger {
     payload: string
   ): Promise<void> {
     try {
-      const supabase = await createClient();
+      const supabase = createServiceRoleClient();
 
       await supabase
         .from('webhook_logs')
@@ -106,7 +106,7 @@ export class WebhookLogger {
     paymentId: string
   ): Promise<void> {
     try {
-      const supabase = await createClient();
+      const supabase = createServiceRoleClient();
 
       await supabase
         .from('webhook_logs')
@@ -136,7 +136,7 @@ export class WebhookLogger {
     processingTimeMs: number
   ): Promise<void> {
     try {
-      const supabase = await createClient();
+      const supabase = createServiceRoleClient();
 
       await supabase
         .from('webhook_logs')
@@ -167,7 +167,7 @@ export class WebhookLogger {
     processingTimeMs: number
   ): Promise<void> {
     try {
-      const supabase = await createClient();
+      const supabase = createServiceRoleClient();
 
       await supabase
         .from('webhook_logs')
@@ -197,7 +197,7 @@ export class WebhookLogger {
    */
   static async getLogsForPayment(asaasPaymentId: string): Promise<WebhookLogData[]> {
     try {
-      const supabase = await createClient();
+      const supabase = createServiceRoleClient();
 
       const { data, error } = await supabase
         .from('webhook_logs')
@@ -221,7 +221,7 @@ export class WebhookLogger {
    */
   static async getRecentFailures(minutesAgo: number = 60): Promise<WebhookLogData[]> {
     try {
-      const supabase = await createClient();
+      const supabase = createServiceRoleClient();
 
       const timeLimit = new Date();
       timeLimit.setMinutes(timeLimit.getMinutes() - minutesAgo);
@@ -253,7 +253,7 @@ export class WebhookLogger {
     avgProcessingTime: number;
   }> {
     try {
-      const supabase = await createClient();
+      const supabase = createServiceRoleClient();
 
       const timeLimit = new Date();
       timeLimit.setHours(timeLimit.getHours() - hoursAgo);

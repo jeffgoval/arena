@@ -81,20 +81,22 @@ export class CaucaoService {
       
       // 3. Salvar registro da pré-autorização no banco
       const { data: preAuth, error: preAuthError } = await supabase
-        .from('payments')
+        .from('pagamentos')
         .insert({
           user_id: userId,
-          reservation_id: reservaId,
-          amount: valorTotal,
-          method: 'credit_card',
+          reserva_id: reservaId,
+          valor: valorTotal,
+          tipo: 'credit_card',
           status: 'authorized',
-          transaction_id: resultado.dados?.id,
+          asaas_payment_id: resultado.dados?.id || null,
           metadata: {
             type: 'pre_authorization',
             descricao: dadosPreAuth.descricao,
-            referencia: dadosPreAuth.referencia
+            referencia: dadosPreAuth.referencia,
+            data_expiracao: resultado.dados?.dataExpiracao || null
           },
-          created_at: new Date().toISOString()
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         })
         .select()
         .single();
@@ -133,8 +135,8 @@ export class CaucaoService {
       
       // 1. Obter dados da pré-autorização
       const { data: preAuth, error: preAuthError } = await supabase
-        .from('payments')
-        .select('*')
+        .from('pagamentos')
+        .select('id, status, asaas_payment_id, metadata')
         .eq('id', preAuthId)
         .single();
         
@@ -148,7 +150,7 @@ export class CaucaoService {
       
       // 2. Capturar parcialmente no Asaas
       const resultado = await pagamentoService.capturarPreAutorizacao(
-        preAuth.transaction_id,
+        preAuth.asaas_payment_id,
         valorCapturar
       );
       
@@ -157,13 +159,20 @@ export class CaucaoService {
       }
       
       // 3. Atualizar status no banco
+      const metadataAtualizada = {
+        ...(preAuth.metadata || {}),
+        capture_amount: valorCapturar,
+        capture_at: new Date().toISOString()
+      };
+
       const { error: updateError } = await supabase
-        .from('payments')
+        .from('pagamentos')
         .update({
           status: 'paid',
           capture_amount: valorCapturar,
           paid_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
+          metadata: metadataAtualizada
         })
         .eq('id', preAuthId);
         
@@ -175,7 +184,7 @@ export class CaucaoService {
         sucesso: true,
         dados: {
           id: preAuth.id,
-          transaction_id: preAuth.transaction_id,
+          transaction_id: preAuth.asaas_payment_id,
           valor_capturado: valorCapturar,
           status: 'paid'
         }
@@ -199,8 +208,8 @@ export class CaucaoService {
       
       // 1. Obter dados da pré-autorização
       const { data: preAuth, error: preAuthError } = await supabase
-        .from('payments')
-        .select('*')
+        .from('pagamentos')
+        .select('id, status, asaas_payment_id, metadata')
         .eq('id', preAuthId)
         .single();
         
@@ -213,19 +222,24 @@ export class CaucaoService {
       }
       
       // 2. Cancelar no Asaas
-      const resultado = await pagamentoService.cancelarPreAutorizacao(preAuth.transaction_id);
+      const resultado = await pagamentoService.cancelarPreAutorizacao(preAuth.asaas_payment_id);
       
       if (!resultado.sucesso) {
         throw new Error(resultado.erro || 'Erro ao cancelar pré-autorização');
       }
       
       // 3. Atualizar status no banco
+      const metadataAtualizada = {
+        ...(preAuth.metadata || {}),
+        cancelled_at: new Date().toISOString()
+      };
+
       const { error: updateError } = await supabase
-        .from('payments')
+        .from('pagamentos')
         .update({
           status: 'cancelled',
-          cancelled_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
+          metadata: metadataAtualizada
         })
         .eq('id', preAuthId);
         
@@ -256,7 +270,7 @@ export class CaucaoService {
       
       // 1. Obter dados da pré-autorização
       const { data: preAuth, error: preAuthError } = await supabase
-        .from('payments')
+        .from('pagamentos')
         .select('*')
         .eq('id', preAuthId)
         .single();
@@ -266,7 +280,7 @@ export class CaucaoService {
       }
       
       // 2. Consultar status no Asaas
-      const status = await pagamentoService.consultarPagamento(preAuth.transaction_id);
+      const status = await pagamentoService.consultarPagamento(preAuth.asaas_payment_id);
       
       if (!status) {
         throw new Error('Não foi possível consultar o status da pré-autorização');
@@ -275,7 +289,7 @@ export class CaucaoService {
       // 3. Atualizar status no banco se necessário
       if (status.status !== preAuth.status) {
         await supabase
-          .from('payments')
+          .from('pagamentos')
           .update({
             status: status.status,
             updated_at: new Date().toISOString()
@@ -287,7 +301,7 @@ export class CaucaoService {
         sucesso: true,
         dados: {
           id: preAuth.id,
-          transaction_id: preAuth.transaction_id,
+          transaction_id: preAuth.asaas_payment_id,
           status: status.status,
           valor: status.valor,
           valor_liquido: status.valorLiquido,
@@ -366,9 +380,9 @@ export class CaucaoService {
       
       // Buscar pré-autorização ativa para a reserva
       const { data: preAuth, error: preAuthError } = await supabase
-        .from('payments')
+        .from('pagamentos')
         .select('*')
-        .eq('reservation_id', reservationId)
+        .eq('reserva_id', reservationId)
         .eq('metadata->type', 'pre_authorization')
         .in('status', ['authorized', 'pending'])
         .order('created_at', { ascending: false })
@@ -383,13 +397,13 @@ export class CaucaoService {
       }
       
       // Consultar status atualizado no Asaas se necessário
-      if (preAuth.transaction_id) {
-        const statusAsaas = await pagamentoService.consultarPagamento(preAuth.transaction_id);
-        
+      if (preAuth.asaas_payment_id) {
+        const statusAsaas = await pagamentoService.consultarPagamento(preAuth.asaas_payment_id);
+
         if (statusAsaas && statusAsaas.status !== preAuth.status) {
           // Atualizar status no banco
           await supabase
-            .from('payments')
+            .from('pagamentos')
             .update({
               status: statusAsaas.status,
               updated_at: new Date().toISOString()
@@ -404,11 +418,11 @@ export class CaucaoService {
         sucesso: true,
         dados: {
           id: preAuth.id,
-          reservationId: preAuth.reservation_id,
+          reservationId: preAuth.reserva_id,
           status: preAuth.status,
-          amount: preAuth.amount,
-          capturedAmount: preAuth.capture_amount,
-          transactionId: preAuth.transaction_id,
+          amount: preAuth.valor,
+          capturedAmount: preAuth.capture_amount || preAuth.metadata?.capture_amount || null,
+          transactionId: preAuth.asaas_payment_id,
           createdAt: preAuth.created_at,
           expiresAt: preAuth.metadata?.data_expiracao
         }
@@ -508,9 +522,9 @@ export class CaucaoService {
       
       // Buscar pré-autorização ativa para a reserva
       const { data: preAuth, error: preAuthError } = await supabase
-        .from('payments')
+        .from('pagamentos')
         .select('*')
-        .eq('reservation_id', reservationId)
+        .eq('reserva_id', reservationId)
         .eq('metadata->type', 'pre_authorization')
         .eq('status', 'authorized')
         .single();

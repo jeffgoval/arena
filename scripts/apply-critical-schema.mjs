@@ -62,16 +62,16 @@ try {
   // Verify the changes
   console.log('🔍 Verificando mudanças...\\n');
 
-  // Check payments table
-  const { data: paymentsCheck, error: paymentsError } = await supabase
-    .from('payments')
+  // Check pagamentos table
+  const { data: pagamentosCheck, error: pagamentosError } = await supabase
+    .from('pagamentos')
     .select('*')
     .limit(1);
 
-  if (paymentsError) {
-    console.log('⚠️  Tabela payments:', paymentsError.message);
+  if (pagamentosError) {
+    console.log('⚠️  Tabela pagamentos:', pagamentosError.message);
   } else {
-    console.log('✅ Tabela payments criada com sucesso!');
+    console.log('✅ Tabela pagamentos criada com sucesso!');
   }
 
   // Check reservas columns
@@ -100,7 +100,7 @@ try {
 
   console.log('\\n🎉 Migração crítica concluída!');
   console.log('\\n📊 Resumo:');
-  console.log('  • Tabela payments: criada');
+  console.log('  • Tabela pagamentos: criada');
   console.log('  • Tabela reservas: 3 colunas adicionadas');
   console.log('  • Tabela reserva_participantes: 6 colunas adicionadas');
   console.log('  • Triggers: validação de rateio + auto-cálculo de valores');

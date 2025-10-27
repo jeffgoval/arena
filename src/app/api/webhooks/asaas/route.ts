@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { asaasAPI } from '@/lib/asaas';
 import { WebhookPagamento, EventoWebhook } from '@/types/pagamento.types';
-import { createClient } from '@/lib/supabase/server';
+import { createServiceRoleClient } from '@/lib/supabase/service-role';
 import { whatsappService } from '@/services/whatsappService';
 import { notificacaoService } from '@/services/notificacaoService';
 import { WebhookLogger } from '@/lib/webhooks/webhook-logger';
@@ -148,13 +148,15 @@ async function processarEventoWebhook(webhookData: WebhookPagamento, requestId: 
         await processarAguardandoPagamento(payment, requestId);
         break;
 
-      case EventoWebhook.PAGAMENTO_RECEBIDO:
-        await processarPagamentoRecebido(payment, requestId);
-        break;
+    case EventoWebhook.PAGAMENTO_RECEBIDO:
+      await processarPagamentoRecebido(payment, requestId);
+      break;
 
-      case EventoWebhook.PAGAMENTO_CONFIRMADO:
-        await processarPagamentoConfirmado(payment, requestId);
-        break;
+    case EventoWebhook.PAGAMENTO_CONFIRMADO:
+      await processarPagamentoConfirmado(payment, requestId, {
+        origemEvento: EventoWebhook.PAGAMENTO_CONFIRMADO
+      });
+      break;
 
       case EventoWebhook.PAGAMENTO_VENCIDO:
         await processarPagamentoVencido(payment, requestId);
@@ -210,7 +212,7 @@ async function processarAguardandoPagamento(
 
   // PIX: Cliente ainda não pagou
   // Atualizar status se necessário
-  const supabase = await createClient();
+  const supabase = createServiceRoleClient();
 
   await supabase
     .from('pagamentos')
@@ -225,13 +227,19 @@ async function processarPagamentoRecebido(
   logger.info('Webhook:PaymentReceived', 'Pagamento recebido', {
     requestId,
     paymentId: payment.id,
-    value: payment.value
+    value: payment.value,
+    billingType: payment.billingType,
+    status: payment.status
   });
 
-  // Para PIX: pagamento foi recebido, aguardando confirmação final
-  // Para outros métodos: similar ao PAYMENT_CONFIRMED
+  logger.info('Webhook:PaymentReceived', 'Tratando recebimento como confirmacao imediata', {
+    requestId,
+    paymentId: payment.id
+  });
 
-  // Aguardar PAYMENT_CONFIRMED para confirmar definitivamente
+  await processarPagamentoConfirmado(payment, requestId, {
+    origemEvento: EventoWebhook.PAGAMENTO_RECEBIDO
+  });
 }
 
 /**
@@ -253,9 +261,11 @@ async function processarPagamentoRecebido(
  */
 async function processarPagamentoConfirmado(
   payment: WebhookPagamento['payment'],
-  requestId: string
+  requestId: string,
+  options: { origemEvento?: EventoWebhook } = {}
 ) {
-  const supabase = await createClient();
+  const supabase = createServiceRoleClient();
+  const origemEvento = options.origemEvento || EventoWebhook.PAGAMENTO_CONFIRMADO;
 
   logger.info('Webhook:PaymentConfirmed', 'Iniciando processamento', {
     requestId,
@@ -263,7 +273,8 @@ async function processarPagamentoConfirmado(
     status: payment.status,
     value: payment.value,
     billingType: payment.billingType,
-    externalReference: payment.externalReference
+    externalReference: payment.externalReference,
+    origemEvento
   });
 
   try {
@@ -374,19 +385,48 @@ async function processarPagamentoConfirmado(
       statusNovo: 'confirmado'
     });
 
+    const metadataAnterior = (pagamentoExistente.metadata as Record<string, any>) || {};
+    const jaConfirmado = pagamentoExistente.status === 'confirmado';
+
+    const paidAt =
+      payment.paymentDate ||
+      payment.clientPaymentDate ||
+      pagamentoExistente.paid_at ||
+      new Date().toISOString();
+
+    const confirmedAt =
+      payment.confirmedDate ||
+      payment.paymentDate ||
+      payment.clientPaymentDate ||
+      (typeof metadataAnterior.asaas_confirmed_at === 'string'
+        ? metadataAnterior.asaas_confirmed_at
+        : undefined) ||
+      new Date().toISOString();
+
+    const metadataAtualizada: Record<string, any> = {
+      ...metadataAnterior,
+      asaas_confirmed_at: confirmedAt,
+      asaas_net_value:
+        payment.netValue ??
+        metadataAnterior.asaas_net_value ??
+        pagamentoExistente.valor,
+      asaas_billing_type: payment.billingType || metadataAnterior.asaas_billing_type,
+      asaas_status: payment.status || metadataAnterior.asaas_status,
+      webhook_received_at: new Date().toISOString(),
+      webhook_request_id: requestId,
+      webhook_origin_event: origemEvento
+    };
+
+    metadataAtualizada.status_interno = 'confirmado';
+    metadataAtualizada.status_atualizado_em = new Date().toISOString();
+    metadataAtualizada.pagamento_confirmado = true;
+
     const { data: pagamentoAtualizado, error: updateError } = await supabase
       .from('pagamentos')
       .update({
         status: 'confirmado',
-        paid_at: payment.paymentDate || new Date().toISOString(),
-        metadata: {
-          ...(pagamentoExistente.metadata || {}),
-          asaas_confirmed_at: payment.confirmedDate,
-          asaas_net_value: payment.netValue,
-          asaas_billing_type: payment.billingType,
-          webhook_received_at: new Date().toISOString(),
-          webhook_request_id: requestId
-        },
+        paid_at: paidAt,
+        metadata: metadataAtualizada,
         updated_at: new Date().toISOString()
       })
       .eq('id', pagamentoExistente.id)
@@ -404,14 +444,15 @@ async function processarPagamentoConfirmado(
     logger.info('Webhook:PaymentConfirmed', 'Pagamento atualizado com sucesso', {
       requestId,
       pagamentoId: pagamentoAtualizado.id,
-      status: 'confirmado'
+      status: 'confirmado',
+      origemEvento
     });
 
     // ========================================================================
     // PASSO 3: Confirmar reserva
     // ========================================================================
 
-    if (pagamentoExistente.reserva_id) {
+    if (pagamentoExistente.reserva_id && !jaConfirmado) {
       logger.info('Webhook:PaymentConfirmed', 'Confirmando reserva', {
         requestId,
         reservaId: pagamentoExistente.reserva_id
@@ -440,34 +481,53 @@ async function processarPagamentoConfirmado(
           status: 'confirmada'
         });
       }
+    } else if (pagamentoExistente.reserva_id && jaConfirmado) {
+      logger.info('Webhook:PaymentConfirmed', 'Reserva ja estava confirmada', {
+        requestId,
+        reservaId: pagamentoExistente.reserva_id,
+        origemEvento
+      });
     }
 
     // ========================================================================
     // PASSO 4: Enviar notificações (assíncrono - não bloqueia)
     // ========================================================================
 
-    // Executar notificações em background
-    setImmediate(async () => {
-      try {
-        await enviarNotificacoesPagamentoConfirmado(
-          pagamentoExistente,
-          payment,
-          requestId
-        );
-      } catch (notifError) {
-        logger.error(
-          'Webhook:PaymentConfirmed',
-          'Erro ao enviar notificações (não crítico)',
-          notifError as Error,
-          { requestId, pagamentoId: pagamentoExistente.id }
-        );
-      }
-    });
+    if (!jaConfirmado) {
+      // Executar notificações em background
+      setImmediate(async () => {
+        try {
+          await enviarNotificacoesPagamentoConfirmado(
+            pagamentoExistente,
+            payment,
+            requestId
+          );
+        } catch (notifError) {
+          logger.error(
+            'Webhook:PaymentConfirmed',
+            'Erro ao enviar notificações (não crítico)',
+            notifError as Error,
+            { requestId, pagamentoId: pagamentoExistente.id }
+          );
+        }
+      });
+    } else {
+      logger.info(
+        'Webhook:PaymentConfirmed',
+        'Pagamento ja confirmado anteriormente, notificações puladas',
+        {
+          requestId,
+          pagamentoId: pagamentoExistente.id,
+          origemEvento
+        }
+      );
+    }
 
     logger.info('Webhook:PaymentConfirmed', 'Processamento concluído com sucesso', {
       requestId,
       pagamentoId: pagamentoAtualizado.id,
-      reservaId: pagamentoExistente.reserva_id
+      reservaId: pagamentoExistente.reserva_id,
+      origemEvento
     });
 
   } catch (error) {
@@ -493,7 +553,7 @@ async function enviarNotificacoesPagamentoConfirmado(
   payment: WebhookPagamento['payment'],
   requestId: string
 ) {
-  const supabase = await createClient();
+  const supabase = createServiceRoleClient();
 
   if (!pagamento.reserva_id) {
     logger.info('Webhook:Notificacoes', 'Pagamento sem reserva associada, pulando notificações', {
@@ -582,7 +642,7 @@ async function processarPagamentoVencido(
     paymentId: payment.id
   });
   
-  const supabase = await createClient();
+  const supabase = createServiceRoleClient();
   
   try {
     // Atualizar status no banco de dados

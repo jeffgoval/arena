@@ -342,7 +342,7 @@ export async function POST(request: NextRequest) {
 
         console.log('[API] PIX criado no Asaas com sucesso:', {
           paymentId: resultadoPix.dados?.id,
-          hasQrCode: !!resultadoPix.dados?.qrCode
+          hasQrCode: !!resultadoPix.dados?.qrCodePix
         });
 
         statusPagamento = 'pendente';
@@ -351,8 +351,8 @@ export async function POST(request: NextRequest) {
 
         // Salvar dados do PIX para mostrar QR Code depois
         dadosPagamento.asaas_payment_id = transactionId;
-        dadosPagamento.asaas_pix_qrcode = resultadoPix.dados?.qrCode;
-        dadosPagamento.asaas_pix_payload = resultadoPix.dados?.payload;
+        dadosPagamento.asaas_pix_qrcode = resultadoPix.dados?.qrCodePix;
+        dadosPagamento.asaas_pix_payload = resultadoPix.dados?.pixCopiaECola;
         dadosPagamento.metadata = {
           ...dadosPagamento.metadata,
           transaction_id: transactionId,

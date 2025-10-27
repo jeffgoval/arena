@@ -101,9 +101,9 @@ serve(async (req) => {
 
         // 7. Check for pre-authorization
         const { data: preAuth, error: preAuthError } = await supabase
-          .from('payments')
+          .from('pagamentos')
           .select('*')
-          .eq('reservation_id', reserva.id)
+          .eq('reserva_id', reserva.id)
           .eq('status', 'authorized')
           .eq('metadata->>type', 'pre_authorization')
           .single();
@@ -112,7 +112,7 @@ serve(async (req) => {
           // 7a. Capture pre-authorization for organizer's amount
           console.log(`  Capturing pre-auth: R$ ${organizerAmount.toFixed(2)}`);
 
-          const captureResponse = await fetch(`${ASAAS_BASE_URL}/payments/${preAuth.transaction_id}/captureAuthorizedPayment`, {
+          const captureResponse = await fetch(`${ASAAS_BASE_URL}/payments/${preAuth.asaas_payment_id}/captureAuthorizedPayment`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -126,12 +126,20 @@ serve(async (req) => {
           }
 
           // Update payment record
+          const preAuthMetadata = preAuth.metadata || {};
+
           await supabase
-            .from('payments')
+            .from('pagamentos')
             .update({
               status: 'paid',
               capture_amount: organizerAmount,
               paid_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+              metadata: {
+                ...preAuthMetadata,
+                capture_amount: organizerAmount,
+                capture_at: new Date().toISOString(),
+              },
             })
             .eq('id', preAuth.id);
 
@@ -157,13 +165,14 @@ serve(async (req) => {
           });
 
           // Create payment record
-          await supabase.from('payments').insert({
+          await supabase.from('pagamentos').insert({
             user_id: reserva.cliente_id,
-            reservation_id: reserva.id,
-            amount: organizerAmount,
-            method: 'balance',
+            reserva_id: reserva.id,
+            valor: organizerAmount,
+            tipo: 'balance',
             status: 'paid',
             paid_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
             metadata: { type: 'game_closure_balance' },
           });
 

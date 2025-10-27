@@ -3,85 +3,67 @@ import { createClient } from '@/lib/supabase/server';
 
 export const runtime = 'edge';
 
-/**
- * GET /api/reservas/[id]/info
- * Obter informações básicas da reserva para avaliação
- */
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient();
 
-    // Verificar autenticação
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
     }
 
     const { id: reservaId } = await params;
 
-    // Buscar reserva
     const { data: reserva, error: reservaError } = await supabase
-      .from('reservations')
+      .from('reservas')
       .select(`
         id,
         data,
         organizador_id,
-        quadra:courts!reservations_quadra_id_fkey(nome)
+        quadra:quadras!reservas_quadra_id_fkey(nome)
       `)
       .eq('id', reservaId)
       .single();
 
     if (reservaError || !reserva) {
-      return NextResponse.json(
-        { error: 'Reserva não encontrada' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Reserva não encontrada' }, { status: 404 });
     }
 
-    // Verificar se o usuário é o organizador ou participante
     const { data: participante } = await supabase
-      .from('reservation_participants')
+      .from('reserva_participantes')
       .select('id')
       .eq('reserva_id', reservaId)
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
-    if (reserva.organizador_id !== user.id && !participante) {
+    const usuarioPodeAvaliar = reserva.organizador_id === user.id || !!participante;
+    if (!usuarioPodeAvaliar) {
       return NextResponse.json(
         { error: 'Você não tem permissão para avaliar esta reserva' },
         { status: 403 }
       );
     }
 
-    // Verificar se já foi avaliada pelo usuário
     const { data: avaliacaoExistente } = await supabase
-      .from('reviews')
+      .from('avaliacoes')
       .select('id')
       .eq('reserva_id', reservaId)
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
     const quadra = Array.isArray(reserva.quadra) ? reserva.quadra[0] : reserva.quadra;
 
-    const info = {
+    return NextResponse.json({
       id: reserva.id,
       quadra_nome: quadra?.nome || 'Quadra',
       data: reserva.data,
       ja_avaliada: !!avaliacaoExistente,
-    };
-
-    return NextResponse.json(info);
+    });
   } catch (error) {
     console.error('Erro ao buscar informações da reserva:', error);
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 });
   }
 }

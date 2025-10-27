@@ -16,14 +16,14 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 console.log('🔍 Verificando migração crítica...\n');
 
 // 1. Check payments table
-console.log('1️⃣ Tabela PAYMENTS:');
-const { data: paymentsData, error: paymentsError } = await supabase
-  .from('payments')
+console.log('1️⃣ Tabela PAGAMENTOS:');
+const { data: pagamentosData, error: pagamentosError } = await supabase
+  .from('pagamentos')
   .select('*')
   .limit(1);
 
-if (paymentsError) {
-  console.log('   ❌ Erro:', paymentsError.message);
+if (pagamentosError) {
+  console.log('   ❌ Erro:', pagamentosError.message);
 } else {
   console.log('   ✅ Tabela existe e está acessível');
 }
@@ -57,7 +57,7 @@ if (participantesError) {
 console.log('\n✅ MIGRAÇÃO VERIFICADA COM SUCESSO!\n');
 
 console.log('📊 Resumo:');
-console.log('  • Tabela payments: CRIADA');
+console.log('  • Tabela PAGAMENTOS: CRIADA');
 console.log('  • Reservas: 3 colunas ADICIONADAS');
 console.log('  • Reserva_participantes: 6 colunas ADICIONADAS');
 console.log('  • Triggers: CRIADOS');
