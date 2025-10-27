@@ -60,6 +60,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Node.js version: 20 (configured via `.node-version`)
 - SSR enabled (no static export)
 
+**Development Environment:**
+- Primary OS: Windows (commands optimized for Windows)
+- Alternative support: Unix/macOS (cross-platform compatible)
+- Package manager: npm (not yarn or pnpm)
+
 ## Development Commands
 
 ### Essential Commands
@@ -117,26 +122,49 @@ npx shadcn@latest add dialog
 
 ### Debugging with Node Scripts
 
-The `scripts/` directory contains utilities for debugging and testing:
+The `scripts/` directory contains 40+ utilities for debugging and testing. Key scripts include:
 
+**Authentication & Users:**
 ```bash
-# Test authentication flow
-node scripts/test-signup.mjs
-
-# Check database schema and tables
-node scripts/check-db-schema.mjs
-
-# Check user role assignments
-node scripts/check-user-role.mjs
-
-# Verify RLS policies
-node scripts/check-rls-policies.mjs
-
-# Apply manual migrations
-node scripts/apply-migration.mjs
+node scripts/test-signup.mjs              # Test auth signup flow
+node scripts/check-auth-role.mjs          # Check user role assignments
+node scripts/check-users-schema.mjs       # Verify users table schema
+node scripts/check-all-user-columns.mjs   # Check all user table columns
 ```
 
-**Note:** These scripts use ESM modules (.mjs) and connect directly to Supabase for diagnostics.
+**Database Schema:**
+```bash
+node scripts/check-db-structure.mjs       # Comprehensive schema check
+node scripts/list-all-tables.mjs          # List all database tables
+node scripts/check-table-schema.mjs       # Verify specific table structure
+node scripts/check-table-columns.mjs      # Check table columns
+node scripts/refresh-schema-cache.mjs     # Refresh Supabase schema cache
+```
+
+**Migrations:**
+```bash
+node scripts/apply-security-migration.mjs # Apply security updates
+node scripts/check-migration.mjs          # Verify migration status
+node scripts/exec-sql-direct.mjs          # Execute SQL directly
+node scripts/apply-rls-fix.mjs            # Apply RLS policy fixes
+```
+
+**Environment & Deployment:**
+```bash
+node scripts/check-vercel-env.mjs         # Check Vercel environment variables
+node scripts/check-vercel-env.mjs --fix   # Fix Vercel environment variables
+node scripts/test-supabase-keys.mjs       # Test Supabase connection
+```
+
+**Feature-Specific:**
+```bash
+node scripts/check-creditos-table.mjs     # Verify credits system
+node scripts/test-asaas-integration.mjs   # Test payment integration
+node scripts/test-convites-now.mjs        # Test invitations system
+node scripts/check-aceites-schema.mjs     # Check invitation acceptance schema
+```
+
+**Note:** All scripts use ESM modules (.mjs) and connect directly to Supabase. See `docs/README-SCRIPTS.md` for complete documentation.
 
 ## Architecture Overview
 
@@ -325,6 +353,22 @@ Component → Hook (useCreateCourt) → Service (courtsService.create) → Supab
     2. JWT metadata
     3. Database query (fallback)
   - Cache timestamp tracked to ensure freshness
+- **Rate Limiting:**
+  - Implemented at middleware level using in-memory store
+  - Different limits for different routes:
+    - Auth routes: Stricter limits to prevent brute force
+    - Payment routes: Protected limits for financial operations
+    - API routes: Standard limits for general API calls
+    - Dashboard routes: More relaxed limits for authenticated users
+  - Returns 429 status with `Retry-After` header when exceeded
+  - Tracks by client IP with support for proxy headers (Vercel, Cloudflare)
+  - Includes `X-RateLimit-*` headers in all responses
+- **Security Logging:**
+  - Logs unauthorized access attempts
+  - Tracks rate limit violations
+  - Records privilege escalation attempts
+  - Monitors banned/suspended user access
+  - All security events logged via `lib/security/security-logger.ts`
 - **Critical:** All responses have `Cache-Control: no-store` headers to prevent cross-user data leaks
 
 **Supabase Clients:**
@@ -483,10 +527,18 @@ The application includes API routes for webhooks and server-side operations:
 
 ### Vercel Configuration
 
-**vercel.json:**
-- Region: `gru1` (São Paulo, Brazil) for optimal latency
-- Framework auto-detected as Next.js
-- Build/dev/install commands configured
+**Deployment Settings:**
+- Region: `gru1` (São Paulo, Brazil) for optimal latency with Brazilian users
+- Framework: Next.js (auto-detected)
+- Node.js version: 20 (via `.node-version` file)
+- Build command: `npm run build`
+- Output directory: `.next` (default for Next.js)
+
+**Environment Variables:**
+- Configure all env vars from `.env.example` in Vercel dashboard
+- Use `node scripts/check-vercel-env.mjs` to verify Vercel env vars
+- Use `node scripts/check-vercel-env.mjs --fix` to sync local → Vercel
+- Remember: Changes to env vars require redeployment
 
 ### Environment Variables
 
@@ -521,6 +573,50 @@ Defined in `tailwind.config.ts`:
 - Primary (Green): `#2D9F5D` - Sports theme
 - Secondary (Blue): `#4F9CFF` - Trust/energy
 - Accent (Orange): `#FF6B35` - Call-to-action
+
+### TypeScript Configuration
+
+**Path Aliases:**
+- `@/*` maps to `src/*` - use this for all imports
+- Example: `import { Button } from '@/components/ui/button'`
+- Example: `import { createClient } from '@/lib/supabase/client'`
+
+**Strict Mode:**
+- Strict type checking is enabled (`strict: true`)
+- Type errors will fail the build (no `ignoreBuildErrors`)
+- Always run `npx tsc --noEmit` before committing to catch type errors
+
+**Compiler Options:**
+- Target: ES2017 for optimal compatibility
+- Module: ESNext with bundler resolution
+- JSX: preserve (handled by Next.js)
+- Supports async/await natively
+
+### Security Headers
+
+The middleware automatically adds comprehensive security headers to all responses:
+
+**Cache Control:**
+- `Cache-Control: no-store, no-cache, must-revalidate, private`
+- `Pragma: no-cache` and `Expires: 0`
+- Critical for preventing cross-user data leaks in financial systems
+
+**Security Headers:**
+- `X-Frame-Options: DENY` - Prevents clickjacking
+- `X-Content-Type-Options: nosniff` - Prevents MIME sniffing
+- `X-XSS-Protection: 1; mode=block` - XSS protection
+- `Referrer-Policy: strict-origin-when-cross-origin` - Referrer control
+- `Strict-Transport-Security` - Forces HTTPS (production only)
+- `Permissions-Policy` - Restricts dangerous browser features (geolocation, microphone, camera, payment)
+
+**Content Security Policy (CSP):**
+- Comprehensive CSP with Vercel Analytics support
+- Restricts script sources to self and trusted domains
+- Prevents inline scripts except where necessary
+- Blocks frame embedding and object loading
+- Enforces upgrade to HTTPS
+
+**Note:** All responses include these headers automatically via middleware.
 
 ## Development Guidelines
 
@@ -578,9 +674,11 @@ const { data: { user } } = await supabase.auth.getUser();
 
 **"User not authenticated":**
 - Check `.env.local` has correct Supabase keys
-- Verify middleware is running
-- Check cookie storage in browser
-- Clear role cache cookies (`user-role`, `user-role-timestamp`)
+- Verify middleware is running by checking browser Network tab
+- Check cookie storage in browser DevTools
+- Clear role cache cookies (pattern: `user-role-*`, `user-role-ts-*`)
+- Run `node scripts/test-supabase-keys.mjs` to verify connection
+- Check if user is banned/suspended in database
 
 **TypeScript errors:**
 - Run `npm run lint` to see all errors
@@ -588,10 +686,15 @@ const { data: { user } } = await supabase.auth.getUser();
 - Regenerate database types if schema changed: `npx supabase gen types typescript --linked > src/types/database.types.ts`
 
 **Build errors:**
-- Clear `.next` folder: `rd /s /q .next` (Windows) or `rm -rf .next` (Unix)
-- Clear build info: `del tsconfig.tsbuildinfo` (Windows) or `rm tsconfig.tsbuildinfo` (Unix)
-- Reinstall dependencies: `npm install`
-- Check for missing environment variables
+- Clear `.next` folder:
+  - Windows: `rd /s /q .next` or `rmdir /s /q .next`
+  - Unix/macOS: `rm -rf .next`
+- Clear build info:
+  - Windows: `del tsconfig.tsbuildinfo`
+  - Unix/macOS: `rm tsconfig.tsbuildinfo`
+- Reinstall dependencies: `npm install` (all platforms)
+- Check for missing environment variables in `.env.local`
+- Verify all required env vars match `.env.example`
 
 **Dependency warnings:**
 - Project uses ESLint 9+ (not v8) to avoid deprecation warnings
