@@ -45,13 +45,25 @@ export function useCreditos(limit = 50, offset = 0) {
 export function useComprarCreditos() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const supabase = createClient();
 
   return useMutation({
     mutationFn: async (data: ComprarCreditosData) => {
+      // Obter usuário autenticado
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Usuário não autenticado');
+
+      // Adicionar usuarioId ao payload
+      const payload = {
+        ...data,
+        usuarioId: user.id,
+        pacote: data.pacoteId,
+      };
+
       const response = await fetch('/api/creditos/comprar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {

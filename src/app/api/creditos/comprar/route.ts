@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
 
     // Buscar dados do usuário
     const { data: usuario, error: usuarioError } = await supabase
-      .from('usuarios')
+      .from('users')
       .select('*')
       .eq('id', usuarioId)
       .single();
@@ -70,31 +70,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Criar cliente no Asaas se necessário
-    let clienteAsaasId = usuario.asaas_customer_id;
-
-    if (!clienteAsaasId) {
-      clienteAsaasId = await pagamentoService.criarOuAtualizarCliente({
-        nome: usuario.nome,
-        email: usuario.email,
-        telefone: usuario.telefone,
-        celular: usuario.telefone,
-        cpf: usuario.cpf || '',
-        cep: usuario.cep || '',
-        endereco: usuario.endereco || '',
-        numero: usuario.numero || '',
-        complemento: usuario.complemento || '',
-        bairro: usuario.bairro || '',
-        cidade: usuario.cidade || '',
-        estado: usuario.estado || ''
-      });
-
-      // Salvar ID do cliente Asaas
-      await supabase
-        .from('usuarios')
-        .update({ asaas_customer_id: clienteAsaasId })
-        .eq('id', usuarioId);
-    }
+    // Criar ou buscar cliente no Asaas
+    const clienteAsaasId = await pagamentoService.criarOuAtualizarCliente({
+      id: usuario.asaas_customer_id || undefined, // Usar ID existente se houver
+      nome: usuario.nome_completo || usuario.email,
+      email: usuario.email,
+      telefone: usuario.whatsapp || '',
+      celular: usuario.whatsapp || '',
+      cpf: usuario.cpf || '',
+      cep: usuario.cep || '',
+      endereco: usuario.logradouro || '',
+      numero: usuario.numero || '',
+      complemento: usuario.complemento || '',
+      bairro: usuario.bairro || '',
+      cidade: usuario.cidade || '',
+      estado: usuario.estado || ''
+    });
 
     // Calcular data de expiração
     const dataExpiracao = new Date();
