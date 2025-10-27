@@ -10,6 +10,9 @@ export const createAvaliacaoSchema = z.object({
     .max(500, 'Comentário deve ter no máximo 500 caracteres')
     .optional()
     .or(z.literal('')),
+  avaliacao_atendimento: z.number().int().min(1).max(5).optional(),
+  avaliacao_limpeza: z.number().int().min(1).max(5).optional(),
+  avaliacao_instalacoes: z.number().int().min(1).max(5).optional(),
 });
 
 export type CreateAvaliacaoData = z.infer<typeof createAvaliacaoSchema>;
