@@ -81,7 +81,7 @@ export function useReservas(filtro?: 'futuras' | 'passadas' | 'todas') {
           id: r.id,
           data: r.data,
           status: r.status,
-          quadra: r.quadra?.nome,
+          quadra: Array.isArray(r.quadra) ? r.quadra[0]?.nome : (r.quadra as any)?.nome,
           valor: r.valor_total
         }))
       });

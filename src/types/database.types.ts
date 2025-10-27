@@ -851,10 +851,13 @@ export type Database = {
           asaas_payment_id: string | null
           asaas_pix_payload: string | null
           asaas_pix_qrcode: string | null
+          capture_amount: number | null
           created_at: string | null
           id: string
+          legacy_payment_id: string | null
           metadata: Json | null
           paid_at: string | null
+          refunded_at: string | null
           reserva_id: string | null
           status: string | null
           tipo: string
@@ -866,10 +869,13 @@ export type Database = {
           asaas_payment_id?: string | null
           asaas_pix_payload?: string | null
           asaas_pix_qrcode?: string | null
+          capture_amount?: number | null
           created_at?: string | null
           id?: string
+          legacy_payment_id?: string | null
           metadata?: Json | null
           paid_at?: string | null
+          refunded_at?: string | null
           reserva_id?: string | null
           status?: string | null
           tipo: string
@@ -881,10 +887,13 @@ export type Database = {
           asaas_payment_id?: string | null
           asaas_pix_payload?: string | null
           asaas_pix_qrcode?: string | null
+          capture_amount?: number | null
           created_at?: string | null
           id?: string
+          legacy_payment_id?: string | null
           metadata?: Json | null
           paid_at?: string | null
+          refunded_at?: string | null
           reserva_id?: string | null
           status?: string | null
           tipo?: string
@@ -902,85 +911,6 @@ export type Database = {
           },
           {
             foreignKeyName: "pagamentos_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      payments: {
-        Row: {
-          amount: number
-          authorization_id: string | null
-          capture_amount: number | null
-          created_at: string | null
-          error_message: string | null
-          id: string
-          invitation_id: string | null
-          metadata: Json | null
-          method: string
-          paid_at: string | null
-          refunded_at: string | null
-          reservation_id: string | null
-          status: string
-          transaction_id: string | null
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          amount: number
-          authorization_id?: string | null
-          capture_amount?: number | null
-          created_at?: string | null
-          error_message?: string | null
-          id?: string
-          invitation_id?: string | null
-          metadata?: Json | null
-          method: string
-          paid_at?: string | null
-          refunded_at?: string | null
-          reservation_id?: string | null
-          status?: string
-          transaction_id?: string | null
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          amount?: number
-          authorization_id?: string | null
-          capture_amount?: number | null
-          created_at?: string | null
-          error_message?: string | null
-          id?: string
-          invitation_id?: string | null
-          metadata?: Json | null
-          method?: string
-          paid_at?: string | null
-          refunded_at?: string | null
-          reservation_id?: string | null
-          status?: string
-          transaction_id?: string | null
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "payments_invitation_id_fkey"
-            columns: ["invitation_id"]
-            isOneToOne: false
-            referencedRelation: "convites"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "payments_reservation_id_fkey"
-            columns: ["reservation_id"]
-            isOneToOne: false
-            referencedRelation: "reservas"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "payments_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
@@ -1183,7 +1113,7 @@ export type Database = {
             foreignKeyName: "reserva_participantes_payment_id_fkey"
             columns: ["payment_id"]
             isOneToOne: false
-            referencedRelation: "payments"
+            referencedRelation: "pagamentos"
             referencedColumns: ["id"]
           },
           {
@@ -1725,6 +1655,51 @@ export type Database = {
           status?: Database["public"]["Enums"]["user_status"]
           updated_at?: string | null
           whatsapp?: string | null
+        }
+        Relationships: []
+      }
+      webhook_logs: {
+        Row: {
+          asaas_payment_id: string | null
+          created_at: string | null
+          error_message: string | null
+          event_type: string
+          id: string
+          payload: Json
+          processed_at: string | null
+          request_id: string
+          retry_count: number | null
+          signature: string | null
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          asaas_payment_id?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          event_type: string
+          id?: string
+          payload: Json
+          processed_at?: string | null
+          request_id: string
+          retry_count?: number | null
+          signature?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          asaas_payment_id?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          event_type?: string
+          id?: string
+          payload?: Json
+          processed_at?: string | null
+          request_id?: string
+          retry_count?: number | null
+          signature?: string | null
+          status?: string
+          updated_at?: string | null
         }
         Relationships: []
       }

@@ -671,14 +671,7 @@ async function processarPagamentoVencido(
           updated_at: new Date().toISOString()
         })
         .eq('id', pagamentoData.reserva_id)
-        .select('id, usuario_id')
-        .single();
-      
-      // Buscar telefone do usuário
-      const { data: usuarioData } = await supabase
-        .from('users')
-        .select('telefone')
-        .eq('id', reservaData?.usuario_id)
+        .select('id, organizador_id')
         .single();
 
       if (reservaError) {
@@ -686,14 +679,25 @@ async function processarPagamentoVencido(
         return;
       }
 
+      // Buscar telefone do usuário
+      let usuarioData = null;
+      if (reservaData?.organizador_id) {
+        const result = await supabase
+          .from('users')
+          .select('whatsapp')
+          .eq('id', reservaData.organizador_id)
+          .single();
+        usuarioData = result.data;
+      }
+
       // Cancelar notificações agendadas
       await notificacaoService.cancelarNotificacoesReserva(pagamentoData.reserva_id);
 
       // Notificar cancelamento por vencimento
-      if (usuarioData?.telefone) {
+      if (usuarioData?.whatsapp) {
         try {
           await whatsappService.notificarCancelamento(
-            usuarioData.telefone,
+            usuarioData.whatsapp,
             {
               tipo: 'reserva',
               id: reservaData.id,

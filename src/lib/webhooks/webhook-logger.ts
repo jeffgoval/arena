@@ -7,15 +7,18 @@ import { createServiceRoleClient } from '@/lib/supabase/service-role';
 import { logger } from '@/lib/utils/logger';
 
 export interface WebhookLogData {
-  requestId: string;
-  eventType: string;
-  asaasPaymentId?: string;
+  id?: string;
+  request_id: string;
+  event_type: string;
+  asaas_payment_id?: string | null;
   payload: any;
-  signature: string;
-  status: 'received' | 'success' | 'error' | 'invalid_signature' | 'processing';
-  errorMessage?: string;
-  errorStack?: string;
-  processingTimeMs?: number;
+  signature: string | null;
+  status: string;
+  error_message?: string | null;
+  retry_count?: number | null;
+  processed_at?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
 }
 
 export class WebhookLogger {
@@ -260,7 +263,7 @@ export class WebhookLogger {
 
       const { data, error } = await supabase
         .from('webhook_logs')
-        .select('status, processing_time_ms')
+        .select('status')
         .gte('created_at', timeLimit.toISOString());
 
       if (error) throw error;
@@ -272,16 +275,6 @@ export class WebhookLogger {
         invalidSignature: data.filter(log => log.status === 'invalid_signature').length,
         avgProcessingTime: 0
       };
-
-      const processingTimes = data
-        .filter(log => log.processing_time_ms !== null)
-        .map(log => log.processing_time_ms as number);
-
-      if (processingTimes.length > 0) {
-        stats.avgProcessingTime = Math.round(
-          processingTimes.reduce((a, b) => a + b, 0) / processingTimes.length
-        );
-      }
 
       return stats;
     } catch (error) {
