@@ -1,4 +1,6 @@
 import { asaasAPI } from '@/lib/asaas';
+import { logger, sanitizarDadosParaLog } from '@/lib/utils/logger';
+import { clienteValidator, DadosCliente } from '@/lib/validators/clienteValidator';
 import {
   Cliente,
   DadosPagamento,
@@ -14,51 +16,135 @@ export class PagamentoService {
   
   // Criar ou atualizar cliente no Asaas
   async criarOuAtualizarCliente(cliente: Cliente): Promise<string> {
+    logger.info('PagamentoService', 'Iniciando criação/atualização de cliente', {
+      clienteId: cliente.id,
+      temCPF: !!cliente.cpf,
+      temEmail: !!cliente.email,
+      temEndereco: !!cliente.endereco
+    });
+
     try {
+      // Se tem ID, verificar se o cliente ainda existe no Asaas
+      if (cliente.id) {
+        try {
+          await asaasAPI.getCustomer(cliente.id);
+          logger.info('PagamentoService', 'Cliente existe no Asaas, atualizando', { clienteId: cliente.id });
+        } catch (error: any) {
+          // Se o cliente não existe mais (404 ou invalid_customer), criar um novo
+          if (error.message?.includes('404') || error.message?.includes('invalid_customer') || error.message?.includes('não encontrado')) {
+            logger.info('PagamentoService', 'Cliente não existe mais no Asaas, será criado um novo', { clienteIdAntigo: cliente.id });
+            cliente.id = undefined; // Força criação de novo cliente
+          } else {
+            throw error;
+          }
+        }
+      }
+      // Converter Cliente para DadosCliente (formato do validator)
+      const dadosParaValidar: DadosCliente = {
+        name: cliente.nome,
+        email: cliente.email,
+        cpfCnpj: cliente.cpf,
+        phone: cliente.telefone,
+        mobilePhone: cliente.celular,
+        postalCode: cliente.cep,
+        address: cliente.endereco,
+        addressNumber: cliente.numero,
+        complement: cliente.complemento,
+        province: cliente.bairro,
+        observations: cliente.observacoes
+      };
+
+      // Validar dados do cliente
+      logger.info('PagamentoService', 'Validando dados do cliente', {
+        clienteId: cliente.id
+      });
+
+      const validacao = clienteValidator.validarDadosCliente(dadosParaValidar);
+
+      // Se houver avisos, registrar no log
+      if (validacao.avisos.length > 0) {
+        logger.info('PagamentoService', 'Avisos na validação do cliente', {
+          clienteId: cliente.id,
+          avisos: validacao.avisos
+        });
+      }
+
+      // Se a validação falhar, lançar erro com mensagens claras
+      if (!validacao.valido) {
+        const mensagemErro = `Dados do cliente inválidos: ${validacao.erros.join(', ')}`;
+        logger.error('PagamentoService', 'Validação de cliente falhou', new Error(mensagemErro), {
+          clienteId: cliente.id,
+          erros: validacao.erros,
+          avisos: validacao.avisos
+        });
+        
+        throw new Error(mensagemErro);
+      }
+
+      logger.info('PagamentoService', 'Validação do cliente concluída com sucesso', {
+        clienteId: cliente.id
+      });
+
+      // Sanitizar dados (remove campos vazios e faz trim)
+      const dadosSanitizados = clienteValidator.sanitizarDados(dadosParaValidar);
+
+      // Garantir que cpfCnpj está presente (já validado acima)
+      if (!dadosSanitizados.cpfCnpj) {
+        throw new Error('CPF/CNPJ é obrigatório para criar cliente');
+      }
+
+      // Construir objeto no formato AsaasCustomer
+      const customerData: any = {
+        name: dadosSanitizados.name,
+        email: dadosSanitizados.email,
+        cpfCnpj: dadosSanitizados.cpfCnpj
+      };
+
+      // Adicionar campos opcionais apenas se presentes
+      if (dadosSanitizados.phone) customerData.phone = dadosSanitizados.phone;
+      if (dadosSanitizados.mobilePhone) customerData.mobilePhone = dadosSanitizados.mobilePhone;
+      if (dadosSanitizados.postalCode) customerData.postalCode = dadosSanitizados.postalCode;
+      if (dadosSanitizados.address) customerData.address = dadosSanitizados.address;
+      if (dadosSanitizados.addressNumber) customerData.addressNumber = dadosSanitizados.addressNumber;
+      if (dadosSanitizados.complement) customerData.complement = dadosSanitizados.complement;
+      if (dadosSanitizados.province) customerData.province = dadosSanitizados.province;
+      if (dadosSanitizados.observations) customerData.observations = dadosSanitizados.observations;
+
+      logger.info('PagamentoService', 'Dados do cliente sanitizados', {
+        clienteId: cliente.id,
+        camposPreenchidos: Object.keys(customerData),
+        dadosSanitizados: sanitizarDadosParaLog(customerData)
+      });
+
       // Verificar se cliente já existe
       if (cliente.id) {
-        await asaasAPI.updateCustomer(cliente.id, {
-          name: cliente.nome,
-          email: cliente.email,
-          phone: cliente.telefone,
-          mobilePhone: cliente.celular,
-          cpfCnpj: cliente.cpf,
-          postalCode: cliente.cep,
-          address: cliente.endereco,
-          addressNumber: cliente.numero,
-          complement: cliente.complemento,
-          province: cliente.bairro,
-          city: cliente.cidade,
-          state: cliente.estado,
-          observations: cliente.observacoes
-        });
+        logger.info('PagamentoService', 'Atualizando cliente existente', { clienteId: cliente.id });
+        await asaasAPI.updateCustomer(cliente.id, customerData);
+        logger.info('PagamentoService', 'Cliente atualizado com sucesso', { clienteId: cliente.id });
         return cliente.id;
       } else {
-        const response = await asaasAPI.createCustomer({
-          name: cliente.nome,
-          email: cliente.email,
-          phone: cliente.telefone,
-          mobilePhone: cliente.celular,
-          cpfCnpj: cliente.cpf,
-          postalCode: cliente.cep,
-          address: cliente.endereco,
-          addressNumber: cliente.numero,
-          complement: cliente.complemento,
-          province: cliente.bairro,
-          city: cliente.cidade,
-          state: cliente.estado,
-          observations: cliente.observacoes
-        });
+        logger.info('PagamentoService', 'Criando novo cliente');
+        const response = await asaasAPI.createCustomer(customerData);
+        logger.info('PagamentoService', 'Novo cliente criado com sucesso', { clienteId: response.id });
         return response.id;
       }
     } catch (error) {
-      console.error('Erro ao criar/atualizar cliente:', error);
+      logger.error('PagamentoService', 'Erro ao criar/atualizar cliente', error as Error, {
+        clienteId: cliente.id,
+        dadosCliente: sanitizarDadosParaLog(cliente)
+      });
       throw error;
     }
   }
 
   // Criar pagamento PIX
   async criarPagamentoPix(dados: DadosPagamento): Promise<ResultadoPagamento> {
+    logger.info('PagamentoService', 'Iniciando criação de pagamento PIX', {
+      clienteId: dados.clienteId,
+      valor: dados.valor,
+      referencia: dados.referencia
+    });
+
     try {
       const response = await asaasAPI.createPixPayment({
         customer: dados.clienteId,
@@ -85,6 +171,12 @@ export class PagamentoService {
       // Gerar QR Code PIX
       const qrCodeData = await asaasAPI.getPixQrCode(response.id);
 
+      logger.info('PagamentoService', 'Pagamento PIX criado com sucesso', {
+        pagamentoId: response.id,
+        status: response.status,
+        valor: response.value
+      });
+
       return {
         sucesso: true,
         dados: {
@@ -109,6 +201,11 @@ export class PagamentoService {
         }
       };
     } catch (error: any) {
+      logger.error('PagamentoService', 'Erro ao criar pagamento PIX', error, {
+        clienteId: dados.clienteId,
+        valor: dados.valor,
+        referencia: dados.referencia
+      });
       return {
         sucesso: false,
         erro: error.message,
@@ -119,6 +216,13 @@ export class PagamentoService {
 
   // Criar pagamento com cartão de crédito
   async criarPagamentoCartao(dados: DadosPagamento): Promise<ResultadoPagamento> {
+    logger.info('PagamentoService', 'Iniciando criação de pagamento com cartão', {
+      clienteId: dados.clienteId,
+      valor: dados.valor,
+      parcelas: dados.parcelas,
+      referencia: dados.referencia
+    });
+
     try {
       if (!dados.dadosCartao || !dados.dadosPortadorCartao) {
         throw new Error('Dados do cartão são obrigatórios');
@@ -166,6 +270,12 @@ export class PagamentoService {
         remoteIp: dados.ipRemoto
       });
 
+      logger.info('PagamentoService', 'Pagamento com cartão criado com sucesso', {
+        pagamentoId: response.id,
+        status: response.status,
+        valor: response.value
+      });
+
       return {
         sucesso: true,
         dados: {
@@ -188,6 +298,12 @@ export class PagamentoService {
         }
       };
     } catch (error: any) {
+      logger.error('PagamentoService', 'Erro ao criar pagamento com cartão', error, {
+        clienteId: dados.clienteId,
+        valor: dados.valor,
+        parcelas: dados.parcelas,
+        referencia: dados.referencia
+      });
       return {
         sucesso: false,
         erro: error.message,

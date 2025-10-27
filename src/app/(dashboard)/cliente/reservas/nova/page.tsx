@@ -17,17 +17,25 @@ import { useTurmas } from "@/hooks/core/useTurmas";
 import { useCreateReserva } from "@/hooks/core/useReservas";
 import { createReservaSchema, type CreateReservaData } from "@/lib/validations/reserva.schema";
 import { useToast } from "@/hooks/use-toast";
+import { useUser } from "@/hooks/auth/useUser";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import Link from "next/link";
+import { ModalPagamento } from "@/components/shared/pagamento/ModalPagamento";
+import type { DadosResumo } from "@/components/shared/pagamento/ResumoFinanceiro";
+import type { DadosComprovante } from "@/components/shared/pagamento/ComprovantePagamento";
+import type { Reserva } from "@/types/reservas.types";
 
 export default function NovaReservaPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { data: userData } = useUser();
 
   const [selectedQuadra, setSelectedQuadra] = useState<string>("");
   const [selectedHorario, setSelectedHorario] = useState<string>("");
   const [selectedData, setSelectedData] = useState<string>("");
+  const [modalPagamentoAberto, setModalPagamentoAberto] = useState(false);
+  const [reservaCriada, setReservaCriada] = useState<Reserva | null>(null);
 
   const { data: quadras, isLoading: isLoadingQuadras } = useQuadras();
   const { data: horarios, isLoading: isLoadingHorarios } = useHorariosDisponiveis(
@@ -80,17 +88,71 @@ export default function NovaReservaPage() {
 
       toast({
         title: "Reserva criada com sucesso!",
-        description: "Sua reserva foi criada e está aguardando confirmação.",
+        description: "Prossiga para o pagamento para confirmar sua reserva.",
       });
 
-      // Redirect to reservation detail page
-      router.push(`/cliente/reservas/${reserva.id}`);
+      // Save reservation data and open payment modal
+      setReservaCriada(reserva);
+      setModalPagamentoAberto(true);
     } catch (error: any) {
       toast({
         title: "Erro ao criar reserva",
         description: error.message || "Tente novamente mais tarde.",
         variant: "destructive",
       });
+    }
+  };
+
+  // Prepare payment summary data
+  const dadosResumoPagamento: DadosResumo | null = reservaCriada && quadraSelecionada && horarioSelecionado && selectedData
+    ? {
+        itens: [
+          {
+            descricao: `Reserva - ${quadraSelecionada.nome}`,
+            valor: horarioSelecionado.valor_avulsa,
+            quantidade: 1,
+          }
+        ],
+        subtotal: horarioSelecionado.valor_avulsa,
+        desconto: 0,
+        taxas: 0,
+        total: horarioSelecionado.valor_avulsa,
+        detalhesReserva: {
+          id: reservaCriada.id,
+          quadra: quadraSelecionada.nome,
+          data: format(new Date(selectedData + "T00:00:00"), "dd 'de' MMMM 'de' yyyy", { locale: ptBR }),
+          horario: `${horarioSelecionado.hora_inicio} - ${horarioSelecionado.hora_fim}`,
+        },
+      }
+    : null;
+
+  const handlePagamentoConcluido = (comprovante: DadosComprovante) => {
+    console.log('[NovaReserva] Pagamento concluído! Comprovante:', comprovante);
+
+    // NÃO fechar o modal aqui!
+    // O modal vai mostrar a tela de comprovante
+    // O usuário vai fechar clicando no botão "Concluir" do comprovante
+
+    // Mostrar toast informando que está pronto
+    toast({
+      title: comprovante.status === 'aprovado' ? "Pagamento confirmado!" : "Pagamento em processamento",
+      description: comprovante.status === 'aprovado'
+        ? "Sua reserva foi confirmada com sucesso."
+        : "Aguardando confirmação do pagamento.",
+    });
+  };
+
+  const handleFecharModalPagamento = () => {
+    console.log('[NovaReserva] Fechando modal de pagamento...');
+
+    // Se já criou uma reserva e processou pagamento, redirecionar
+    if (reservaCriada) {
+      console.log('[NovaReserva] Redirecionando para lista de reservas...');
+      setModalPagamentoAberto(false);
+      router.push("/cliente/reservas");
+    } else {
+      // Se não processou pagamento ainda, apenas fechar
+      setModalPagamentoAberto(false);
     }
   };
 
@@ -212,12 +274,12 @@ export default function NovaReservaPage() {
                 {/* Turma (opcional) */}
                 <div className="space-y-2">
                   <Label htmlFor="turma">Vincular Turma (opcional)</Label>
-                  <Select onValueChange={(value) => setValue("turma_id", value || "")}>
+                  <Select onValueChange={(value) => setValue("turma_id", value === "none" ? "" : value)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Sem turma" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Sem turma</SelectItem>
+                      <SelectItem value="none">Sem turma</SelectItem>
                       {turmas?.map((turma) => (
                         <SelectItem key={turma.id} value={turma.id}>
                           {turma.nome}
@@ -318,6 +380,17 @@ export default function NovaReservaPage() {
           </div>
         </div>
       </form>
+
+      {/* Payment Modal */}
+      {dadosResumoPagamento && (
+        <ModalPagamento
+          aberto={modalPagamentoAberto}
+          onFechar={handleFecharModalPagamento}
+          dadosResumo={dadosResumoPagamento}
+          saldoDisponivel={userData?.profile?.saldo_creditos || 0}
+          onPagamentoConcluido={handlePagamentoConcluido}
+        />
+      )}
     </div>
   );
 }

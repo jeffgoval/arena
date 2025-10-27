@@ -40,7 +40,10 @@ export const courtsService = {
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('[courtsService] Erro ao criar quadra:', error);
+      throw new Error(error.message || 'Erro ao criar quadra');
+    }
     return data;
   },
 
@@ -53,7 +56,10 @@ export const courtsService = {
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('[courtsService] Erro ao atualizar quadra:', error);
+      throw new Error(error.message || 'Erro ao atualizar quadra');
+    }
     return data;
   },
 

@@ -38,9 +38,11 @@ export function useCreateCourt() {
       });
     },
     onError: (error: any) => {
+      const errorMessage = error?.message || error?.toString() || 'Erro desconhecido ao criar quadra';
+      console.error('Erro ao criar quadra:', error);
       toast({
         title: 'Erro ao criar quadra',
-        description: error.message,
+        description: errorMessage,
         variant: 'destructive',
       });
     },
@@ -62,9 +64,11 @@ export function useUpdateCourt() {
       });
     },
     onError: (error: any) => {
+      const errorMessage = error?.message || error?.toString() || 'Erro desconhecido ao atualizar quadra';
+      console.error('Erro ao atualizar quadra:', error);
       toast({
         title: 'Erro ao atualizar quadra',
-        description: error.message,
+        description: errorMessage,
         variant: 'destructive',
       });
     },

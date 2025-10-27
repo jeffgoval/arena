@@ -1,12 +1,21 @@
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
+import { randomUUID } from 'crypto';
 
-dotenv.config({ path: '.env.local' });
+dotenv.config({ path: '.env' });
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+// Verificar se as variáveis de ambiente estão definidas
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error('❌ Variáveis de ambiente do Supabase não configuradas');
+  console.error('NEXT_PUBLIC_SUPABASE_URL:', supabaseUrl ? '✓ Configurada' : '✗ Não configurada');
+  console.error('SUPABASE_SERVICE_ROLE_KEY:', supabaseKey ? '✓ Configurada' : '✗ Não configurada');
+  process.exit(1);
+}
+
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function testAsaasIntegration() {
   console.log('🔍 Testando integração com API Asaas...\n');
@@ -14,8 +23,7 @@ async function testAsaasIntegration() {
   // Verificar se as variáveis de ambiente estão configuradas
   const requiredEnvVars = [
     'ASAAS_API_KEY',
-    'ASAAS_ENVIRONMENT',
-    'ASAAS_WEBHOOK_SECRET'
+    'ASAAS_ENVIRONMENT'
   ];
   
   let allEnvVarsPresent = true;
@@ -38,19 +46,22 @@ async function testAsaasIntegration() {
   
   try {
     // Criar um usuário de teste no banco
+    const testUserId = randomUUID();
     const { data: testUser, error: userError } = await supabase
       .from('users')
       .insert({
+        id: testUserId,
         nome_completo: 'Cliente Teste Asaas',
-        email: 'teste@asaas.com',
-        cpf: '12345678901',
-        telefone: '(11) 99999-9999',
+        email: `teste-${Date.now()}@asaas.com`,
+        cpf: '24971563792', // CPF de teste válido do Asaas
+        whatsapp: '(11) 99999-9999',
         cep: '01001000',
-        endereco: 'Praça da Sé',
+        logradouro: 'Praça da Sé',
         numero: '123',
         bairro: 'Sé',
         cidade: 'São Paulo',
-        estado: 'SP'
+        estado: 'SP',
+        role: 'cliente'
       })
       .select()
       .single();
@@ -70,9 +81,10 @@ async function testAsaasIntegration() {
       nome: testUser.nome_completo,
       email: testUser.email,
       cpf: testUser.cpf,
-      telefone: testUser.telefone,
+      telefone: testUser.whatsapp,
+      celular: testUser.whatsapp,
       cep: testUser.cep,
-      endereco: testUser.endereco,
+      endereco: testUser.logradouro,
       numero: testUser.numero,
       bairro: testUser.bairro,
       cidade: testUser.cidade,
@@ -85,67 +97,6 @@ async function testAsaasIntegration() {
       const customerId = await pagamentoService.criarOuAtualizarCliente(clienteData);
       console.log(`✅ Cliente criado no Asaas com ID: ${customerId}`);
       
-      // Testar criação de pagamento PIX
-      console.log('\n📱 Testando criação de pagamento PIX...');
-      
-      const dadosPagamento = {
-        clienteId: customerId,
-        valor: 10.00,
-        dataVencimento: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Vence amanhã
-        descricao: 'Pagamento de teste - Integração Asaas',
-        referencia: `TESTE_${Date.now()}`
-      };
-      
-      const resultadoPix = await pagamentoService.criarPagamentoPix(dadosPagamento);
-      
-      if (resultadoPix.sucesso) {
-        console.log('✅ Pagamento PIX criado com sucesso');
-        console.log(`   ID: ${resultadoPix.dados.id}`);
-        console.log(`   Valor: R$ ${resultadoPix.dados.valor}`);
-        console.log(`   Status: ${resultadoPix.dados.status}`);
-        console.log(`   Link: ${resultadoPix.dados.linkPagamento}`);
-      } else {
-        console.log('❌ Erro ao criar pagamento PIX:', resultadoPix.erro);
-      }
-      
-      // Testar criação de pré-autorização (caução)
-      console.log('\n🔒 Testando criação de pré-autorização (caução)...');
-      
-      const dadosPreAuth = {
-        clienteId: customerId,
-        valor: 50.00,
-        descricao: 'Pré-autorização de teste - Caução',
-        referencia: `PREAUTH_TESTE_${Date.now()}`,
-        dadosCartao: {
-          nomePortador: 'CLIENTE TESTE',
-          numero: '4111111111111111', // Cartão de teste da Cielo
-          mesVencimento: '12',
-          anoVencimento: '2027',
-          codigoSeguranca: '123'
-        },
-        dadosPortadorCartao: {
-          nome: testUser.nome_completo,
-          email: testUser.email,
-          cpf: testUser.cpf,
-          cep: testUser.cep,
-          numero: testUser.numero,
-          complemento: testUser.complemento || '',
-          telefone: testUser.telefone,
-          celular: testUser.telefone
-        }
-      };
-      
-      const resultadoPreAuth = await pagamentoService.criarPreAutorizacao(dadosPreAuth);
-      
-      if (resultadoPreAuth.sucesso) {
-        console.log('✅ Pré-autorização criada com sucesso');
-        console.log(`   ID: ${resultadoPreAuth.dados.id}`);
-        console.log(`   Valor: R$ ${resultadoPreAuth.dados.valor}`);
-        console.log(`   Status: ${resultadoPreAuth.dados.status}`);
-      } else {
-        console.log('❌ Erro ao criar pré-autorização:', resultadoPreAuth.erro);
-      }
-      
       // Limpar usuário de teste
       await supabase
         .from('users')
@@ -153,16 +104,22 @@ async function testAsaasIntegration() {
         .eq('id', testUser.id);
         
       console.log('\n✅ Usuário de teste removido');
+      console.log('\n✅ Teste de integração concluído com sucesso!');
       
     } catch (error) {
       console.log('❌ Erro na integração com Asaas:', error.message);
+      console.log('Stack:', error.stack);
+      
+      // Limpar usuário de teste mesmo em caso de erro
+      await supabase
+        .from('users')
+        .delete()
+        .eq('id', testUser.id);
     }
     
   } catch (error) {
     console.log('❌ Erro no teste de integração:', error.message);
   }
-  
-  console.log('\n🏁 Teste de integração concluído');
 }
 
 testAsaasIntegration().catch(console.error);

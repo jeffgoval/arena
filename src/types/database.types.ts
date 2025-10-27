@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "13.0.5"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       assinaturas_mensalista: {
@@ -1627,6 +1652,7 @@ export type Database = {
       }
       users: {
         Row: {
+          asaas_customer_id: string | null
           bairro: string | null
           banned: boolean
           banned_at: string | null
@@ -1651,6 +1677,7 @@ export type Database = {
           whatsapp: string | null
         }
         Insert: {
+          asaas_customer_id?: string | null
           bairro?: string | null
           banned?: boolean
           banned_at?: string | null
@@ -1675,6 +1702,7 @@ export type Database = {
           whatsapp?: string | null
         }
         Update: {
+          asaas_customer_id?: string | null
           bairro?: string | null
           banned?: boolean
           banned_at?: string | null
@@ -1835,6 +1863,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       notification_priority: ["low", "medium", "high", "urgent"],

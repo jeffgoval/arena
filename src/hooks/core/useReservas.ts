@@ -12,8 +12,19 @@ export function useReservas(filtro?: 'futuras' | 'passadas' | 'todas') {
   return useQuery({
     queryKey: ['reservas', filtro],
     queryFn: async () => {
+      console.log('[useReservas] 🔍 Iniciando busca de reservas...');
+      console.log('[useReservas] Filtro aplicado:', filtro);
+
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Usuário não autenticado');
+      if (!user) {
+        console.error('[useReservas] ❌ Usuário não autenticado');
+        throw new Error('Usuário não autenticado');
+      }
+
+      console.log('[useReservas] ✅ Usuário autenticado:', {
+        id: user.id,
+        email: user.email
+      });
 
       let query = supabase
         .from('reservas')
@@ -27,23 +38,53 @@ export function useReservas(filtro?: 'futuras' | 'passadas' | 'todas') {
           organizador:users!reservas_organizador_id_fkey(id, nome_completo),
           quadra:quadras(id, nome, tipo),
           horario:horarios(id, hora_inicio, hora_fim),
-          turma:turmas(id, nome),
-          reserva_participantes(id)
+          turma:turmas!reservas_turma_id_fkey(id, nome)
         `)
         .eq('organizador_id', user.id)
         .neq('status', 'cancelada')
         .order('data', { ascending: true });
 
+      console.log('[useReservas] 🔍 Query configurada:', {
+        filtroOrganizador: user.id,
+        excluindoStatus: 'cancelada'
+      });
+
       // Aplicar filtro
       const hoje = new Date().toISOString().split('T')[0];
       if (filtro === 'futuras') {
         query = query.gte('data', hoje);
+        console.log('[useReservas] 📅 Filtrando futuras (>= hoje):', hoje);
       } else if (filtro === 'passadas') {
         query = query.lt('data', hoje);
+        console.log('[useReservas] 📅 Filtrando passadas (< hoje):', hoje);
+      } else {
+        console.log('[useReservas] 📅 Sem filtro de data (todas)');
       }
 
       const { data, error } = await query;
-      if (error) throw error;
+
+      if (error) {
+        console.error('[useReservas] ❌ Erro na query:', error.message || 'Erro desconhecido');
+        console.error('[useReservas] ❌ Detalhes:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        throw error;
+      }
+
+      console.log('[useReservas] ✅ Query executada com sucesso!');
+      console.log('[useReservas] 📊 Resultados:', {
+        totalReservas: data?.length || 0,
+        reservas: data?.map(r => ({
+          id: r.id,
+          data: r.data,
+          status: r.status,
+          quadra: r.quadra?.nome,
+          valor: r.valor_total
+        }))
+      });
 
       return data as unknown as Reserva[];
     },

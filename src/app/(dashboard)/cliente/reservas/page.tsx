@@ -14,20 +14,20 @@ import { ptBR } from "date-fns/locale";
 type FiltroType = "todas" | "futuras" | "passadas";
 
 export default function ReservasPage() {
-  const [filtro, setFiltro] = useState<FiltroType>("futuras");
-  const { data: reservasData, isLoading } = useReservas();
+  const [filtro, setFiltro] = useState<FiltroType>("todas");
+  const { data: reservas, isLoading } = useReservas();
 
   const hoje = new Date();
   hoje.setHours(0, 0, 0, 0);
 
   const filtros = [
+    { key: "todas", label: "Todas" },
     { key: "futuras", label: "Futuras" },
     { key: "passadas", label: "Passadas" },
-    { key: "todas", label: "Todas" },
   ];
 
-  // Filter reservations based on selected filter
-  const reservas = reservasData?.filter((reserva: any) => {
+  // Filtrar reservas por data (mantendo todas independente do status)
+  const reservasFiltradas = reservas?.filter((reserva: any) => {
     const dataReserva = parseISO(reserva.data);
     dataReserva.setHours(0, 0, 0, 0);
 
@@ -36,13 +36,24 @@ export default function ReservasPage() {
     } else if (filtro === "passadas") {
       return dataReserva < hoje;
     }
-    return true; // "todas"
+    return true; // "todas" - MOSTRA TUDO (pendente, confirmada, etc)
   }).sort((a: any, b: any) => {
-    // Sort futuras ascending, passadas descending
     const dateA = parseISO(a.data).getTime();
     const dateB = parseISO(b.data).getTime();
     return filtro === "passadas" ? dateB - dateA : dateA - dateB;
   }) || [];
+
+  console.log('[ReservasPage] Reservas carregadas:', {
+    total: reservas?.length || 0,
+    filtradas: reservasFiltradas?.length || 0,
+    filtro,
+    reservas: reservasFiltradas?.map(r => ({
+      id: r.id,
+      quadra: r.quadra?.nome,
+      data: r.data,
+      status: r.status
+    }))
+  });
 
   if (isLoading) {
     return (
@@ -126,7 +137,7 @@ export default function ReservasPage() {
       </Card>
 
       {/* Reservations List */}
-      {!reservas || reservas.length === 0 ? (
+      {!reservasFiltradas || reservasFiltradas.length === 0 ? (
         <Card className="border-0 shadow-soft">
           <CardContent className="p-12 text-center">
             <Calendar className="w-16 h-16 mx-auto text-muted-foreground/20 mb-4" />
@@ -146,7 +157,7 @@ export default function ReservasPage() {
         </Card>
       ) : (
         <div className="space-y-4">
-          {reservas.map((reserva: any) => {
+          {reservasFiltradas.map((reserva: any) => {
             const dataReserva = parseISO(reserva.data);
             const diaSemana = format(dataReserva, "EEE", { locale: ptBR }).toUpperCase().substring(0, 3);
             const dia = format(dataReserva, "dd");
@@ -226,7 +237,7 @@ export default function ReservasPage() {
       )}
 
       {/* Info Card */}
-      {reservas && reservas.length > 0 && (
+      {reservasFiltradas && reservasFiltradas.length > 0 && (
         <Card className="border-info/20 bg-info/5 shadow-soft">
           <CardContent className="p-4">
             <div className="flex items-start gap-3">

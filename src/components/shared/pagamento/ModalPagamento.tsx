@@ -52,14 +52,42 @@ export function ModalPagamento({
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Erro ao processar pagamento');
+        console.error('[ModalPagamento] Erro na resposta da API:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorMessage: error.error,
+          errorDetails: error.details,
+          fullError: error
+        });
+
+        // Mostrar mensagem mais detalhada
+        const mensagemErro = error.details
+          ? `${error.error}: ${error.details}`
+          : error.error || 'Erro ao processar pagamento';
+
+        throw new Error(mensagemErro);
       }
 
-      const { comprovante: novoComprovante } = await response.json();
+      const responseData = await response.json();
+      console.log('[ModalPagamento] ✅ Resposta da API:', JSON.stringify(responseData, null, 2));
 
+      const novoComprovante = responseData.comprovante;
+
+      if (!novoComprovante) {
+        console.error('[ModalPagamento] ❌ Comprovante não encontrado na resposta!');
+        console.error('[ModalPagamento] Resposta recebida:', responseData);
+        throw new Error('Resposta inválida da API - comprovante não encontrado');
+      }
+
+      console.log('[ModalPagamento] ✅ Comprovante recebido:', JSON.stringify(novoComprovante, null, 2));
+
+      console.log('[ModalPagamento] 🔄 Mudando etapa para "comprovante"...');
       setComprovante(novoComprovante);
       setEtapa("comprovante");
+
+      console.log('[ModalPagamento] ✅ Etapa alterada! Chamando onPagamentoConcluido...');
       onPagamentoConcluido?.(novoComprovante);
+      console.log('[ModalPagamento] ✅ Processamento completo!');
 
     } catch (error) {
       console.error('Erro ao processar pagamento:', error);

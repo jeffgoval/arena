@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -20,11 +21,19 @@ import {
 } from 'lucide-react';
 import { useCreditos, useComprarCreditos, PACOTES_CREDITOS } from '@/hooks/core/useCreditos';
 import { CreditosPageSkeleton } from '@/components/shared/loading/CreditosSkeleton';
+import { ModalCPF } from '@/components/shared/forms/ModalCPF';
+import { createClient } from '@/lib/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import type { CreditoTipo } from '@/types/creditos.types';
 
 export default function CreditosPage() {
   const { data, isLoading, error } = useCreditos();
   const comprarCreditos = useComprarCreditos();
+  const [modalCPFAberto, setModalCPFAberto] = useState(false);
+  const [pacoteSelecionado, setPacoteSelecionado] = useState<string | null>(null);
+  const [salvandoCPF, setSalvandoCPF] = useState(false);
+  const { toast } = useToast();
+  const supabase = createClient();
 
   if (isLoading) {
     return <CreditosPageSkeleton />;
@@ -114,12 +123,72 @@ export default function CreditosPage() {
     try {
       await comprarCreditos.mutateAsync({
         pacoteId,
-        metodoPagamento: 'PIX', // Por enquanto fixo, depois implementar seleção
+        metodoPagamento: 'pix', // Por enquanto fixo, depois implementar seleção
         valor: PACOTES_CREDITOS.find(p => p.id === pacoteId)?.valor || 0,
       });
-    } catch (error) {
-      // Error handling é feito pelo hook
-      console.error('Erro ao comprar créditos:', error);
+    } catch (error: any) {
+      // Se o erro for CPF ausente, abrir modal para capturar
+      if (error?.message === 'CPF_AUSENTE') {
+        setPacoteSelecionado(pacoteId);
+        setModalCPFAberto(true);
+      } else {
+        // Error handling é feito pelo hook
+        console.error('Erro ao comprar créditos:', error);
+      }
+    }
+  };
+
+  const handleConfirmarCPF = async (cpf: string) => {
+    setSalvandoCPF(true);
+    
+    try {
+      // Obter usuário autenticado
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('Usuário não autenticado');
+      }
+
+      // Salvar CPF no perfil do usuário
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({ cpf })
+        .eq('id', user.id);
+
+      if (updateError) {
+        throw new Error('Erro ao salvar CPF');
+      }
+
+      toast({
+        title: 'CPF salvo com sucesso!',
+        description: 'Agora você pode continuar com a compra.',
+      });
+
+      // Fechar modal
+      setModalCPFAberto(false);
+
+      // Tentar comprar novamente
+      if (pacoteSelecionado) {
+        await comprarCreditos.mutateAsync({
+          pacoteId: pacoteSelecionado,
+          metodoPagamento: 'pix',
+          valor: PACOTES_CREDITOS.find(p => p.id === pacoteSelecionado)?.valor || 0,
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Erro ao salvar CPF',
+        description: error.message || 'Tente novamente',
+        variant: 'destructive',
+      });
+    } finally {
+      setSalvandoCPF(false);
+    }
+  };
+
+  const handleFecharModalCPF = () => {
+    if (!salvandoCPF) {
+      setModalCPFAberto(false);
+      setPacoteSelecionado(null);
     }
   };
 
@@ -419,6 +488,14 @@ export default function CreditosPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Modal para capturar CPF */}
+      <ModalCPF
+        open={modalCPFAberto}
+        onClose={handleFecharModalCPF}
+        onConfirm={handleConfirmarCPF}
+        loading={salvandoCPF}
+      />
     </div>
   );
 }

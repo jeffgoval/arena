@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { validarCPF } from '@/lib/utils/validators';
 import type { 
   CreditosResponse, 
   ComprarCreditosData, 
@@ -53,6 +54,26 @@ export function useComprarCreditos() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuário não autenticado');
 
+      // Buscar dados do usuário para validar CPF
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('cpf')
+        .eq('id', user.id)
+        .single();
+
+      if (userError) {
+        throw new Error('Erro ao buscar dados do usuário');
+      }
+
+      // Validar CPF antes de enviar
+      if (!userData?.cpf) {
+        throw new Error('CPF_AUSENTE');
+      }
+
+      if (!validarCPF(userData.cpf)) {
+        throw new Error('CPF inválido. Por favor, atualize seu CPF no perfil.');
+      }
+
       // Adicionar usuarioId ao payload
       const payload = {
         ...data,
@@ -68,6 +89,10 @@ export function useComprarCreditos() {
 
       if (!response.ok) {
         const errorData = await response.json();
+        // Verificar se é um erro de configuração do sistema de pagamento
+        if (errorData.error && errorData.error.includes('configuração')) {
+          throw new Error('Sistema de pagamento temporariamente indisponível. Por favor, tente novamente mais tarde ou entre em contato com o suporte.');
+        }
         throw new Error(errorData.error || 'Erro ao comprar créditos');
       }
 

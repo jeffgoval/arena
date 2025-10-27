@@ -127,7 +127,7 @@ async function processarPagamentoConfirmado(payment: WebhookPagamento['payment']
     const { data: pagamentoData, error: pagamentoError } = await supabase
       .from('pagamentos')
       .update({
-        status: 'CONFIRMADO',
+        status: 'confirmado',
         data_pagamento: payment.paymentDate,
         data_confirmacao: payment.confirmedDate,
         valor_liquido: payment.netValue,
@@ -147,7 +147,7 @@ async function processarPagamentoConfirmado(payment: WebhookPagamento['payment']
       const { data: reservaData, error: reservaError } = await supabase
         .from('reservas')
         .update({
-          status: 'CONFIRMADA',
+          status: 'confirmada',
           updated_at: new Date().toISOString()
         })
         .eq('id', pagamentoData.reserva_id)
@@ -222,7 +222,7 @@ async function processarPagamentoVencido(payment: WebhookPagamento['payment']) {
     const { data: pagamentoData, error: pagamentoError } = await supabase
       .from('pagamentos')
       .update({
-        status: 'VENCIDO',
+        status: 'vencido',
         updated_at: new Date().toISOString()
       })
       .eq('asaas_payment_id', payment.id)
@@ -239,7 +239,7 @@ async function processarPagamentoVencido(payment: WebhookPagamento['payment']) {
       const { data: reservaData, error: reservaError } = await supabase
         .from('reservas')
         .update({
-          status: 'CANCELADA',
+          status: 'cancelada',
           motivo_cancelamento: 'Pagamento vencido',
           updated_at: new Date().toISOString()
         })

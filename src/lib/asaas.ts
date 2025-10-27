@@ -1,4 +1,14 @@
 import axios, { AxiosInstance } from 'axios';
+import { logger, sanitizarDadosParaLog } from '@/lib/utils/logger';
+
+// Interface para erros da API Asaas
+export interface AsaasErrorResponse {
+  errors: Array<{
+    code: string;
+    description: string;
+  }>;
+  message?: string;
+}
 
 // Tipos para a API do Asaas
 export interface AsaasCustomer {
@@ -135,12 +145,48 @@ class AsaasAPI {
   private api: AxiosInstance;
   private apiKey: string;
   private baseURL: string;
+  
+  // Configuração de retry
+  private readonly retryConfig = {
+    maxRetries: 2,
+    retryableStatusCodes: [408, 429, 500, 502, 503, 504],
+    initialDelay: 1000, // 1 segundo
+    backoffMultiplier: 2
+  };
 
   constructor() {
+    // Tentar carregar do process.env primeiro
     this.apiKey = process.env.ASAAS_API_KEY || '';
-    this.baseURL = process.env.ASAAS_ENVIRONMENT === 'production' 
-      ? 'https://www.asaas.com/api/v3'
-      : 'https://sandbox.asaas.com/api/v3';
+
+    // Fallback: carregar do arquivo de configuração se env não funcionar
+    if (!this.apiKey) {
+      try {
+        const config = require('../../asaas.config.js');
+        this.apiKey = config.apiKey;
+        this.baseURL = config.baseURL;
+        console.log('[Asaas API] Carregado do asaas.config.js (fallback)');
+      } catch (error) {
+        console.error('[Asaas API] ERRO: Não foi possível carregar configuração do Asaas');
+        this.baseURL = 'https://sandbox.asaas.com/api/v3';
+      }
+    } else {
+      this.baseURL = process.env.ASAAS_ENVIRONMENT === 'production'
+        ? 'https://www.asaas.com/api/v3'
+        : 'https://sandbox.asaas.com/api/v3';
+    }
+
+    // Validar API key
+    if (!this.apiKey) {
+      console.error('[Asaas API] ERRO: ASAAS_API_KEY não está configurada!');
+      console.error('[Asaas API] Verifique se a variável está em .env.local ou asaas.config.js');
+    } else {
+      console.log('[Asaas API] Configurado com sucesso:', {
+        environment: process.env.ASAAS_ENVIRONMENT || 'sandbox',
+        baseURL: this.baseURL,
+        apiKeyLength: this.apiKey.length,
+        source: process.env.ASAAS_API_KEY ? 'env' : 'config file'
+      });
+    }
 
     this.api = axios.create({
       baseURL: this.baseURL,
@@ -151,36 +197,162 @@ class AsaasAPI {
       timeout: 30000,
     });
 
-    // Interceptor para logs
+    // Interceptor para logs detalhados
     this.api.interceptors.request.use(
       (config) => {
-        console.log(`[Asaas API] ${config.method?.toUpperCase()} ${config.url}`);
+        this.logRequest(config.method?.toUpperCase() || 'UNKNOWN', config.url || '', config.data);
         return config;
       },
       (error) => {
-        console.error('[Asaas API] Request error:', error);
+        logger.error('AsaasAPI', 'Request Interceptor Error', error);
         return Promise.reject(error);
       }
     );
 
     this.api.interceptors.response.use(
       (response) => {
-        console.log(`[Asaas API] Response ${response.status} from ${response.config.url}`);
+        this.logResponse(response.status, response.data, response.config.url || '');
         return response;
       },
       (error) => {
-        console.error('[Asaas API] Response error:', error.response?.data || error.message);
+        this.logError(error);
         return Promise.reject(error);
       }
     );
   }
 
+  // Método de retry com backoff exponencial
+  private async requestWithRetry<T>(
+    fn: () => Promise<T>,
+    context: string,
+    maxRetries: number = this.retryConfig.maxRetries
+  ): Promise<T> {
+    let lastError: any;
+    
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        // Primeira tentativa ou retry
+        if (attempt > 0) {
+          const delay = this.retryConfig.initialDelay * Math.pow(this.retryConfig.backoffMultiplier, attempt - 1);
+          logger.info('AsaasAPI', `Retry ${attempt}/${maxRetries} para ${context}`, { 
+            delay,
+            attempt,
+            maxRetries 
+          });
+          await this.sleep(delay);
+        }
+        
+        const result = await fn();
+        
+        // Se chegou aqui, sucesso!
+        if (attempt > 0) {
+          logger.info('AsaasAPI', `Retry bem-sucedido para ${context}`, { attempt });
+        }
+        
+        return result;
+      } catch (error: any) {
+        lastError = error;
+        
+        // Verificar se deve fazer retry
+        const shouldRetry = this.shouldRetry(error, attempt, maxRetries);
+        
+        if (!shouldRetry) {
+          logger.info('AsaasAPI', `Não será feito retry para ${context}`, {
+            attempt,
+            statusCode: error.response?.status,
+            errorCode: error.code,
+            reason: this.getNoRetryReason(error, attempt, maxRetries)
+          });
+          throw error;
+        }
+        
+        logger.warn('AsaasAPI', `Tentativa ${attempt + 1} falhou para ${context}, será feito retry`, {
+          attempt: attempt + 1,
+          maxRetries,
+          statusCode: error.response?.status,
+          errorCode: error.code,
+          errorMessage: error.message
+        });
+      }
+    }
+    
+    // Se chegou aqui, todas as tentativas falharam
+    logger.error('AsaasAPI', `Todas as tentativas falharam para ${context}`, lastError, {
+      totalAttempts: maxRetries + 1
+    });
+    throw lastError;
+  }
+  
+  // Verificar se deve fazer retry
+  private shouldRetry(error: any, attempt: number, maxRetries: number): boolean {
+    // Não fazer retry se já atingiu o máximo de tentativas
+    if (attempt >= maxRetries) {
+      return false;
+    }
+    
+    const statusCode = error.response?.status;
+    
+    // Não fazer retry para erros 4xx (validação, autenticação, etc)
+    // Exceto 408 (Request Timeout) e 429 (Too Many Requests)
+    if (statusCode && statusCode >= 400 && statusCode < 500) {
+      return this.retryConfig.retryableStatusCodes.includes(statusCode);
+    }
+    
+    // Fazer retry para erros 5xx (servidor)
+    if (statusCode && statusCode >= 500) {
+      return this.retryConfig.retryableStatusCodes.includes(statusCode);
+    }
+    
+    // Fazer retry para erros de rede/timeout
+    if (error.code === 'ECONNABORTED' || 
+        error.code === 'ETIMEDOUT' || 
+        error.code === 'ECONNREFUSED' ||
+        error.code === 'ENOTFOUND' ||
+        error.code === 'ENETUNREACH') {
+      return true;
+    }
+    
+    return false;
+  }
+  
+  // Obter razão para não fazer retry (para logs)
+  private getNoRetryReason(error: any, attempt: number, maxRetries: number): string {
+    if (attempt >= maxRetries) {
+      return 'Máximo de tentativas atingido';
+    }
+    
+    const statusCode = error.response?.status;
+    
+    if (statusCode && statusCode >= 400 && statusCode < 500 && 
+        !this.retryConfig.retryableStatusCodes.includes(statusCode)) {
+      return `Erro de validação/cliente (${statusCode}) - não é retentável`;
+    }
+    
+    return 'Erro não retentável';
+  }
+  
+  // Função auxiliar para sleep
+  private sleep(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
   // Gerenciamento de Clientes
   async createCustomer(customer: AsaasCustomer) {
+    logger.info('AsaasAPI', 'Criando cliente', { customer: sanitizarDadosParaLog(customer) });
+    
     try {
-      const response = await this.api.post('/customers', customer);
-      return response.data;
+      const result = await this.requestWithRetry(
+        async () => {
+          const response = await this.api.post('/customers', customer);
+          return response.data;
+        },
+        'createCustomer'
+      );
+      
+      logger.info('AsaasAPI', 'Cliente criado com sucesso', { customerId: result.id });
+      return result;
     } catch (error) {
+      logger.error('AsaasAPI', 'Erro ao criar cliente', error as Error, { customer: sanitizarDadosParaLog(customer) });
       throw this.handleError(error, 'Erro ao criar cliente');
     }
   }
@@ -195,10 +367,21 @@ class AsaasAPI {
   }
 
   async updateCustomer(customerId: string, customer: Partial<AsaasCustomer>) {
+    logger.info('AsaasAPI', 'Atualizando cliente', { customerId, customer: sanitizarDadosParaLog(customer) });
+    
     try {
-      const response = await this.api.post(`/customers/${customerId}`, customer);
-      return response.data;
+      const result = await this.requestWithRetry(
+        async () => {
+          const response = await this.api.post(`/customers/${customerId}`, customer);
+          return response.data;
+        },
+        'updateCustomer'
+      );
+      
+      logger.info('AsaasAPI', 'Cliente atualizado com sucesso', { customerId });
+      return result;
     } catch (error) {
+      logger.error('AsaasAPI', 'Erro ao atualizar cliente', error as Error, { customerId, customer: sanitizarDadosParaLog(customer) });
       throw this.handleError(error, 'Erro ao atualizar cliente');
     }
   }
@@ -338,18 +521,137 @@ class AsaasAPI {
   }
 
   // Utilitários
-  private handleError(error: any, defaultMessage: string) {
-    if (error.response?.data?.errors) {
-      const errors = error.response.data.errors;
-      const errorMessages = errors.map((err: any) => err.description || err.message).join(', ');
-      return new Error(`${defaultMessage}: ${errorMessages}`);
-    }
-    
-    if (error.response?.data?.message) {
-      return new Error(`${defaultMessage}: ${error.response.data.message}`);
+  private handleError(error: any, defaultMessage: string): Error {
+    // Log detalhado do erro
+    this.logError(error);
+
+    const statusCode = error.response?.status;
+
+    // Extrair mensagens específicas da Asaas
+    if (error.response?.data) {
+      const responseData = error.response.data as AsaasErrorResponse;
+      
+      // Caso 1: Array de erros estruturados
+      if (responseData.errors && Array.isArray(responseData.errors) && responseData.errors.length > 0) {
+        const errorMessages = responseData.errors
+          .map((err) => {
+            const code = err.code ? `[${err.code}]` : '';
+            const description = err.description || 'Erro desconhecido';
+            return `${code} ${description}`.trim();
+          })
+          .join('; ');
+        
+        const fullMessage = `${defaultMessage}: ${errorMessages}`;
+        const newError = new Error(fullMessage);
+        (newError as any).asaasErrors = responseData.errors;
+        (newError as any).statusCode = statusCode;
+        return newError;
+      }
+      
+      // Caso 2: Mensagem simples
+      if (responseData.message) {
+        const fullMessage = `${defaultMessage}: ${responseData.message}`;
+        const newError = new Error(fullMessage);
+        (newError as any).statusCode = statusCode;
+        return newError;
+      }
     }
 
-    return new Error(`${defaultMessage}: ${error.message}`);
+    // Caso 3: Erro de rede ou timeout
+    if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') {
+      const newError = new Error(`${defaultMessage}: Timeout na conexão com Asaas`);
+      (newError as any).isTimeout = true;
+      return newError;
+    }
+
+    if (error.code === 'ECONNREFUSED') {
+      const newError = new Error(`${defaultMessage}: Não foi possível conectar ao servidor Asaas`);
+      (newError as any).isNetworkError = true;
+      return newError;
+    }
+
+    // Caso 4: Erro genérico
+    const fullMessage = error.message 
+      ? `${defaultMessage}: ${error.message}`
+      : defaultMessage;
+    
+    const newError = new Error(fullMessage);
+    (newError as any).statusCode = statusCode;
+    return newError;
+  }
+
+  // Métodos de logging
+  private logRequest(method: string, url: string, data?: any): void {
+    logger.info('AsaasAPI', `Request: ${method} ${url}`, {
+      method,
+      url,
+      data: data ? sanitizarDadosParaLog(data) : undefined
+    });
+  }
+
+  private logResponse(status: number, data: any, url: string): void {
+    logger.info('AsaasAPI', `Response: ${status} from ${url}`, {
+      status,
+      url,
+      hasData: !!data,
+      dataKeys: data ? Object.keys(data) : []
+    });
+  }
+
+  private logError(error: any): void {
+    const errorData: any = {
+      message: error.message,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      url: error.config?.url,
+      method: error.config?.method?.toUpperCase(),
+      code: error.code,
+      stack: error.stack
+    };
+
+    // Adicionar dados da resposta de erro
+    if (error.response?.data) {
+      const responseData = error.response.data;
+      
+      // Se for um erro estruturado da Asaas
+      if (responseData.errors && Array.isArray(responseData.errors)) {
+        errorData.asaasErrors = responseData.errors.map((err: any) => ({
+          code: err.code,
+          description: err.description
+        }));
+      }
+      
+      // Incluir mensagem se houver
+      if (responseData.message) {
+        errorData.asaasMessage = responseData.message;
+      }
+      
+      // Incluir resposta completa para debug
+      errorData.responseData = responseData;
+    }
+
+    // Adicionar dados da requisição (sanitizados)
+    if (error.config?.data) {
+      try {
+        const requestData = typeof error.config.data === 'string' 
+          ? JSON.parse(error.config.data) 
+          : error.config.data;
+        errorData.requestData = sanitizarDadosParaLog(requestData);
+      } catch (e) {
+        errorData.requestData = '[Não foi possível parsear dados da requisição]';
+      }
+    }
+
+    // Adicionar headers da requisição (sem token)
+    if (error.config?.headers) {
+      const headers = { ...error.config.headers };
+      if (headers.access_token) {
+        headers.access_token = '[REDACTED]';
+      }
+      errorData.requestHeaders = headers;
+    }
+
+    logger.error('AsaasAPI', 'Response Error', error, errorData);
   }
 
   // Validar webhook
