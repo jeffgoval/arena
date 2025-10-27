@@ -618,6 +618,103 @@ The middleware automatically adds comprehensive security headers to all response
 
 **Note:** All responses include these headers automatically via middleware.
 
+### Asaas Payment Gateway Integration
+
+**Status:** ✅ Integrated and tested in sandbox
+
+The application uses Asaas as the payment gateway for processing payments, pre-authorizations (caução), and refunds.
+
+**Implemented Features:**
+- Customer management (create, update, search)
+- PIX payments with QR Code generation
+- Credit/debit card payments
+- Pre-authorization (caução) with partial/full capture
+- Payment cancellation
+- Full and partial refunds
+- Webhook handling for payment events
+
+**Architecture:**
+- **Client:** `src/lib/asaas.ts` - Main API client
+- **Service:** `src/services/integrations/asaas.service.ts` - Modern service layer
+- **Legacy Service:** `src/services/pagamentoService.ts` - Compatibility layer
+- **Types:** `src/types/pagamento.types.ts` - Complete TypeScript definitions
+- **Webhook:** `src/app/api/pagamentos/webhook/route.ts` - Event handler
+
+**Testing Scripts:**
+```bash
+# Complete smoke test (6 tests)
+node scripts/test-asaas-smoke.mjs
+
+# Test pre-authorization capture flow
+node scripts/asaas-test-preauth-capture.mjs
+
+# Test cancellation and refunds
+node scripts/asaas-test-refund.mjs
+
+# Original integration test
+node scripts/test-asaas-integration.mjs
+```
+
+**Environment Configuration:**
+- `ASAAS_API_KEY` - API key from Asaas dashboard
+- `ASAAS_ENVIRONMENT` - "sandbox" or "production"
+- `ASAAS_WEBHOOK_SECRET` - Secret for webhook signature validation
+
+**Sandbox Test Cards:**
+- **Approved:** `5162306219378829` (CVV: 318, Exp: 12/2030)
+- **Analysis:** `4111111111111111` (CVV: 123, Exp: 12/2030)
+- **Declined:** `5555555555554444` (CVV: 321, Exp: 12/2030)
+
+**Test Data:**
+- **CPF:** 24971563792, 86534145070, 13669234630
+- **Name:** JOAO DA SILVA
+- **Email:** Use timestamp for uniqueness (e.g., `test-${Date.now()}@asaas.com`)
+
+**Documentation:**
+- **Sandbox Guide:** `docs/ASAAS_SANDBOX_GUIDE.md` - Complete testing guide
+- **Test Results:** `docs/ASAAS_TEST_RESULTS.md` - Validation results
+- **Official Docs:** https://docs.asaas.com
+
+**Important Notes:**
+- **Sandbox Limitation:** PIX requires account approval (may not work immediately)
+- **Webhooks:** Require public URL (use ngrok/localtunnel for local testing)
+- **Test Mode:** No real charges are made in sandbox
+- **Performance:** All operations complete in < 3s
+
+**Common Operations:**
+
+```typescript
+// Create or get customer
+const customer = await asaasService.getOrCreateCustomer({
+  name: "Cliente Teste",
+  cpfCnpj: "24971563792",
+  email: "teste@example.com"
+});
+
+// Create PIX payment
+const pixPayment = await asaasService.createPixPayment(
+  customer.id,
+  50.00,
+  "Reserva Quadra"
+);
+
+// Create pre-authorization (caução)
+const preAuth = await asaasService.createPreAuthorization({
+  customer: customer.id,
+  value: 100.00,
+  creditCard: { /* ... */ },
+  creditCardHolderInfo: { /* ... */ }
+});
+
+// Capture partial amount
+await asaasService.capturePreAuthorization(preAuth.id, 30.00);
+
+// Full refund
+await asaasService.refundPayment(paymentId);
+```
+
+**Note:** All responses include these headers automatically via middleware.
+
 ## Development Guidelines
 
 ### When Creating New Features
