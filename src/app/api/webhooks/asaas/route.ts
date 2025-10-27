@@ -54,7 +54,11 @@ export async function POST(request: NextRequest) {
     await WebhookLogger.logReceived(requestId, payload, signature);
 
     // PASSO 2: Validar assinatura (SEGURANÇA CRÍTICA)
-    if (!asaasAPI.validateWebhook(payload, signature)) {
+    // Nota: Asaas sandbox pode enviar webhooks sem assinatura.
+    // Validamos apenas se a assinatura estiver presente.
+    const shouldValidateSignature = signature && signature.length > 0;
+
+    if (shouldValidateSignature && !asaasAPI.validateWebhook(payload, signature)) {
       logger.warn('Webhook:Asaas', 'Assinatura inválida', {
         requestId,
         signatureLength: signature.length
@@ -66,6 +70,13 @@ export async function POST(request: NextRequest) {
         { erro: 'Assinatura inválida' },
         { status: 401 }
       );
+    }
+
+    if (!shouldValidateSignature) {
+      logger.warn('Webhook:Asaas', 'Webhook recebido sem assinatura (sandbox)', {
+        requestId,
+        environment: process.env.ASAAS_ENVIRONMENT || 'sandbox'
+      });
     }
 
     // PASSO 3: Parse do payload
