@@ -656,18 +656,66 @@ class AsaasAPI {
 
   // Validar webhook
   validateWebhook(payload: string, signature: string): boolean {
-    // Implementar validação de assinatura do webhook
-    // O Asaas usa HMAC-SHA256 para assinar os webhooks
     const crypto = require('crypto');
-    const webhookSecret = process.env.ASAAS_WEBHOOK_SECRET || '';
-    
-    const expectedSignature = crypto
-      .createHmac('sha256', webhookSecret)
-      .update(payload)
-      .digest('hex');
+    const webhookSecret = process.env.ASAAS_WEBHOOK_SECRET;
 
-    return signature === expectedSignature;
+    if (!webhookSecret || webhookSecret === 'seu_webhook_secret_aqui') {
+      logger.error(
+        'AsaasAPI',
+        'Webhook secret ausente ou placeholder. Configure ASAAS_WEBHOOK_SECRET antes de receber webhooks.',
+        new Error('Webhook secret not configured'),
+        { configured: !!webhookSecret }
+      );
+      return false;
+    }
+
+    const expected = crypto.createHmac('sha256', webhookSecret).update(payload).digest();
+    const rawSignature = (signature || '').trim();
+
+    if (!rawSignature) {
+      logger.warn('AsaasAPI', 'Webhook recebido sem header asaas-signature');
+      return false;
+    }
+
+    const normalized = rawSignature.startsWith('sha256=')
+      ? rawSignature.slice(7)
+      : rawSignature;
+
+    const encodings: BufferEncoding[] = ['hex', 'base64'];
+    const candidates: Array<{ buffer: Buffer; encoding: BufferEncoding }> = [];
+
+    for (const encoding of encodings) {
+      try {
+        const buffer = Buffer.from(normalized, encoding);
+        if (buffer.length === expected.length) {
+          candidates.push({ buffer, encoding });
+        }
+      } catch {
+        // Ignore invalid encoding for this format
+      }
+    }
+
+    if (candidates.length === 0) {
+      logger.warn('AsaasAPI', 'Formato da assinatura nao corresponde a hex nem base64', {
+        signatureLength: normalized.length
+      });
+      return false;
+    }
+
+    for (const candidate of candidates) {
+      if (crypto.timingSafeEqual(candidate.buffer, expected)) {
+        return true;
+      }
+    }
+
+    logger.warn('AsaasAPI', 'Assinatura do webhook nao confere', {
+      expectedPrefix: expected.toString('hex').slice(0, 8),
+      providedPrefix: normalized.slice(0, 8)
+    });
+
+    return false;
   }
+
 }
 
 export const asaasAPI = new AsaasAPI();
