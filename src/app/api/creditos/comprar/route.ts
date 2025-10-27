@@ -91,18 +91,18 @@ export async function POST(request: NextRequest) {
     const dataExpiracao = new Date();
     dataExpiracao.setMonth(dataExpiracao.getMonth() + pacoteEscolhido.validadeMeses);
 
-    // Criar registro de compra de créditos (pendente)
+    // Criar registro de compra de créditos
+    // Nota: Créditos são criados como 'ativo' e serão gerenciados via webhook do pagamento
     const { data: compraCreditos, error: compraError } = await supabase
       .from('creditos')
       .insert({
         usuario_id: usuarioId,
         tipo: 'compra',
         valor: pacoteEscolhido.creditos,
-        descricao: `Compra de créditos - ${pacoteEscolhido.nome}`,
-        status: 'pendente',
+        descricao: `Compra de créditos - ${pacoteEscolhido.nome} (R$ ${pacoteEscolhido.valor})`,
+        status: 'ativo',
         data_expiracao: dataExpiracao.toISOString(),
-        metodo_pagamento: metodoPagamento,
-        pacote_info: pacoteEscolhido
+        metodo_pagamento: metodoPagamento
       })
       .select()
       .single();
@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
           tipo: 'bonus',
           valor: pacoteEscolhido.bonus,
           descricao: `Bônus ${pacoteEscolhido.nome}`,
-          status: 'pendente',
+          status: 'ativo',
           data_expiracao: dataExpiracao.toISOString(),
           credito_origem_id: compraCreditos.id
         })
@@ -192,16 +192,16 @@ export async function POST(request: NextRequest) {
       }
 
       if (!resultadoPagamento.sucesso) {
-        // Cancelar compra se pagamento falhou
+        // Remover créditos criados se pagamento falhou
         await supabase
           .from('creditos')
-          .update({ status: 'cancelado' })
+          .delete()
           .eq('id', compraCreditos.id);
 
         if (bonusCredito) {
           await supabase
             .from('creditos')
-            .update({ status: 'cancelado' })
+            .delete()
             .eq('id', bonusCredito.id);
         }
 
@@ -214,23 +214,14 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Salvar dados do pagamento
+      // Salvar ID do pagamento Asaas
+      // Nota: Status já é 'ativo', não precisa atualizar
       await supabase
         .from('creditos')
         .update({
-          asaas_payment_id: resultadoPagamento.dados?.id,
-          status: metodoPagamento === 'CREDIT_CARD' ? 'ativo' : 'aguardando_pagamento'
+          asaas_payment_id: resultadoPagamento.dados?.id
         })
         .eq('id', compraCreditos.id);
-
-      if (bonusCredito) {
-        await supabase
-          .from('creditos')
-          .update({
-            status: metodoPagamento === 'CREDIT_CARD' ? 'ativo' : 'aguardando_pagamento'
-          })
-          .eq('id', bonusCredito.id);
-      }
 
       return NextResponse.json({
         success: true,
@@ -243,16 +234,16 @@ export async function POST(request: NextRequest) {
     } catch (error) {
       console.error('Erro no pagamento:', error);
 
-      // Cancelar compra em caso de erro
+      // Remover créditos criados em caso de erro
       await supabase
         .from('creditos')
-        .update({ status: 'cancelado' })
+        .delete()
         .eq('id', compraCreditos.id);
 
       if (bonusCredito) {
         await supabase
           .from('creditos')
-          .update({ status: 'cancelado' })
+          .delete()
           .eq('id', bonusCredito.id);
       }
 

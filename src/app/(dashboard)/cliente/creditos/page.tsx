@@ -114,11 +114,12 @@ export default function CreditosPage() {
     try {
       await comprarCreditos.mutateAsync({
         pacoteId,
-        metodoPagamento: 'pix', // Por enquanto fixo, depois implementar seleção
+        metodoPagamento: 'PIX', // Por enquanto fixo, depois implementar seleção
         valor: PACOTES_CREDITOS.find(p => p.id === pacoteId)?.valor || 0,
       });
     } catch (error) {
       // Error handling é feito pelo hook
+      console.error('Erro ao comprar créditos:', error);
     }
   };
 
