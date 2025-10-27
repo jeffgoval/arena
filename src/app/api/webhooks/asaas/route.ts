@@ -676,7 +676,7 @@ async function processarPagamentoVencido(
       
       // Buscar telefone do usuário
       const { data: usuarioData } = await supabase
-        .from('usuarios')
+        .from('users')
         .select('telefone')
         .eq('id', reservaData?.usuario_id)
         .single();
